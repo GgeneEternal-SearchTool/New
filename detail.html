@@ -49,12 +49,12 @@
 
 <script>
 /* ===== 設定 ===== */
-const JSON_BASE_URL = "./json-file"; // HTML を New/ に置き、json-file/ は同階層のサブフォルダ
+const JSON_BASE_URL = "./json-file";
 const UNITS_JSON = JSON_BASE_URL + "/units.json";
 const PILOTS_JSON = JSON_BASE_URL + "/pilots.json";
 const COMBI_PART_PREFIX = JSON_BASE_URL + "/combi_part_";
-const MAX_COMBI_PARTS_TO_CHECK = 100; // 上限（安全策）
-const MAX_CONSECUTIVE_MISSES = 5;     // 連続で見つからなければ探索終了
+const MAX_COMBI_PARTS_TO_CHECK = 200;
+const MAX_CONSECUTIVE_MISSES = 5;
 /* ================== */
 
 const params = new URLSearchParams(location.search);
@@ -71,7 +71,7 @@ const filterT2Btn = document.getElementById("filter-t2");
 
 let units = [], pilots = [];
 let currentUnit = null;
-let combiRows = []; // 該当ユニットの combi 行を蓄積
+let combiRows = [];
 let sortByDmgDesc = true;
 let filterT2 = false;
 
@@ -96,7 +96,7 @@ function renderPilotCard(p, dmg, t2){
   name.textContent = p["Pilot.キャラ"] || ("PID:" + p.pid);
   info.appendChild(name);
   const meta = document.createElement("div");
-  meta.innerHTML = `<div class="small">PID: ${p.pid} ${t2 ? '<span style="color:green">2回行動</span>' : ''}</div>`;
+  meta.innerHTML = `<div class="small">PID: ${p.pid || "unknown"} ${t2 ? '<span style="color:green">2回行動</span>' : ''}</div>`;
   info.appendChild(meta);
   const dmgEl = document.createElement("div");
   dmgEl.className = "p-dmg";
@@ -126,16 +126,26 @@ function applyPilotFiltersAndRender(){
     return;
   }
   combiSummary.textContent = `該当 ${list.length} 件（全 Combi を検索）`;
+
+  // pidMap を作る（柔軟にキーを探す）
   const pidMap = {};
-  pilots.forEach(p => pidMap[p.pid] = p);
+  pilots.forEach(p => {
+    const candidates = [p.pid, p["pid"], p["Pilot.キャラ識別"], p["Pilot.キャラ"]];
+    for(const c of candidates){
+      if(c !== undefined && c !== null && c !== ""){
+        pidMap[Number(c)] = p;
+        break;
+      }
+    }
+  });
 
   list.forEach(r => {
-    const p = pidMap[r.p] || { "Pilot.キャラ": r.pilot_name || ("PID:" + r.p), pid: r.p };
+    const p = (r.p !== null && pidMap[r.p]) ? pidMap[r.p] : { "Pilot.キャラ": r.pilot_name || ("PID:" + (r.p || "unknown")), pid: r.p };
     pilotGrid.appendChild(renderPilotCard(p, r.D0, r.t2));
   });
 }
 
-// 自動検出: combi_part_00.json から順に存在チェックして有効なパート数を返す
+// combi part 自動検出（HEAD で存在チェック）
 async function detectCombiParts(){
   const parts = [];
   let consecutiveMisses = 0;
@@ -159,7 +169,6 @@ async function detectCombiParts(){
   return parts;
 }
 
-// Combi を分割ファイルから順に読み、該当ユニットの行を集める（遅延読み込み）
 async function loadCombiForUnit(uid){
   combiRows = [];
   combiSummary.textContent = "Combi を読み込み中...";
@@ -172,10 +181,15 @@ async function loadCombiForUnit(uid){
     try{
       const part = await fetchJson(url);
       for(const r of part){
+        // r.u が uid と一致する行を正規化して追加
         if(r.u === uid){
-          r.D0 = (r.D0 !== undefined && r.D0 !== null) ? Number(r.D0) : null;
-          r.t2 = (r.t2 !== undefined && r.t2 !== null) ? Number(r.t2) : 0;
-          combiRows.push(r);
+          // 正規化: p を数値化、pilot_name を確保、D0/t2 を数値化
+          const nr = Object.assign({}, r);
+          nr.p = (nr.p !== undefined && nr.p !== null && nr.p !== "") ? Number(nr.p) : null;
+          nr.pilot_name = nr.pilot_name || nr["Pilot.キャラ"] || "";
+          nr.D0 = (nr.D0 !== undefined && nr.D0 !== null) ? Number(nr.D0) : null;
+          nr.t2 = (nr.t2 !== undefined && nr.t2 !== null) ? Number(nr.t2) : 0;
+          combiRows.push(nr);
         }
       }
     }catch(e){

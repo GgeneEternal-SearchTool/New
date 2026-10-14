@@ -19,15 +19,14 @@
   .filters select,.filters input{padding:6px;border:1px solid #ddd;border-radius:6px;background:#fff}
   .controls{margin-left:auto;display:flex;gap:8px;align-items:center}
   .btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
-  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-w),1fr));gap:var(--gap)}
   .card{border:1px solid #eee;border-radius:8px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff}
   .thumb-wrap{position:relative;width:var(--thumb);height:var(--thumb)}
   .thumb{width:var(--thumb);height:var(--thumb);object-fit:cover;border-radius:4px;border:1px solid #ddd;display:block}
-  /* バッジ（アイコン） */
-  .badge-row{position:absolute;left:0;right:0;top:-6px;display:flex;justify-content:center;gap:4px;pointer-events:none}
-  .badge{background:rgba(255,255,255,0.95);border:1px solid #ddd;padding:2px 4px;border-radius:6px;font-size:11px;box-shadow:0 1px 2px rgba(0,0,0,0.08)}
-  .badge.small{padding:2px 3px;font-size:10px;border-radius:5px}
+  .badge-row-top{position:absolute;left:6px;right:6px;top:4px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
+  .small-circle{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,0.15)}
+  .small-circle.dim{opacity:0.5}
+  .rare-badge{position:absolute;left:50%;transform:translateX(-50%);top:28px;padding:3px 8px;border-radius:10px;color:#fff;font-weight:700;font-size:12px;box-shadow:0 1px 2px rgba(0,0,0,0.12)}
   .name{font-size:13px;text-align:center;line-height:1.2}
   .meta{font-size:12px;color:var(--muted)}
   .count{margin-top:8px;color:var(--muted);font-size:13px}
@@ -44,26 +43,11 @@
 <header>
   <h1 style="margin:0;font-size:18px">ユニット一覧</h1>
   <div class="filters" aria-label="フィルター">
-    <label>
-      <span class="small">レア</span><br/>
-      <select id="filter-rarity"><option value="">全て</option></select>
-    </label>
-    <label>
-      <span class="small">タイプ</span><br/>
-      <select id="filter-type"><option value="">全て</option></select>
-    </label>
-    <label>
-      <span class="small">移動力</span><br/>
-      <select id="filter-move"><option value="">全て</option></select>
-    </label>
-    <label>
-      <span class="small">最大射程</span><br/>
-      <select id="filter-range"><option value="">全て</option></select>
-    </label>
-    <label>
-      <span class="small">入手</span><br/>
-      <select id="filter-obtain"><option value="">全て</option></select>
-    </label>
+    <label><span class="small">レア</span><br/><select id="filter-rarity"><option value="">全て</option></select></label>
+    <label><span class="small">タイプ</span><br/><select id="filter-type"><option value="">全て</option></select></label>
+    <label><span class="small">移動力</span><br/><select id="filter-move"><option value="">全て</option></select></label>
+    <label><span class="small">最大射程</span><br/><select id="filter-range"><option value="">全て</option></select></label>
+    <label><span class="small">入手</span><br/><select id="filter-obtain"><option value="">全て</option></select></label>
   </div>
 
   <div class="controls">
@@ -80,22 +64,14 @@
   <div id="empty" class="empty" style="display:none">該当するユニットが見つかりません。</div>
 </main>
 
-<footer>
-  <div>データ: GitHub JSON を参照</div>
-</footer>
+<footer><div>データ: GitHub JSON を参照</div></footer>
 
 <script>
 /* ===== 設定 ===== */
-const JSON_BASE_URL = "./json-file"; // HTML を New/ に置き、json-file/ は同階層のサブフォルダ
+const JSON_BASE_URL = "./json-file";
 const UNITS_JSON = JSON_BASE_URL + "/units.json";
 const COMBI_FIELD_MAP_JSON = JSON_BASE_URL + "/combi_field_map.json";
-/* ================== */
-
-/*
- FIELD_LABELS: JSON 内の短縮キー -> 表示ラベル
- 例: "D0" -> "Damage", "D4" -> "Damage-full active", "CD" -> "Critical Damage-full active"
- HB* は耐久回数のラベル
-*/
+/* ===== 表示ラベル ===== */
 const FIELD_LABELS = {
   "D0": "Damage",
   "D4": "Damage-full active",
@@ -110,10 +86,7 @@ const FIELD_LABELS = {
   "HB3_F": "耐久回数EX (full)"
 };
 
-let units = []; // units.json の配列
-let fieldMap = {}; // 短縮キー -> 元列名（必要なら）
-
-// DOM
+let units = [], fieldMap = {};
 const grid = document.getElementById("grid");
 const summary = document.getElementById("summary");
 const emptyEl = document.getElementById("empty");
@@ -125,7 +98,6 @@ const filterObtain = document.getElementById("filter-obtain");
 const sortBy = document.getElementById("sort-by");
 const sortDirBtn = document.getElementById("sort-dir");
 const resetBtn = document.getElementById("reset");
-
 let sortDirAsc = true;
 
 async function fetchJson(url){
@@ -133,7 +105,6 @@ async function fetchJson(url){
   if(!res.ok) throw new Error("Fetch failed: " + url);
   return res.json();
 }
-
 function uniqueValues(arr, key){
   const s = new Set();
   arr.forEach(x => {
@@ -142,7 +113,6 @@ function uniqueValues(arr, key){
   });
   return Array.from(s).sort((a,b)=> a.localeCompare(b, 'ja'));
 }
-
 function populateFilter(selectEl, values){
   selectEl.innerHTML = '<option value="">全て</option>';
   values.forEach(v => {
@@ -152,16 +122,12 @@ function populateFilter(selectEl, values){
     selectEl.appendChild(opt);
   });
 }
-
-/* 並べ替えドロップダウンを FIELD_LABELS から動的生成 */
 function populateSortOptions(){
   sortBy.innerHTML = "";
-  // まず名前ソートを追加
   const optName = document.createElement("option");
   optName.value = "name";
   optName.textContent = "名前";
   sortBy.appendChild(optName);
-  // FIELD_LABELS のキー順で追加
   Object.keys(FIELD_LABELS).forEach(k => {
     const opt = document.createElement("option");
     opt.value = k;
@@ -169,77 +135,72 @@ function populateSortOptions(){
     sortBy.appendChild(opt);
   });
 }
-
-/* ユニットカードを作る（画像上にバッジを重ねる） */
+function intensityFromValue(v){
+  const n = Number(v) || 0;
+  const clamped = Math.max(2, Math.min(6, n));
+  return 0.35 + (clamped - 2) * ( (1.0 - 0.35) / (6 - 2) );
+}
+function rareBackgroundStyle(rare){
+  if(!rare) return "background:rgba(0,0,0,0.08)";
+  if(rare.indexOf("UR") !== -1){
+    const opacity = rare.indexOf("0") !== -1 ? 0.5 : 1.0;
+    // 簡易虹グラデ
+    return `background:linear-gradient(90deg,#ff5f6d,#ffc371,#7afcff);opacity:${opacity};`;
+  }
+  if(rare.indexOf("SSR") !== -1 || rare.indexOf("SSP") !== -1){
+    const opacity = rare.indexOf("SP") !== -1 ? 0.5 : 1.0;
+    return `background:linear-gradient(90deg,#ff8c42,#ff6a00);opacity:${opacity};`;
+  }
+  return "background:#888";
+}
 function renderCard(u){
   const a = document.createElement("a");
   a.href = `detail.html?uid=${encodeURIComponent(u.uid)}`;
   a.className = "card";
   a.title = u["ユニット"] || u["ユニット識別"] || "unit";
-
-  // thumb wrapper（相対位置）
   const wrap = document.createElement("div");
   wrap.className = "thumb-wrap";
-
-  // badge row（上部に重ねる）
-  const badgeRow = document.createElement("div");
-  badgeRow.className = "badge-row";
-
-  // ① レアアイコン（レア文字列を小さなバッジで表示）
-  const rarity = (u["レア"] || "").toString();
-  if(rarity){
-    const b = document.createElement("div");
-    b.className = "badge small";
-    b.textContent = rarity;
-    badgeRow.appendChild(b);
-  }
-
-  // ② 移動力アイコン（移動力を表示）
-  const move = (u["移動力"] || "").toString();
-  if(move){
-    const b = document.createElement("div");
-    b.className = "badge small";
-    // 簡易アイコン: 靴の絵文字＋値（必要なら画像に差し替え）
-    b.textContent = "移" + move;
-    badgeRow.appendChild(b);
-  }
-
-  // ③ 最大射程アイコン（射程を表示）
-  const range = (u["最大射程"] || "").toString();
-  if(range){
-    const b = document.createElement("div");
-    b.className = "badge small";
-    b.textContent = "射" + range;
-    badgeRow.appendChild(b);
-  }
-
-  wrap.appendChild(badgeRow);
-
-  // 画像
+  const topRow = document.createElement("div");
+  topRow.className = "badge-row-top";
+  const moveVal = (u["移動力"] || "").toString();
+  const moveBadge = document.createElement("div");
+  moveBadge.className = "small-circle";
+  moveBadge.style.background = `rgba(220,20,60,${intensityFromValue(moveVal)})`;
+  moveBadge.textContent = moveVal || "-";
+  if(!moveVal) moveBadge.classList.add("dim");
+  topRow.appendChild(moveBadge);
+  const rangeVal = (u["最大射程"] || "").toString();
+  const rangeBadge = document.createElement("div");
+  rangeBadge.className = "small-circle";
+  rangeBadge.style.background = `rgba(30,144,255,${intensityFromValue(rangeVal)})`;
+  rangeBadge.textContent = rangeVal || "-";
+  if(!rangeVal) rangeBadge.classList.add("dim");
+  topRow.appendChild(rangeBadge);
+  wrap.appendChild(topRow);
   const img = document.createElement("img");
   img.className = "thumb";
   img.src = u["画像リンク"] || "";
   img.alt = u["ユニット"] || "";
   img.loading = "lazy";
   wrap.appendChild(img);
-
+  const rare = (u["レア"] || "").toString();
+  const rareBadge = document.createElement("div");
+  rareBadge.className = "rare-badge";
+  rareBadge.textContent = rare || "";
+  rareBadge.style.cssText = rareBackgroundStyle(rare);
+  wrap.appendChild(rareBadge);
   a.appendChild(wrap);
-
-  // name
   const nm = document.createElement("div");
   nm.className = "name";
   nm.textContent = u["ユニット"] || ("ID:" + u.uid);
   a.appendChild(nm);
-
-  // meta: rarity and Damage if present
   const meta = document.createElement("div");
   meta.className = "meta";
   const dmg = (u["D0"] !== undefined && u["D0"] !== null) ? Math.round(u["D0"]) : "";
-  meta.textContent = (rarity ? rarity + " " : "") + (dmg ? "D:" + dmg : "");
+  meta.textContent = (rare ? rare + " " : "") + (dmg ? "D:" + dmg : "");
   a.appendChild(meta);
   return a;
 }
-
 function applyFiltersAndRender(){
   const r = filterRarity.value;
   const t = filterType.value;
@@ -247,16 +208,13 @@ function applyFiltersAndRender(){
   const rg = filterRange.value;
   const ob = filterObtain.value;
   let list = units.slice();
-
   if(r) list = list.filter(u => (u["レア"]||"") === r);
   if(t) list = list.filter(u => (u["タイプ"]||"") === t);
   if(mv) list = list.filter(u => (u["移動力"]||"") === mv);
   if(rg) list = list.filter(u => (u["最大射程"]||"") === rg);
   if(ob) list = list.filter(u => (u["入手"]||"") === ob);
-
   const key = sortBy.value;
   list.sort((a,b)=>{
-    // 名前ソート
     if(key === "name"){
       const sa = (a["ユニット"]||"").toString();
       const sb = (b["ユニット"]||"").toString();
@@ -272,7 +230,6 @@ function applyFiltersAndRender(){
     const sb = (vb||"").toString();
     return sortDirAsc ? sa.localeCompare(sb, 'ja') : sb.localeCompare(sa, 'ja');
   });
-
   grid.innerHTML = "";
   if(list.length === 0){
     emptyEl.style.display = "block";
@@ -282,34 +239,25 @@ function applyFiltersAndRender(){
   }
   summary.textContent = `表示 ${list.length} / 全 ${units.length} 件`;
 }
-
 async function init(){
   try{
     try{ fieldMap = await fetchJson(COMBI_FIELD_MAP_JSON); }catch(e){ fieldMap = {}; }
     units = await fetchJson(UNITS_JSON);
-
-    // フィルタの選択肢を自動生成
     populateFilter(filterRarity, uniqueValues(units, "レア"));
     populateFilter(filterType, uniqueValues(units, "タイプ"));
     populateFilter(filterMove, uniqueValues(units, "移動力"));
     populateFilter(filterRange, uniqueValues(units, "最大射程"));
     populateFilter(filterObtain, uniqueValues(units, "入手"));
-
-    // 並べ替えオプションを生成
     populateSortOptions();
-
-    // デフォルト: D0（Damage）降順
     sortBy.value = "D0";
     sortDirAsc = false;
     sortDirBtn.textContent = sortDirAsc ? "昇順" : "降順";
-
     applyFiltersAndRender();
   }catch(err){
     summary.textContent = "読み込みエラー: " + err.message;
     console.error(err);
   }
 }
-
 filterRarity.addEventListener("change", applyFiltersAndRender);
 filterType.addEventListener("change", applyFiltersAndRender);
 filterMove.addEventListener("change", applyFiltersAndRender);
@@ -326,8 +274,6 @@ resetBtn.addEventListener("click", ()=>{
   sortBy.value = "D0"; sortDirAsc = false; sortDirBtn.textContent = "降順";
   applyFiltersAndRender();
 });
-
-
 init();
 </script>
 </body>
