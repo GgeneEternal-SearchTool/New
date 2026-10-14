@@ -8,31 +8,47 @@
   :root{
     --gap:10px;
     --thumb:60px;
-    --card-w:120px;
+    --card-w:140px;
     --accent:#2b6cb0;
     --muted:#666;
     font-family: system-ui, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Arial;
   }
+
+  /* ページ全体 */
   body{margin:16px;color:#111;background:#fff}
   header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:12px}
+  h1{margin:0;font-size:18px}
+
+  /* フィルター / コントロール */
   .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
   .filters select,.filters input{padding:6px;border:1px solid #ddd;border-radius:6px;background:#fff}
   .controls{margin-left:auto;display:flex;gap:8px;align-items:center}
   .btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+  /* グリッド */
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-w),1fr));gap:var(--gap)}
-  .card{border:1px solid #eee;border-radius:8px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff}
-  .thumb-wrap{position:relative;width:var(--thumb);height:var(--thumb)}
+  .card{border:1px solid #eee;border-radius:8px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff;position:relative;overflow:visible}
+  .thumb-wrap{width:var(--thumb);height:var(--thumb);display:flex;align-items:center;justify-content:center;margin-top:8px}
   .thumb{width:var(--thumb);height:var(--thumb);object-fit:cover;border-radius:4px;border:1px solid #ddd;display:block}
-  .badge-row-top{position:absolute;left:6px;right:6px;top:4px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
-  .small-circle{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,0.15)}
-  .small-circle.dim{opacity:0.5}
-  .rare-badge{position:absolute;left:50%;transform:translateX(-50%);top:28px;padding:3px 8px;border-radius:10px;color:#fff;font-weight:700;font-size:12px;box-shadow:0 1px 2px rgba(0,0,0,0.12)}
-  .name{font-size:13px;text-align:center;line-height:1.2}
+
+  /* アイコン領域（画像の外側・上部） */
+  .icon-area { position:absolute; left:8px; right:8px; top:6px; display:flex; flex-direction:column; align-items:center; pointer-events:none; }
+  .icon-top { width:100%; display:flex; justify-content:space-between; align-items:center; gap:6px; }
+  .icon-circle { width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:12px; box-shadow:0 1px 2px rgba(0,0,0,0.12); }
+  .icon-circle.dim { opacity:0.45; }
+  .rare-row { margin-top:6px; width:100%; display:flex; justify-content:center; }
+  .rare-badge { display:inline-block; padding:4px 10px; border-radius:10px; color:#fff; font-weight:700; font-size:12px; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,0.12); }
+
+  /* テキスト */
+  .name{font-size:13px;text-align:center;line-height:1.2; margin-top:6px}
   .meta{font-size:12px;color:var(--muted)}
   .count{margin-top:8px;color:var(--muted);font-size:13px}
   .small{font-size:12px;color:#444}
   .empty{padding:40px;text-align:center;color:var(--muted)}
   footer{margin-top:18px;color:var(--muted);font-size:13px}
+
+  /* レスポンシブ */
   @media (max-width:520px){
     header{flex-direction:column;align-items:stretch}
     .controls{margin-left:0}
@@ -41,7 +57,8 @@
 </head>
 <body>
 <header>
-  <h1 style="margin:0;font-size:18px">ユニット一覧</h1>
+  <h1>ユニット一覧</h1>
+
   <div class="filters" aria-label="フィルター">
     <label><span class="small">レア</span><br/><select id="filter-rarity"><option value="">全て</option></select></label>
     <label><span class="small">タイプ</span><br/><select id="filter-type"><option value="">全て</option></select></label>
@@ -54,6 +71,7 @@
     <label class="small">並べ替え</label>
     <select id="sort-by" class="btn"></select>
     <button id="sort-dir" class="btn">昇順</button>
+    <button id="reload" class="btn">データ再読み込み</button>
     <button id="reset" class="btn">リセット</button>
   </div>
 </header>
@@ -62,16 +80,20 @@
   <div id="summary" class="count">読み込み中...</div>
   <div id="grid" class="grid" aria-live="polite"></div>
   <div id="empty" class="empty" style="display:none">該当するユニットが見つかりません。</div>
+  <div id="error" style="color:#b33;margin-top:12px;display:none"></div>
 </main>
 
-<footer><div>データ: GitHub JSON を参照</div></footer>
+<footer>
+  <div>データ: GitHub JSON を参照</div>
+</footer>
 
 <script>
 /* ===== 設定 ===== */
-const JSON_BASE_URL = "./json-file";
-const UNITS_JSON = JSON_BASE_URL + "/units.json";
-const COMBI_FIELD_MAP_JSON = JSON_BASE_URL + "/combi_field_map.json";
-/* ===== 表示ラベル ===== */
+const JSON_BASE_URL = "./json-file"; // HTML を New/ に置き、json-file/ は同階層のサブフォルダ
+const UNITS_JSON = () => `${JSON_BASE_URL}/units.json`;
+const COMBI_FIELD_MAP_JSON = () => `${JSON_BASE_URL}/combi_field_map.json`;
+
+/* ===== 並べ替えラベル（JSON の短縮キー -> 表示名） ===== */
 const FIELD_LABELS = {
   "D0": "Damage",
   "D4": "Damage-full active",
@@ -86,10 +108,12 @@ const FIELD_LABELS = {
   "HB3_F": "耐久回数EX (full)"
 };
 
+/* ===== 状態 ===== */
 let units = [], fieldMap = {};
 const grid = document.getElementById("grid");
 const summary = document.getElementById("summary");
 const emptyEl = document.getElementById("empty");
+const errorEl = document.getElementById("error");
 const filterRarity = document.getElementById("filter-rarity");
 const filterType = document.getElementById("filter-type");
 const filterMove = document.getElementById("filter-move");
@@ -97,14 +121,19 @@ const filterRange = document.getElementById("filter-range");
 const filterObtain = document.getElementById("filter-obtain");
 const sortBy = document.getElementById("sort-by");
 const sortDirBtn = document.getElementById("sort-dir");
+const reloadBtn = document.getElementById("reload");
 const resetBtn = document.getElementById("reset");
+
 let sortDirAsc = true;
 
-async function fetchJson(url){
-  const res = await fetch(url);
-  if(!res.ok) throw new Error("Fetch failed: " + url);
+/* ===== ヘルパー ===== */
+async function fetchJson(url, cacheBust=false){
+  const u = cacheBust ? `${url}?v=${Date.now()}` : url;
+  const res = await fetch(u);
+  if(!res.ok) throw new Error(`Fetch failed: ${u} (${res.status})`);
   return res.json();
 }
+
 function uniqueValues(arr, key){
   const s = new Set();
   arr.forEach(x => {
@@ -113,6 +142,7 @@ function uniqueValues(arr, key){
   });
   return Array.from(s).sort((a,b)=> a.localeCompare(b, 'ja'));
 }
+
 function populateFilter(selectEl, values){
   selectEl.innerHTML = '<option value="">全て</option>';
   values.forEach(v => {
@@ -122,6 +152,7 @@ function populateFilter(selectEl, values){
     selectEl.appendChild(opt);
   });
 }
+
 function populateSortOptions(){
   sortBy.innerHTML = "";
   const optName = document.createElement("option");
@@ -135,72 +166,103 @@ function populateSortOptions(){
     sortBy.appendChild(opt);
   });
 }
+
+/* 数値 2-6 を不透明度に変換（移動力/射程の濃淡） */
 function intensityFromValue(v){
   const n = Number(v) || 0;
   const clamped = Math.max(2, Math.min(6, n));
-  return 0.35 + (clamped - 2) * ( (1.0 - 0.35) / (6 - 2) );
+  return 0.35 + (clamped - 2) * ((1.0 - 0.35) / (6 - 2));
 }
+
+/* レアに応じた背景スタイル（横長バッジ） */
 function rareBackgroundStyle(rare){
   if(!rare) return "background:rgba(0,0,0,0.08)";
+  // UR 系: 虹グラデ。UR☆0 は半透明
   if(rare.indexOf("UR") !== -1){
     const opacity = rare.indexOf("0") !== -1 ? 0.5 : 1.0;
-    // 簡易虹グラデ
+    // カラーはサンプル。必要なら具体色を指定してください。
     return `background:linear-gradient(90deg,#ff5f6d,#ffc371,#7afcff);opacity:${opacity};`;
   }
+  // SSR / SSP: オレンジ系。SP は半透明
   if(rare.indexOf("SSR") !== -1 || rare.indexOf("SSP") !== -1){
     const opacity = rare.indexOf("SP") !== -1 ? 0.5 : 1.0;
     return `background:linear-gradient(90deg,#ff8c42,#ff6a00);opacity:${opacity};`;
   }
+  // デフォルト
   return "background:#888";
 }
+
+/* ===== カード描画（アイコンは画像の外側に配置） ===== */
 function renderCard(u){
   const a = document.createElement("a");
   a.href = `detail.html?uid=${encodeURIComponent(u.uid)}`;
   a.className = "card";
   a.title = u["ユニット"] || u["ユニット識別"] || "unit";
+
+  // アイコン領域（画像の外側・上部）
+  const iconArea = document.createElement("div");
+  iconArea.className = "icon-area";
+
+  // 上段: 移動力（左）と射程（右）
+  const top = document.createElement("div");
+  top.className = "icon-top";
+
+  const moveVal = (u["移動力"] || "").toString();
+  const left = document.createElement("div");
+  left.className = "icon-circle" + (moveVal ? "" : " dim");
+  left.style.background = `rgba(220,20,60,${intensityFromValue(moveVal)})`;
+  left.textContent = moveVal || "-";
+  top.appendChild(left);
+
+  const right = document.createElement("div");
+  const rangeVal = (u["最大射程"] || "").toString();
+  right.className = "icon-circle" + (rangeVal ? "" : " dim");
+  right.style.background = `rgba(30,144,255,${intensityFromValue(rangeVal)})`;
+  right.textContent = rangeVal || "-";
+  top.appendChild(right);
+
+  iconArea.appendChild(top);
+
+  // 下段: レア（横長・改行しない）
+  const rareRow = document.createElement("div");
+  rareRow.className = "rare-row";
+  const rareBadge = document.createElement("div");
+  rareBadge.className = "rare-badge";
+  const rare = (u["レア"] || "").toString();
+  rareBadge.textContent = rare || "";
+  rareBadge.style.cssText = rareBackgroundStyle(rare);
+  rareRow.appendChild(rareBadge);
+  iconArea.appendChild(rareRow);
+
+  a.appendChild(iconArea);
+
+  // 画像（アイコン領域の下に表示される）
   const wrap = document.createElement("div");
   wrap.className = "thumb-wrap";
-  const topRow = document.createElement("div");
-  topRow.className = "badge-row-top";
-  const moveVal = (u["移動力"] || "").toString();
-  const moveBadge = document.createElement("div");
-  moveBadge.className = "small-circle";
-  moveBadge.style.background = `rgba(220,20,60,${intensityFromValue(moveVal)})`;
-  moveBadge.textContent = moveVal || "-";
-  if(!moveVal) moveBadge.classList.add("dim");
-  topRow.appendChild(moveBadge);
-  const rangeVal = (u["最大射程"] || "").toString();
-  const rangeBadge = document.createElement("div");
-  rangeBadge.className = "small-circle";
-  rangeBadge.style.background = `rgba(30,144,255,${intensityFromValue(rangeVal)})`;
-  rangeBadge.textContent = rangeVal || "-";
-  if(!rangeVal) rangeBadge.classList.add("dim");
-  topRow.appendChild(rangeBadge);
-  wrap.appendChild(topRow);
   const img = document.createElement("img");
   img.className = "thumb";
   img.src = u["画像リンク"] || "";
   img.alt = u["ユニット"] || "";
   img.loading = "lazy";
   wrap.appendChild(img);
-  const rare = (u["レア"] || "").toString();
-  const rareBadge = document.createElement("div");
-  rareBadge.className = "rare-badge";
-  rareBadge.textContent = rare || "";
-  rareBadge.style.cssText = rareBackgroundStyle(rare);
-  wrap.appendChild(rareBadge);
   a.appendChild(wrap);
+
+  // 名前・メタ
   const nm = document.createElement("div");
   nm.className = "name";
   nm.textContent = u["ユニット"] || ("ID:" + u.uid);
   a.appendChild(nm);
+
   const meta = document.createElement("div");
   meta.className = "meta";
   const dmg = (u["D0"] !== undefined && u["D0"] !== null) ? Math.round(u["D0"]) : "";
   meta.textContent = (rare ? rare + " " : "") + (dmg ? "D:" + dmg : "");
   a.appendChild(meta);
+
   return a;
 }
+
+/* ===== フィルタ適用と描画 ===== */
 function applyFiltersAndRender(){
   const r = filterRarity.value;
   const t = filterType.value;
@@ -208,11 +270,13 @@ function applyFiltersAndRender(){
   const rg = filterRange.value;
   const ob = filterObtain.value;
   let list = units.slice();
+
   if(r) list = list.filter(u => (u["レア"]||"") === r);
   if(t) list = list.filter(u => (u["タイプ"]||"") === t);
   if(mv) list = list.filter(u => (u["移動力"]||"") === mv);
   if(rg) list = list.filter(u => (u["最大射程"]||"") === rg);
   if(ob) list = list.filter(u => (u["入手"]||"") === ob);
+
   const key = sortBy.value;
   list.sort((a,b)=>{
     if(key === "name"){
@@ -230,6 +294,7 @@ function applyFiltersAndRender(){
     const sb = (vb||"").toString();
     return sortDirAsc ? sa.localeCompare(sb, 'ja') : sb.localeCompare(sa, 'ja');
   });
+
   grid.innerHTML = "";
   if(list.length === 0){
     emptyEl.style.display = "block";
@@ -239,25 +304,37 @@ function applyFiltersAndRender(){
   }
   summary.textContent = `表示 ${list.length} / 全 ${units.length} 件`;
 }
-async function init(){
+
+/* ===== 初期化 ===== */
+async function init(cacheBust=false){
+  errorEl.style.display = "none";
   try{
-    try{ fieldMap = await fetchJson(COMBI_FIELD_MAP_JSON); }catch(e){ fieldMap = {}; }
-    units = await fetchJson(UNITS_JSON);
+    try{ fieldMap = await fetchJson(COMBI_FIELD_MAP_JSON(), cacheBust); }catch(e){ fieldMap = {}; }
+    units = await fetchJson(UNITS_JSON(), cacheBust);
+
     populateFilter(filterRarity, uniqueValues(units, "レア"));
     populateFilter(filterType, uniqueValues(units, "タイプ"));
     populateFilter(filterMove, uniqueValues(units, "移動力"));
     populateFilter(filterRange, uniqueValues(units, "最大射程"));
     populateFilter(filterObtain, uniqueValues(units, "入手"));
+
     populateSortOptions();
+
+    // デフォルト: D0（Damage）降順
     sortBy.value = "D0";
     sortDirAsc = false;
     sortDirBtn.textContent = sortDirAsc ? "昇順" : "降順";
+
     applyFiltersAndRender();
   }catch(err){
-    summary.textContent = "読み込みエラー: " + err.message;
+    errorEl.style.display = "block";
+    errorEl.textContent = "読み込みエラー: " + err.message;
+    summary.textContent = "読み込みエラー";
     console.error(err);
   }
 }
+
+/* ===== イベント ===== */
 filterRarity.addEventListener("change", applyFiltersAndRender);
 filterType.addEventListener("change", applyFiltersAndRender);
 filterMove.addEventListener("change", applyFiltersAndRender);
@@ -269,11 +346,14 @@ sortDirBtn.addEventListener("click", ()=>{
   sortDirBtn.textContent = sortDirAsc ? "昇順" : "降順";
   applyFiltersAndRender();
 });
+reloadBtn.addEventListener("click", ()=> init(true)); // キャッシュバストして再読み込み
 resetBtn.addEventListener("click", ()=>{
   filterRarity.value = ""; filterType.value = ""; filterMove.value = ""; filterRange.value = ""; filterObtain.value = "";
   sortBy.value = "D0"; sortDirAsc = false; sortDirBtn.textContent = "降順";
   applyFiltersAndRender();
 });
+
+/* 初回読み込み */
 init();
 </script>
 </body>
