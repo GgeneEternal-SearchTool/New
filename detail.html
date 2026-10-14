@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ユニット詳細</title>
+<style>
+  body{font-family: system-ui, "Noto Sans JP", "Hiragino Kaku Gothic ProN";margin:16px;color:#111}
+  .top{display:flex;gap:12px;align-items:center}
+  .thumb{width:120px;height:120px;object-fit:cover;border:1px solid #ddd;border-radius:6px}
+  .info{flex:1}
+  .label{font-size:13px;color:#666}
+  .value{font-size:16px;margin-bottom:6px}
+  .controls{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+  .btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
+  .grid{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+  .pilot-card{border:1px solid #eee;padding:8px;border-radius:8px;display:flex;gap:8px;align-items:center}
+  .p-thumb{width:48px;height:48px;object-fit:cover;border-radius:4px}
+  .p-info{font-size:13px}
+  .p-name{font-weight:600}
+  .p-dmg{color:#b33;font-weight:700}
+  .loading{color:#666}
+  .back{margin-bottom:12px;display:inline-block}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">← ユニット一覧へ戻る</a>
+<main>
+  <div id="unit-area" class="top">
+    <img id="unit-thumb" class="thumb" src="" alt="" />
+    <div class="info">
+      <div id="unit-name" style="font-size:20px;font-weight:700"></div>
+      <div class="label">レア / タイプ / 移動力 / 最大射程 / 入手</div>
+      <div id="unit-meta" class="value"></div>
+      <div class="controls">
+        <label>パイロット検索: <input id="pilot-search" placeholder="名前で絞る" /></label>
+        <button id="sort-dmg" class="btn">ダメージ順</button>
+        <button id="filter-t2" class="btn">２回行動のみ</button>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <h3 style="margin-top:18px">該当パイロット（Combi）</h3>
+    <div id="combi-summary" class="loading">Combi を読み込み中...</div>
+    <div id="pilot-grid" class="grid"></div>
+  </section>
+</main>
+
+<script>
+/* ===== 設定 ===== */
+const JSON_BASE_URL = "./json-file"; // HTML を New/ に置き、json-file/ は同階層のサブフォルダ
+const UNITS_JSON = JSON_BASE_URL + "/units.json";
+const PILOTS_JSON = JSON_BASE_URL + "/pilots.json";
+const COMBI_PART_PREFIX = JSON_BASE_URL + "/combi_part_";
+const MAX_COMBI_PARTS_TO_CHECK = 100; // 上限（安全策）
+const MAX_CONSECUTIVE_MISSES = 5;     // 連続で見つからなければ探索終了
+/* ================== */
+
+const params = new URLSearchParams(location.search);
+const uidParam = params.get("uid");
+
+const unitThumb = document.getElementById("unit-thumb");
+const unitName = document.getElementById("unit-name");
+const unitMeta = document.getElementById("unit-meta");
+const combiSummary = document.getElementById("combi-summary");
+const pilotGrid = document.getElementById("pilot-grid");
+const pilotSearch = document.getElementById("pilot-search");
+const sortDmgBtn = document.getElementById("sort-dmg");
+const filterT2Btn = document.getElementById("filter-t2");
+
+let units = [], pilots = [];
+let currentUnit = null;
+let combiRows = []; // 該当ユニットの combi 行を蓄積
+let sortByDmgDesc = true;
+let filterT2 = false;
+
+async function fetchJson(url){
+  const res = await fetch(url);
+  if(!res.ok) throw new Error("Fetch failed: " + url);
+  return res.json();
+}
+
+function renderPilotCard(p, dmg, t2){
+  const div = document.createElement("div");
+  div.className = "pilot-card";
+  const img = document.createElement("img");
+  img.className = "p-thumb";
+  img.src = p["Pilot.画像リンク"] || "";
+  img.alt = p["Pilot.キャラ"] || "";
+  div.appendChild(img);
+  const info = document.createElement("div");
+  info.className = "p-info";
+  const name = document.createElement("div");
+  name.className = "p-name";
+  name.textContent = p["Pilot.キャラ"] || ("PID:" + p.pid);
+  info.appendChild(name);
+  const meta = document.createElement("div");
+  meta.innerHTML = `<div class="small">PID: ${p.pid} ${t2 ? '<span style="color:green">2回行動</span>' : ''}</div>`;
+  info.appendChild(meta);
+  const dmgEl = document.createElement("div");
+  dmgEl.className = "p-dmg";
+  dmgEl.textContent = dmg !== null && dmg !== undefined ? Math.round(dmg) : "-";
+  info.appendChild(dmgEl);
+  div.appendChild(info);
+  return div;
+}
+
+function applyPilotFiltersAndRender(){
+  const q = (pilotSearch.value || "").trim().toLowerCase();
+  let list = combiRows.slice();
+  if(filterT2) list = list.filter(r => r.t2 === 1);
+  if(q) list = list.filter(r => {
+    const pname = (r.pilot_name || "").toLowerCase();
+    return pname.includes(q);
+  });
+  list.sort((a,b)=>{
+    const da = a.D0 || 0;
+    const db = b.D0 || 0;
+    return sortByDmgDesc ? db - da : da - db;
+  });
+
+  pilotGrid.innerHTML = "";
+  if(list.length === 0){
+    combiSummary.textContent = "該当するパイロットが見つかりません。";
+    return;
+  }
+  combiSummary.textContent = `該当 ${list.length} 件（全 Combi を検索）`;
+  const pidMap = {};
+  pilots.forEach(p => pidMap[p.pid] = p);
+
+  list.forEach(r => {
+    const p = pidMap[r.p] || { "Pilot.キャラ": r.pilot_name || ("PID:" + r.p), pid: r.p };
+    pilotGrid.appendChild(renderPilotCard(p, r.D0, r.t2));
+  });
+}
+
+// 自動検出: combi_part_00.json から順に存在チェックして有効なパート数を返す
+async function detectCombiParts(){
+  const parts = [];
+  let consecutiveMisses = 0;
+  for(let i=0;i<MAX_COMBI_PARTS_TO_CHECK;i++){
+    const idx = String(i).padStart(2,"0");
+    const url = `${COMBI_PART_PREFIX}${idx}.json`;
+    try{
+      const res = await fetch(url, { method: 'HEAD' });
+      if(res.ok){
+        parts.push(url);
+        consecutiveMisses = 0;
+      } else {
+        consecutiveMisses++;
+        if(consecutiveMisses >= MAX_CONSECUTIVE_MISSES) break;
+      }
+    }catch(e){
+      consecutiveMisses++;
+      if(consecutiveMisses >= MAX_CONSECUTIVE_MISSES) break;
+    }
+  }
+  return parts;
+}
+
+// Combi を分割ファイルから順に読み、該当ユニットの行を集める（遅延読み込み）
+async function loadCombiForUnit(uid){
+  combiRows = [];
+  combiSummary.textContent = "Combi を読み込み中...";
+  const partUrls = await detectCombiParts();
+  if(partUrls.length === 0){
+    combiSummary.textContent = "Combi データが見つかりません。";
+    return;
+  }
+  for(const url of partUrls){
+    try{
+      const part = await fetchJson(url);
+      for(const r of part){
+        if(r.u === uid){
+          r.D0 = (r.D0 !== undefined && r.D0 !== null) ? Number(r.D0) : null;
+          r.t2 = (r.t2 !== undefined && r.t2 !== null) ? Number(r.t2) : 0;
+          combiRows.push(r);
+        }
+      }
+    }catch(e){
+      console.warn("combi part load failed:", url, e);
+    }
+  }
+  applyPilotFiltersAndRender();
+}
+
+async function init(){
+  try{
+    units = await fetchJson(UNITS_JSON);
+    pilots = await fetchJson(PILOTS_JSON);
+    const uid = Number(uidParam);
+    currentUnit = units.find(u => Number(u.uid) === uid);
+    if(!currentUnit){
+      document.getElementById("unit-name").textContent = "ユニットが見つかりません";
+      combiSummary.textContent = "ユニット ID を確認してください";
+      return;
+    }
+    unitThumb.src = currentUnit["画像リンク"] || "";
+    unitName.textContent = currentUnit["ユニット"] || ("ID:" + currentUnit.uid);
+    unitMeta.textContent = `${currentUnit["レア"] || ""} / ${currentUnit["タイプ"] || ""} / 移動:${currentUnit["移動力"] || ""} / 射程:${currentUnit["最大射程"] || ""} / 入手:${currentUnit["入手"] || ""}`;
+
+    await loadCombiForUnit(currentUnit.uid);
+  }catch(err){
+    combiSummary.textContent = "読み込みエラー: " + err.message;
+    console.error(err);
+  }
+}
+
+pilotSearch.addEventListener("input", ()=> applyPilotFiltersAndRender());
+sortDmgBtn.addEventListener("click", ()=> { sortByDmgDesc = !sortByDmgDesc; sortDmgBtn.textContent = sortByDmgDesc ? "ダメージ降順" : "ダメージ昇順"; applyPilotFiltersAndRender(); });
+filterT2Btn.addEventListener("click", ()=> { filterT2 = !filterT2; filterT2Btn.textContent = filterT2 ? "２回行動のみ: ON" : "２回行動のみ"; applyPilotFiltersAndRender(); });
+
+init();
+</script>
+</body>
+</html>
