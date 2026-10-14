@@ -22,7 +22,12 @@
   .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-w),1fr));gap:var(--gap)}
   .card{border:1px solid #eee;border-radius:8px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff}
-  .thumb{width:var(--thumb);height:var(--thumb);object-fit:cover;border-radius:4px;border:1px solid #ddd}
+  .thumb-wrap{position:relative;width:var(--thumb);height:var(--thumb)}
+  .thumb{width:var(--thumb);height:var(--thumb);object-fit:cover;border-radius:4px;border:1px solid #ddd;display:block}
+  /* バッジ（アイコン） */
+  .badge-row{position:absolute;left:0;right:0;top:-6px;display:flex;justify-content:center;gap:4px;pointer-events:none}
+  .badge{background:rgba(255,255,255,0.95);border:1px solid #ddd;padding:2px 4px;border-radius:6px;font-size:11px;box-shadow:0 1px 2px rgba(0,0,0,0.08)}
+  .badge.small{padding:2px 3px;font-size:10px;border-radius:5px}
   .name{font-size:13px;text-align:center;line-height:1.2}
   .meta{font-size:12px;color:var(--muted)}
   .count{margin-top:8px;color:var(--muted);font-size:13px}
@@ -63,11 +68,7 @@
 
   <div class="controls">
     <label class="small">並べ替え</label>
-    <select id="sort-by" class="btn">
-      <option value="name">名前</option>
-      <option value="D0">最大ダメージ (Combi)</option>
-      <option value="HB0">最大耐久(ビーム)</option>
-    </select>
+    <select id="sort-by" class="btn"></select>
     <button id="sort-dir" class="btn">昇順</button>
     <button id="reset" class="btn">リセット</button>
   </div>
@@ -90,8 +91,27 @@ const UNITS_JSON = JSON_BASE_URL + "/units.json";
 const COMBI_FIELD_MAP_JSON = JSON_BASE_URL + "/combi_field_map.json";
 /* ================== */
 
+/*
+ FIELD_LABELS: JSON 内の短縮キー -> 表示ラベル
+ 例: "D0" -> "Damage", "D4" -> "Damage-full active", "CD" -> "Critical Damage-full active"
+ HB* は耐久回数のラベル
+*/
+const FIELD_LABELS = {
+  "D0": "Damage",
+  "D4": "Damage-full active",
+  "CD": "Critical Damage (full active)",
+  "HB0": "耐久回数ビーム",
+  "HB1": "耐久回数物理",
+  "HB2": "耐久回数特殊",
+  "HB3": "耐久回数EX",
+  "HB0_F": "耐久回数ビーム (full)",
+  "HB1_F": "耐久回数物理 (full)",
+  "HB2_F": "耐久回数特殊 (full)",
+  "HB3_F": "耐久回数EX (full)"
+};
+
 let units = []; // units.json の配列
-let fieldMap = {}; // 短縮キー -> 元列名
+let fieldMap = {}; // 短縮キー -> 元列名（必要なら）
 
 // DOM
 const grid = document.getElementById("grid");
@@ -133,24 +153,87 @@ function populateFilter(selectEl, values){
   });
 }
 
+/* 並べ替えドロップダウンを FIELD_LABELS から動的生成 */
+function populateSortOptions(){
+  sortBy.innerHTML = "";
+  // まず名前ソートを追加
+  const optName = document.createElement("option");
+  optName.value = "name";
+  optName.textContent = "名前";
+  sortBy.appendChild(optName);
+  // FIELD_LABELS のキー順で追加
+  Object.keys(FIELD_LABELS).forEach(k => {
+    const opt = document.createElement("option");
+    opt.value = k;
+    opt.textContent = FIELD_LABELS[k] + " (" + k + ")";
+    sortBy.appendChild(opt);
+  });
+}
+
+/* ユニットカードを作る（画像上にバッジを重ねる） */
 function renderCard(u){
   const a = document.createElement("a");
   a.href = `detail.html?uid=${encodeURIComponent(u.uid)}`;
   a.className = "card";
   a.title = u["ユニット"] || u["ユニット識別"] || "unit";
+
+  // thumb wrapper（相対位置）
+  const wrap = document.createElement("div");
+  wrap.className = "thumb-wrap";
+
+  // badge row（上部に重ねる）
+  const badgeRow = document.createElement("div");
+  badgeRow.className = "badge-row";
+
+  // ① レアアイコン（レア文字列を小さなバッジで表示）
+  const rarity = (u["レア"] || "").toString();
+  if(rarity){
+    const b = document.createElement("div");
+    b.className = "badge small";
+    b.textContent = rarity;
+    badgeRow.appendChild(b);
+  }
+
+  // ② 移動力アイコン（移動力を表示）
+  const move = (u["移動力"] || "").toString();
+  if(move){
+    const b = document.createElement("div");
+    b.className = "badge small";
+    // 簡易アイコン: 靴の絵文字＋値（必要なら画像に差し替え）
+    b.textContent = "移" + move;
+    badgeRow.appendChild(b);
+  }
+
+  // ③ 最大射程アイコン（射程を表示）
+  const range = (u["最大射程"] || "").toString();
+  if(range){
+    const b = document.createElement("div");
+    b.className = "badge small";
+    b.textContent = "射" + range;
+    badgeRow.appendChild(b);
+  }
+
+  wrap.appendChild(badgeRow);
+
+  // 画像
   const img = document.createElement("img");
   img.className = "thumb";
   img.src = u["画像リンク"] || "";
   img.alt = u["ユニット"] || "";
   img.loading = "lazy";
-  a.appendChild(img);
+  wrap.appendChild(img);
+
+  a.appendChild(wrap);
+
+  // name
   const nm = document.createElement("div");
   nm.className = "name";
   nm.textContent = u["ユニット"] || ("ID:" + u.uid);
   a.appendChild(nm);
+
+  // meta: rarity and Damage if present
   const meta = document.createElement("div");
   meta.className = "meta";
-  const rarity = u["レア"] || "";
   const dmg = (u["D0"] !== undefined && u["D0"] !== null) ? Math.round(u["D0"]) : "";
   meta.textContent = (rarity ? rarity + " " : "") + (dmg ? "D:" + dmg : "");
   a.appendChild(meta);
@@ -173,6 +256,12 @@ function applyFiltersAndRender(){
 
   const key = sortBy.value;
   list.sort((a,b)=>{
+    // 名前ソート
+    if(key === "name"){
+      const sa = (a["ユニット"]||"").toString();
+      const sb = (b["ユニット"]||"").toString();
+      return sortDirAsc ? sa.localeCompare(sb, 'ja') : sb.localeCompare(sa, 'ja');
+    }
     const va = a[key], vb = b[key];
     const na = (va === undefined || va === null || va === "") ? null : Number(va);
     const nb = (vb === undefined || vb === null || vb === "") ? null : Number(vb);
@@ -198,12 +287,18 @@ async function init(){
   try{
     try{ fieldMap = await fetchJson(COMBI_FIELD_MAP_JSON); }catch(e){ fieldMap = {}; }
     units = await fetchJson(UNITS_JSON);
+
+    // フィルタの選択肢を自動生成
     populateFilter(filterRarity, uniqueValues(units, "レア"));
     populateFilter(filterType, uniqueValues(units, "タイプ"));
     populateFilter(filterMove, uniqueValues(units, "移動力"));
     populateFilter(filterRange, uniqueValues(units, "最大射程"));
     populateFilter(filterObtain, uniqueValues(units, "入手"));
 
+    // 並べ替えオプションを生成
+    populateSortOptions();
+
+    // デフォルト: D0（Damage）降順
     sortBy.value = "D0";
     sortDirAsc = false;
     sortDirBtn.textContent = sortDirAsc ? "昇順" : "降順";
