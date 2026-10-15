@@ -8,140 +8,120 @@
   :root{
     --gap:10px;
     --thumb:60px;
-    --card-w:140px;
+    --card-w:90px; /* 要求: a.card の枠幅を 90 に */
     --accent:#2b6cb0;
     --muted:#666;
     font-family: system-ui, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Arial;
   }
 
+  /* ページ全体 */
+  body{margin:16px;color:#111;background:#fff}
+  header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:12px}
+  h1{margin:0;font-size:18px}
 
+  /* フィルター / コントロール */
+  .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .filters select,.filters input{padding:6px;border:1px solid #ddd;border-radius:6px;background:#fff}
+  .controls{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 
-/* ページ全体 */
-body{margin:16px;color:#111;background:#fff}
-header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:12px}
-h1{margin:0;font-size:18px}
+  /* グリッド */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-w),1fr));gap:var(--gap)}
+  a.card{border:1px solid #eee;border-radius:8px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:8px;background:#fff;position:relative;overflow:visible;text-decoration:none;color:inherit;width:100%;box-sizing:border-box}
+  /* a.card の下線を消す（リンクの下線を削除） */
+  a.card, a.card * { text-decoration: none !important; }
 
-/* フィルター / コントロール */
-.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.filters select,.filters input{padding:6px;border:1px solid #ddd;border-radius:6px;background:#fff}
-.controls{margin-left:auto;display:flex;gap:8px;align-items:center}
-.btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
-.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  /* カード内の幅を固定に近づけるために親グリッドの minmax を利用（--card-w=90px） */
+  /* アイコン領域（画像の外側・上部）を通常フローに配置 */
+  .icon-area{
+    position:static;
+    display:flex;
+    flex-direction:column;   /* 上段（移動/射程）→ 下段（レア）を縦に並べる */
+    align-items:center;
+    gap:6px;
+    width:100%;
+    pointer-events:none;
+    margin:0;
+  }
 
-/* グリッド */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-w),1fr));gap:var(--gap)}
+  /* 上段：左右のアイコンを枠中央に配置 */
+  .icon-top{
+    width:100%;
+    display:flex;
+    justify-content:center; /* 中央に配置 */
+    align-items:center;
+    gap:8px;                /* アイコン間の間隔 */
+    padding:0 6px;
+    box-sizing:border-box;
+  }
 
-/* カード全体：縦レイアウト */
-.card{
-  border:1px solid #eee;
-  border-radius:8px;
-  padding:8px;
-  display:flex;
-  flex-direction:column;   /* 縦に並べる */
-  align-items:center;
-  gap:8px;
-  background:#fff;
-  position:relative;
-  overflow:visible;
-}
+  /* 丸アイコン */
+  .icon-circle{
+    min-width:28px;
+    height:28px;
+    border-radius:50%;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-weight:700;
+    font-size:12px;
+    box-shadow:0 1px 2px rgba(0,0,0,0.12);
+    padding:0 6px;
+  }
+  .icon-circle.dim{ opacity:0.45; }
 
-/* アイコン領域（画像の外側・上部）を通常フローに配置 */
-.icon-area{
-  position:static;         /* absolute をやめる */
-  display:flex;
-  flex-direction:column;   /* 上段（移動/射程）→ 下段（レア）を縦に並べる */
-  align-items:center;
-  gap:6px;
-  width:100%;
-  pointer-events:none;
-  margin:0;                /* 画像との間隔は下で調整 */
-}
+  /* 下段：横長レアバッジ（改行しない） */
+  .rare-row{
+    width:100%;
+    display:flex;
+    justify-content:center;
+  }
+  .rare-badge{
+    display:inline-block;
+    padding:4px 10px;
+    border-radius:10px;
+    color:#fff;
+    font-weight:700;
+    font-size:12px;
+    white-space:nowrap;
+    box-shadow:0 1px 2px rgba(0,0,0,0.12);
+  }
 
-/* 上段：左右に並べる（移動力/射程） */
-.icon-top{
-  width:100%;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:6px;
-  padding:0 6px;           /* 左右の余白 */
-  box-sizing:border-box;
-}
-
-/* 丸アイコン */
-.icon-circle{
-  width:28px;
-  height:28px;
-  border-radius:50%;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  color:#fff;
-  font-weight:700;
-  font-size:12px;
-  box-shadow:0 1px 2px rgba(0,0,0,0.12);
-}
-.icon-circle.dim{ opacity:0.45; }
-
-/* 下段：横長レアバッジ（改行しない） */
-.rare-row{
-  width:100%;
-  display:flex;
-  justify-content:center;
-}
-.rare-badge{
-  display:inline-block;
-  padding:4px 10px;
-  border-radius:10px;
-  color:#fff;
-  font-weight:700;
-  font-size:12px;
-  white-space:nowrap;
-  box-shadow:0 1px 2px rgba(0,0,0,0.12);
-}
-
-/* 画像領域（icon-area の下に来る） */
-.thumb-wrap{
-  width:var(--thumb);
-  height:var(--thumb);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  margin-top:0;            /* icon-area が上にあるので余計な top マージンは不要 */
-}
-.thumb{
-  width:var(--thumb);
-  height:var(--thumb);
-  object-fit:cover;
-  border-radius:4px;
-  border:1px solid #ddd;
-  display:block;
-}
-
-/* テキスト */
-.name{font-size:13px;text-align:center;line-height:1.2;margin:0}
-.meta{font-size:12px;color:var(--muted);margin:0}
-
-/* 小画面調整 */
-@media (max-width:520px){
-  .card{padding:8px}
-  .icon-circle{width:24px;height:24px;font-size:11px}
-  .rare-badge{padding:3px 8px;font-size:11px}
-}
-
-
+  /* 画像領域（icon-area の下に来る） */
+  .thumb-wrap{
+    width:var(--thumb);
+    height:var(--thumb);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:0;
+  }
+  .thumb{
+    width:var(--thumb);
+    height:var(--thumb);
+    object-fit:cover;
+    border-radius:4px;
+    border:1px solid #ddd;
+    display:block;
+  }
 
   /* テキスト */
+  .name{font-size:13px;text-align:center;line-height:1.2;margin:0}
+  /* meta は「並べ替えで使っている値」を表示。濃い太い黒字に */
+  .meta{font-size:12px;color:#000;font-weight:800;margin:0}
 
   .count{margin-top:8px;color:var(--muted);font-size:13px}
   .small{font-size:12px;color:#444}
   .empty{padding:40px;text-align:center;color:var(--muted)}
   footer{margin-top:18px;color:var(--muted);font-size:13px}
 
-  /* レスポンシブ */
   @media (max-width:520px){
     header{flex-direction:column;align-items:stretch}
     .controls{margin-left:0}
+    .icon-circle{min-width:24px;height:24px;font-size:11px;padding:0 4px}
+    .rare-badge{padding:3px 8px;font-size:11px}
   }
 </style>
 </head>
@@ -179,11 +159,11 @@ h1{margin:0;font-size:18px}
 
 <script>
 /* ===== 設定 ===== */
-const JSON_BASE_URL = "./json-file"; // HTML を New/ に置き、json-file/ は同階層のサブフォルダ
+const JSON_BASE_URL = "./json-file";
 const UNITS_JSON = () => `${JSON_BASE_URL}/units.json`;
 const COMBI_FIELD_MAP_JSON = () => `${JSON_BASE_URL}/combi_field_map.json`;
 
-/* ===== 並べ替えラベル（JSON の短縮キー -> 表示名） ===== */
+/* 並べ替えラベル */
 const FIELD_LABELS = {
   "D0": "Damage",
   "D4": "Damage-full active",
@@ -198,7 +178,6 @@ const FIELD_LABELS = {
   "HB3_F": "耐久回数EX (full)"
 };
 
-/* ===== 状態 ===== */
 let units = [], fieldMap = {};
 const grid = document.getElementById("grid");
 const summary = document.getElementById("summary");
@@ -216,7 +195,6 @@ const resetBtn = document.getElementById("reset");
 
 let sortDirAsc = true;
 
-/* ===== ヘルパー ===== */
 async function fetchJson(url, cacheBust=false){
   const u = cacheBust ? `${url}?v=${Date.now()}` : url;
   const res = await fetch(u);
@@ -267,22 +245,34 @@ function intensityFromValue(v){
 /* レアに応じた背景スタイル（横長バッジ） */
 function rareBackgroundStyle(rare){
   if(!rare) return "background:rgba(0,0,0,0.08)";
-  // UR 系: 虹グラデ。UR☆0 は半透明
   if(rare.indexOf("UR") !== -1){
     const opacity = rare.indexOf("0") !== -1 ? 0.5 : 1.0;
-    // カラーはサンプル。必要なら具体色を指定してください。
     return `background:linear-gradient(90deg,#ff5f6d,#ffc371,#7afcff);opacity:${opacity};`;
   }
-  // SSR / SSP: オレンジ系。SP は半透明
   if(rare.indexOf("SSR") !== -1 || rare.indexOf("SSP") !== -1){
     const opacity = rare.indexOf("SP") !== -1 ? 0.5 : 1.0;
     return `background:linear-gradient(90deg,#ff8c42,#ff6a00);opacity:${opacity};`;
   }
-  // デフォルト
   return "background:#888";
 }
 
-/* ===== カード描画（アイコンは画像の外側に配置） ===== */
+/* 並べ替えで使っている値を取得して表示用に整形 */
+function getSortDisplay(u){
+  const key = sortBy.value || "D0";
+  if(key === "name"){
+    return `${"名前"}: ${u["ユニット"] || ""}`;
+  }
+  const label = FIELD_LABELS[key] || key;
+  const val = u[key];
+  if(val === undefined || val === null || val === "") return `${label}: -`;
+  const num = Number(val);
+  if(!isNaN(num)){
+    return `${label}: ${Math.round(num).toLocaleString('ja-JP')}`;
+  }
+  return `${label}: ${val}`;
+}
+
+/* カード描画（アイコンは画像の外側に配置、移動/射程に文字を付与） */
 function renderCard(u){
   const a = document.createElement("a");
   a.href = `detail.html?uid=${encodeURIComponent(u.uid)}`;
@@ -293,7 +283,7 @@ function renderCard(u){
   const iconArea = document.createElement("div");
   iconArea.className = "icon-area";
 
-  // 上段: 移動力（左）と射程（右）
+  // 上段: 移動力（左）と射程（右）を中央に配置
   const top = document.createElement("div");
   top.className = "icon-top";
 
@@ -301,14 +291,14 @@ function renderCard(u){
   const left = document.createElement("div");
   left.className = "icon-circle" + (moveVal ? "" : " dim");
   left.style.background = `rgba(220,20,60,${intensityFromValue(moveVal)})`;
-  left.textContent = moveVal || "-";
+  left.textContent = "移" + (moveVal || "-"); // 要求: 数字の前に文字を追加
   top.appendChild(left);
 
   const right = document.createElement("div");
   const rangeVal = (u["最大射程"] || "").toString();
   right.className = "icon-circle" + (rangeVal ? "" : " dim");
   right.style.background = `rgba(30,144,255,${intensityFromValue(rangeVal)})`;
-  right.textContent = rangeVal || "-";
+  right.textContent = "射" + (rangeVal || "-"); // 要求: 数字の前に文字を追加
   top.appendChild(right);
 
   iconArea.appendChild(top);
@@ -337,22 +327,22 @@ function renderCard(u){
   wrap.appendChild(img);
   a.appendChild(wrap);
 
-  // 名前・メタ
+  // 名前
   const nm = document.createElement("div");
   nm.className = "name";
   nm.textContent = u["ユニット"] || ("ID:" + u.uid);
   a.appendChild(nm);
 
+  // meta: 並べ替えで使っている値を表示（太字黒）
   const meta = document.createElement("div");
   meta.className = "meta";
-  const dmg = (u["D0"] !== undefined && u["D0"] !== null) ? Math.round(u["D0"]) : "";
-  meta.textContent = (rare ? rare + " " : "") + (dmg ? "D:" + dmg : "");
+  meta.textContent = getSortDisplay(u);
   a.appendChild(meta);
 
   return a;
 }
 
-/* ===== フィルタ適用と描画 ===== */
+/* フィルタ適用と描画 */
 function applyFiltersAndRender(){
   const r = filterRarity.value;
   const t = filterType.value;
@@ -395,7 +385,7 @@ function applyFiltersAndRender(){
   summary.textContent = `表示 ${list.length} / 全 ${units.length} 件`;
 }
 
-/* ===== 初期化 ===== */
+/* 初期化 */
 async function init(cacheBust=false){
   errorEl.style.display = "none";
   try{
@@ -424,7 +414,7 @@ async function init(cacheBust=false){
   }
 }
 
-/* ===== イベント ===== */
+/* イベント */
 filterRarity.addEventListener("change", applyFiltersAndRender);
 filterType.addEventListener("change", applyFiltersAndRender);
 filterMove.addEventListener("change", applyFiltersAndRender);
