@@ -14,35 +14,125 @@
     font-family: system-ui, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Arial;
   }
 
-  /* ページ全体 */
-  body{margin:16px;color:#111;background:#fff}
-  header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:12px}
-  h1{margin:0;font-size:18px}
 
-  /* フィルター / コントロール */
-  .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-  .filters select,.filters input{padding:6px;border:1px solid #ddd;border-radius:6px;background:#fff}
-  .controls{margin-left:auto;display:flex;gap:8px;align-items:center}
-  .btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
-  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 
-  /* グリッド */
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-w),1fr));gap:var(--gap)}
-  .card{border:1px solid #eee;border-radius:8px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff;position:relative;overflow:visible}
-  .thumb-wrap{width:var(--thumb);height:var(--thumb);display:flex;align-items:center;justify-content:center;margin-top:8px}
-  .thumb{width:var(--thumb);height:var(--thumb);object-fit:cover;border-radius:4px;border:1px solid #ddd;display:block}
+/* ページ全体 */
+body{margin:16px;color:#111;background:#fff}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:12px}
+h1{margin:0;font-size:18px}
 
-  /* アイコン領域（画像の外側・上部） */
-  .icon-area { position:absolute; left:8px; right:8px; top:6px; display:flex; flex-direction:column; align-items:center; pointer-events:none; }
-  .icon-top { width:100%; display:flex; justify-content:space-between; align-items:center; gap:6px; }
-  .icon-circle { width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:12px; box-shadow:0 1px 2px rgba(0,0,0,0.12); }
-  .icon-circle.dim { opacity:0.45; }
-  .rare-row { margin-top:6px; width:100%; display:flex; justify-content:center; }
-  .rare-badge { display:inline-block; padding:4px 10px; border-radius:10px; color:#fff; font-weight:700; font-size:12px; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,0.12); }
+/* フィルター / コントロール */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filters select,.filters input{padding:6px;border:1px solid #ddd;border-radius:6px;background:#fff}
+.controls{margin-left:auto;display:flex;gap:8px;align-items:center}
+.btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* グリッド */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-w),1fr));gap:var(--gap)}
+
+/* カード全体：縦レイアウト */
+.card{
+  border:1px solid #eee;
+  border-radius:8px;
+  padding:8px;
+  display:flex;
+  flex-direction:column;   /* 縦に並べる */
+  align-items:center;
+  gap:8px;
+  background:#fff;
+  position:relative;
+  overflow:visible;
+}
+
+/* アイコン領域（画像の外側・上部）を通常フローに配置 */
+.icon-area{
+  position:static;         /* absolute をやめる */
+  display:flex;
+  flex-direction:column;   /* 上段（移動/射程）→ 下段（レア）を縦に並べる */
+  align-items:center;
+  gap:6px;
+  width:100%;
+  pointer-events:none;
+  margin:0;                /* 画像との間隔は下で調整 */
+}
+
+/* 上段：左右に並べる（移動力/射程） */
+.icon-top{
+  width:100%;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:6px;
+  padding:0 6px;           /* 左右の余白 */
+  box-sizing:border-box;
+}
+
+/* 丸アイコン */
+.icon-circle{
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-weight:700;
+  font-size:12px;
+  box-shadow:0 1px 2px rgba(0,0,0,0.12);
+}
+.icon-circle.dim{ opacity:0.45; }
+
+/* 下段：横長レアバッジ（改行しない） */
+.rare-row{
+  width:100%;
+  display:flex;
+  justify-content:center;
+}
+.rare-badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:10px;
+  color:#fff;
+  font-weight:700;
+  font-size:12px;
+  white-space:nowrap;
+  box-shadow:0 1px 2px rgba(0,0,0,0.12);
+}
+
+/* 画像領域（icon-area の下に来る） */
+.thumb-wrap{
+  width:var(--thumb);
+  height:var(--thumb);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-top:0;            /* icon-area が上にあるので余計な top マージンは不要 */
+}
+.thumb{
+  width:var(--thumb);
+  height:var(--thumb);
+  object-fit:cover;
+  border-radius:4px;
+  border:1px solid #ddd;
+  display:block;
+}
+
+/* テキスト */
+.name{font-size:13px;text-align:center;line-height:1.2;margin:0}
+.meta{font-size:12px;color:var(--muted);margin:0}
+
+/* 小画面調整 */
+@media (max-width:520px){
+  .card{padding:8px}
+  .icon-circle{width:24px;height:24px;font-size:11px}
+  .rare-badge{padding:3px 8px;font-size:11px}
+}
+
+
 
   /* テキスト */
-  .name{font-size:13px;text-align:center;line-height:1.2; margin-top:6px}
-  .meta{font-size:12px;color:var(--muted)}
+
   .count{margin-top:8px;color:var(--muted);font-size:13px}
   .small{font-size:12px;color:#444}
   .empty{padding:40px;text-align:center;color:var(--muted)}
