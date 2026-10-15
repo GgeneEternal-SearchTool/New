@@ -28,11 +28,27 @@
 
   /* グリッド */
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-w),1fr));gap:var(--gap)}
-  a.card{border:1px solid #eee;border-radius:8px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:8px;background:#fff;position:relative;overflow:visible;text-decoration:none;color:inherit;width:100%;box-sizing:border-box}
-  /* a.card の下線を消す（リンクの下線を削除） */
+  a.card{
+    border:1px solid #eee;
+    border-radius:8px;
+    padding:8px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    background:#fff;
+    position:relative;
+    overflow:visible;
+    text-decoration:none;
+    color:inherit;
+    width:100%;
+    box-sizing:border-box;
+    min-width:var(--card-w);
+    max-width:var(--card-w);
+  }
+  /* リンクの下線を完全に消す */
   a.card, a.card * { text-decoration: none !important; }
 
-  /* カード内の幅を固定に近づけるために親グリッドの minmax を利用（--card-w=90px） */
   /* アイコン領域（画像の外側・上部）を通常フローに配置 */
   .icon-area{
     position:static;
@@ -51,22 +67,22 @@
     display:flex;
     justify-content:center; /* 中央に配置 */
     align-items:center;
-    gap:8px;                /* アイコン間の間隔 */
+    gap:6px;                /* アイコン間の間隔 */
     padding:0 6px;
     box-sizing:border-box;
   }
 
-  /* 丸アイコン */
+  /* 丸アイコン（小さめに） */
   .icon-circle{
-    min-width:28px;
-    height:28px;
+    min-width:22px;   /* 小さめ */
+    height:22px;
     border-radius:50%;
     display:inline-flex;
     align-items:center;
     justify-content:center;
     color:#fff;
     font-weight:700;
-    font-size:12px;
+    font-size:11px;
     box-shadow:0 1px 2px rgba(0,0,0,0.12);
     padding:0 6px;
   }
@@ -108,7 +124,7 @@
   }
 
   /* テキスト */
-  .name{font-size:13px;text-align:center;line-height:1.2;margin:0}
+  .name{font-size:12px;text-align:center;line-height:1.2;margin:0}
   /* meta は「並べ替えで使っている値」を表示。濃い太い黒字に */
   .meta{font-size:12px;color:#000;font-weight:800;margin:0}
 
@@ -120,7 +136,7 @@
   @media (max-width:520px){
     header{flex-direction:column;align-items:stretch}
     .controls{margin-left:0}
-    .icon-circle{min-width:24px;height:24px;font-size:11px;padding:0 4px}
+    .icon-circle{min-width:20px;height:20px;font-size:10px;padding:0 4px}
     .rare-badge{padding:3px 8px;font-size:11px}
   }
 </style>
@@ -163,7 +179,7 @@ const JSON_BASE_URL = "./json-file";
 const UNITS_JSON = () => `${JSON_BASE_URL}/units.json`;
 const COMBI_FIELD_MAP_JSON = () => `${JSON_BASE_URL}/combi_field_map.json`;
 
-/* 並べ替えラベル */
+/* 並べ替えラベル（必要ならここにキーを追加） */
 const FIELD_LABELS = {
   "D0": "Damage",
   "D4": "Damage-full active",
@@ -221,6 +237,7 @@ function populateFilter(selectEl, values){
   });
 }
 
+/* 並べ替えオプション生成: FIELD_LABELS を使う */
 function populateSortOptions(){
   sortBy.innerHTML = "";
   const optName = document.createElement("option");
@@ -242,16 +259,19 @@ function intensityFromValue(v){
   return 0.35 + (clamped - 2) * ((1.0 - 0.35) / (6 - 2));
 }
 
-/* レアに応じた背景スタイル（横長バッジ） */
+/* レアに応じた背景スタイル（横長バッジ）: UR☆0 はより薄く、SSR(SSP) は濃いオレンジ */
 function rareBackgroundStyle(rare){
   if(!rare) return "background:rgba(0,0,0,0.08)";
   if(rare.indexOf("UR") !== -1){
-    const opacity = rare.indexOf("0") !== -1 ? 0.5 : 1.0;
+    const isZero = rare.indexOf("0") !== -1;
+    const opacity = isZero ? 0.35 : 1.0; // UR☆0 をさらに薄く
     return `background:linear-gradient(90deg,#ff5f6d,#ffc371,#7afcff);opacity:${opacity};`;
   }
   if(rare.indexOf("SSR") !== -1 || rare.indexOf("SSP") !== -1){
-    const opacity = rare.indexOf("SP") !== -1 ? 0.5 : 1.0;
-    return `background:linear-gradient(90deg,#ff8c42,#ff6a00);opacity:${opacity};`;
+    const isSP = rare.indexOf("SP") !== -1;
+    const opacity = isSP ? 1.0 : 1.0;
+    // 濃いオレンジに調整
+    return `background:linear-gradient(90deg,#ff6a00,#ff4500);opacity:${opacity};`;
   }
   return "background:#888";
 }
@@ -291,14 +311,14 @@ function renderCard(u){
   const left = document.createElement("div");
   left.className = "icon-circle" + (moveVal ? "" : " dim");
   left.style.background = `rgba(220,20,60,${intensityFromValue(moveVal)})`;
-  left.textContent = "移" + (moveVal || "-"); // 要求: 数字の前に文字を追加
+  left.textContent = "移" + (moveVal || "-"); // 文字＋数値
   top.appendChild(left);
 
   const right = document.createElement("div");
   const rangeVal = (u["最大射程"] || "").toString();
   right.className = "icon-circle" + (rangeVal ? "" : " dim");
   right.style.background = `rgba(30,144,255,${intensityFromValue(rangeVal)})`;
-  right.textContent = "射" + (rangeVal || "-"); // 要求: 数字の前に文字を追加
+  right.textContent = "射" + (rangeVal || "-"); // 文字＋数値
   top.appendChild(right);
 
   iconArea.appendChild(top);
