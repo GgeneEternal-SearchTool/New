@@ -33,19 +33,57 @@
   h1{margin:0;font-size:18px}
 
   /* Filters / Controls */
-  .filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-  .filters select,.filters input{padding:6px;border:1px solid #ddd;border-radius:6px;background:#fff}
+  .filters{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+    width:100%;
+  }
+  .filters select,.filters input{
+    padding:6px;border:1px solid #ddd;border-radius:6px;background:#fff;
+  }
 
-  /* ラベル全体の見た目を小さくする（文字サイズと横幅） */
+  /* Label appearance */
   .filters label{
     display:flex;
     flex-direction:column;
     align-items:flex-start;
-    font-size:11px;        /* ← ここを 10px / 12px に変更して調整 */
-    margin:0;              /* ラベル間の余白は .filters の gap で制御 */
-    max-width: 180px;       /* ラベルの最小幅。小さくしたければ 60px 等に */
+    font-size:11px;        /* change this number to adjust label font-size */
+    margin:0;
+    min-width: 80px;       /* minimum label width; change as needed */
   }
 
+  /* Row break element to force new line in flex layout */
+  .filters-row-break{
+    flex-basis:100%;
+    height:0;
+  }
+
+  /* Series full row */
+  .filters-fullrow{
+    flex-basis:100%;
+    width:100%;
+    margin-top:4px;
+  }
+
+  /* Inline container for Tag1/Tag2 */
+  .filters-inline{
+    display:flex;
+    gap:8px;               /* gap between Tag1 and Tag2 */
+    align-items:flex-start;
+    width:100%;
+  }
+
+  /* Each Tag item width (70% as requested) */
+  .filters-inline-item{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    width:70%;             /* change this number to adjust Tag width */
+  }
+
+  /* If you prefer Tag1/Tag2 to share space equally, use width:48% above instead */
 
   .controls{margin-left:auto;display:flex;gap:8px;align-items:center}
   .btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
@@ -106,19 +144,13 @@
   .rarity-ssr-ssp { background: linear-gradient(90deg,#ff8a33 0%,#ff9f4d 25%,#ffc24f 55%,#ffe27a 85%); color:#1a1a1a; border-radius:6px; padding:3px 6px; font-weight:450; display:inline-block; font-size:11px; }
   .rarity-ssr-sp { background: linear-gradient(90deg,#ffd8b4 0%,#ffe0c2 25%,#ffecb3 55%,#fff7d5 85%); color:#1a1a1a; border-radius:6px; padding:3px 6px; font-weight:100; display:inline-block; font-size:11px; }
 
-  /* Tag1/Tag2 width reduced to 70% */
-  #filter-tag1, #filter-tag2 {
-    width: 70%;
-  }
-
-  /* Tag1 と Tag2 の間隔をさらに狭めたい場合（個別調整） */
-  #filter-tag1 { margin-right: 4px; }  /* 右側の余白を小さくする */
-
   @media (max-width:520px){
     header{flex-direction:column;align-items:stretch}
     .controls{margin-left:0}
     .icon-circle{min-width:16px;height:16px;font-size:10px;padding:0 4px}
     .rare-badge{padding:3px 6px;font-size:10px}
+    .filters-inline { flex-direction:column; }
+    .filters-inline-item { width:100%; }
   }
 </style>
 </head>
@@ -147,16 +179,26 @@
       <select id="filter-obtain" multiple title="Select one or more Obtain values"><option value="">All</option></select>
     </label>
 
-    <!-- Series / Tag1 / Tag2 (single-select each) -->
-    <label><span class="small">Series</span>
+    <!-- force new line -->
+    <div class="filters-row-break"></div>
+
+    <!-- Series full row -->
+    <label class="filters-fullrow"><span class="small">Series</span>
       <select id="filter-series" title="Series"><option value="">All</option></select>
     </label>
-    <label><span class="small">Tag1</span>
-      <select id="filter-tag1" title="Tag1"><option value="">All</option></select>
-    </label>
-    <label><span class="small">Tag2</span>
-      <select id="filter-tag2" title="Tag2"><option value="">All</option></select>
-    </label>
+
+    <!-- force new line -->
+    <div class="filters-row-break"></div>
+
+    <!-- Tag1 and Tag2 inline -->
+    <div class="filters-inline">
+      <label class="filters-inline-item"><span class="small">Tag1</span>
+        <select id="filter-tag1" title="Tag1"><option value="">All</option></select>
+      </label>
+      <label class="filters-inline-item"><span class="small">Tag2</span>
+        <select id="filter-tag2" title="Tag2"><option value="">All</option></select>
+      </label>
+    </div>
   </div>
 
   <div class="controls" aria-hidden="false">
@@ -474,7 +516,6 @@ function applyUIState(state) {
     const vals = Array.isArray(values) ? values : [];
     Array.from(selectEl.options).forEach(opt => {
       if(opt.value === "") {
-        // "All" option: select it only if no values provided
         opt.selected = vals.length === 0;
       } else {
         opt.selected = vals.includes(opt.value);
