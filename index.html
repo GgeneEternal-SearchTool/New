@@ -11,34 +11,82 @@
     --card-w:90px;
     --accent:#2b6cb0;
     --muted:#666;
-    font-family: system-ui, "Segoe UI", "Noto Sans JP", Arial, sans-serif;
+    font-family: system-ui, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Arial;
   }
+
+  /* Page */
   body{margin:16px;color:#111;background:#fff}
   header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:12px}
   h1{margin:0;font-size:18px}
+
+  /* Filters / Controls */
   .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
   .filters select,.filters input{padding:6px;border:1px solid #ddd;border-radius:6px;background:#fff}
   .controls{margin-left:auto;display:flex;gap:8px;align-items:center}
   .btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
   .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+  /* Grid */
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-w),1fr));gap:var(--gap)}
-  a.card{border:1px solid #eee;border-radius:8px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff;overflow:visible;text-decoration:none;color:inherit;min-width:var(--card-w);max-width:var(--card-w);box-sizing:border-box}
-  .icon-area{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;pointer-events:none;margin:0}
+  a.card{
+    border:1px solid #eee;
+    border-radius:8px;
+    padding:8px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    background:#fff;
+    position:relative;
+    overflow:visible;
+    text-decoration:none;
+    color:inherit;
+    min-width:var(--card-w);
+    max-width:var(--card-w);
+    box-sizing:border-box;
+  }
+  a.card, a.card * { text-decoration: none !important; }
+
+  /* Icon area */
+  .icon-area{position:static;display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;pointer-events:none;margin:0}
   .icon-top{width:100%;display:flex;justify-content:center;align-items:center;gap:6px;padding:0 6px;box-sizing:border-box}
   .icon-circle{min-width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:11px;box-shadow:0 1px 2px rgba(0,0,0,0.12);padding:0 6px}
   .icon-circle.dim{ opacity:0.45; }
+
   .rare-row{width:100%;display:flex;justify-content:center}
   .rare-badge{display:inline-block;padding:4px 8px;border-radius:10px;color:#fff;font-weight:700;font-size:11px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,0.12)}
+
+  /* Image */
   .thumb-wrap{width:var(--thumb);height:var(--thumb);display:flex;align-items:center;justify-content:center;margin-top:0}
   .thumb{width:var(--thumb);height:var(--thumb);object-fit:cover;border-radius:4px;border:1px solid #ddd;display:block}
+
+  /* Text */
   .name{font-size:12px;text-align:center;line-height:1.2;margin:0}
   .meta{font-size:12px;color:#000;font-weight:800;margin:0}
+
   .count{margin-top:8px;color:var(--muted);font-size:13px}
   .small{font-size:12px;color:#444}
   .empty{padding:40px;text-align:center;color:var(--muted)}
-  .pager{display:flex;gap:8px;align-items:center;justify-content:center;margin:12px 0;flex-wrap:wrap}
+  footer{margin-top:18px;color:var(--muted);font-size:13px}
+
+  /* Pagination controls */
+  .pager{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    justify-content:center;
+    margin:12px 0;
+    flex-wrap:wrap;
+  }
   .pager .page-input{width:56px;padding:6px;border-radius:6px;border:1px solid #ddd;text-align:center}
   .pager .info{font-size:13px;color:#444}
+
+  /* Rarity classes (same as provided earlier) */
+  .rarity-ur3 { background: linear-gradient(90deg,#e6d9ff 0%,#ffd9e6 18%,#e9dbff 36%,#e8f7d9 56%,#d9f7fb 76%,#cfeaff 100%); color:#1a1a1a;font-weight:450;border-radius:6px;padding:3px 6px;display:inline-block;font-size:11px; }
+  .rarity-ur0 { background: linear-gradient(90deg,#f3efff 0%,#fff3f6 18%,#f6efff 36%,#f6fbef 56%,#eefbfd 76%,#eef7ff 100%); color:#000;font-weight:100;border-radius:6px;padding:3px 6px;display:inline-block;font-size:11px; }
+  .rarity-ssr-ssp { background: linear-gradient(90deg,#ff8a33 0%,#ff9f4d 25%,#ffc24f 55%,#ffe27a 85%); color:#1a1a1a;border-radius:6px;padding:3px 6px;font-weight:450;display:inline-block;font-size:11px; }
+  .rarity-ssr-sp { background: linear-gradient(90deg,#ffd8b4 0%,#ffe0c2 25%,#ffecb3 55%,#fff7d5 85%); color:#1a1a1a;border-radius:6px;padding:3px 6px;font-weight:100;display:inline-block;font-size:11px; }
+
   @media (max-width:520px){
     header{flex-direction:column;align-items:stretch}
     .controls{margin-left:0}
@@ -57,14 +105,6 @@
     <label><span class="small">Move</span><br/><select id="filter-move"><option value="">All</option></select></label>
     <label><span class="small">Range</span><br/><select id="filter-range"><option value="">All</option></select></label>
     <label><span class="small">Obtain</span><br/><select id="filter-obtain"><option value="">All</option></select></label>
-
-    <!-- Series/Tag filters (Unit) -->
-    <label><span class="small">Series (Unit)</span><br/><select id="filter-series-unit"><option value="">All</option></select></label>
-    <label><span class="small">Tag (Unit)</span><br/><select id="filter-tag-unit"><option value="">All</option></select></label>
-
-    <!-- Series/Tag filters (Pilot) -->
-    <label><span class="small">Series (Pilot)</span><br/><select id="filter-series-pilot"><option value="">All</option></select></label>
-    <label><span class="small">Tag (Pilot)</span><br/><select id="filter-tag-pilot"><option value="">All</option></select></label>
   </div>
 
   <div class="controls">
@@ -106,11 +146,9 @@
 </footer>
 
 <script>
-/* ===== Configuration ===== */
-const JSON_BASE = "./json-file";
-const UNITS_JSON = `${JSON_BASE}/units.json`;
-const PILOTS_JSON = `${JSON_BASE}/pilots.json`;
-const SERIES_TAG_JSON = `${JSON_BASE}/series_tag_options.json`;
+/* ===== Settings ===== */
+const JSON_BASE_URL = "./json-file";
+const UNITS_JSON = `${JSON_BASE_URL}/units.json`;
 const PAGE_SIZE = 100;
 
 /* ===== DOM ===== */
@@ -124,11 +162,6 @@ const filterType = document.getElementById("filter-type");
 const filterMove = document.getElementById("filter-move");
 const filterRange = document.getElementById("filter-range");
 const filterObtain = document.getElementById("filter-obtain");
-const filterSeriesUnit = document.getElementById("filter-series-unit");
-const filterTagUnit = document.getElementById("filter-tag-unit");
-const filterSeriesPilot = document.getElementById("filter-series-pilot");
-const filterTagPilot = document.getElementById("filter-tag-pilot");
-
 const sortBy = document.getElementById("sort-by");
 const sortDirBtn = document.getElementById("sort-dir");
 const resetBtn = document.getElementById("reset");
@@ -148,7 +181,7 @@ const lastBottom = document.getElementById("last-bottom");
 const pageInputBottom = document.getElementById("page-input-bottom");
 const pageCountBottom = document.getElementById("page-count-bottom");
 
-/* field labels for sort dropdown */
+/* sort labels (same keys as units.json) */
 const FIELD_LABELS = {
   "D0": "Damage",
   "D4": "Damage-full active",
@@ -156,14 +189,16 @@ const FIELD_LABELS = {
   "HB0": "HB Beam",
   "HB1": "HB Physical",
   "HB2": "HB Special",
-  "HB3": "HB EX"
+  "HB3": "HB EX",
+  "HB0_F": "HB Beam (full)",
+  "HB1_F": "HB Physical (full)",
+  "HB2_F": "HB Special (full)",
+  "HB3_F": "HB EX (full)"
 };
 
-/* ===== State ===== */
+/* state */
 let units = [];
-let pilots = [];
-let seriesTagOptions = { series_unit: [], tag_unit: [], series_pilot: [], tag_pilot: [] };
-let filteredSorted = [];
+let filteredSorted = []; // after filter+sort
 let currentPage = 1;
 let pageCount = 1;
 let sortDirAsc = false;
@@ -182,48 +217,21 @@ function uniqueValues(arr, key){
   });
   return Array.from(s).sort((a,b)=> a.localeCompare(b, 'ja'));
 }
-function splitCommaValues(str){
-  if(!str) return [];
-  return str.split(',').map(s => s.trim()).filter(s => s !== "");
+function rarityClassFromString(rare){
+  if(!rare) return "";
+  const s = String(rare).replace(/\s+/g,"").toUpperCase();
+  if(s.indexOf("UR") !== -1 && s.indexOf("3") !== -1) return "rarity-ur3";
+  if(s.indexOf("UR") !== -1 && (s.indexOf("0") !== -1 || s.indexOf("０") !== -1)) return "rarity-ur0";
+  if(s.indexOf("SSR") !== -1 && s.indexOf("SSP") !== -1) return "rarity-ssr-ssp";
+  if(s.indexOf("SSP") !== -1 || s.indexOf("SP") !== -1) return "rarity-ssr-sp";
+  if(s.indexOf("SSR") !== -1) return "rarity-ssr-ssp";
+  return "";
 }
-function unitHasSeries(unit, seriesName){
-  const joined = unit["シリーズ連結"] || unit["シリーズ"] || unit["series"] || "";
-  const arr = splitCommaValues(joined);
-  return arr.indexOf(seriesName) !== -1;
-}
-function unitHasTag(unit, tagName){
-  const joined = unit["タグ連結"] || unit["タグ"] || unit["tags"] || "";
-  const arr = splitCommaValues(joined);
-  return arr.indexOf(tagName) !== -1;
-}
-function pilotHasSeries(pilot, seriesName){
-  const joined = pilot["シリーズ連結"] || pilot["シリーズ"] || pilot["series"] || "";
-  const arr = splitCommaValues(joined);
-  return arr.indexOf(seriesName) !== -1;
-}
-function pilotHasTag(pilot, tagName){
-  const joined = pilot["タグ連結"] || pilot["タグ"] || pilot["tags"] || "";
-  const arr = splitCommaValues(joined);
-  return arr.indexOf(tagName) !== -1;
-}
-/* Determine whether a pilot links to a unit.
-   Accepts several possible pilot fields: "LINKED UNIT", "LINKED_UNIT", "linked_unit", or unit name.
-*/
-function pilotLinksToUnit(pilot, unit){
-  const linkFields = ["LINKED UNIT","LINKED_UNIT","linked_unit","LINKED_UNIT_NAME","ユニット識別","ユニット","LINKED UNIT NAME"];
-  for(const f of linkFields){
-    if(pilot[f]){
-      const v = String(pilot[f]).trim();
-      if(!v) continue;
-      // match by uid numeric
-      if(String(unit.uid) === v) return true;
-      if(String(unit.uid) === String(Number(v))) return true;
-      // match by unit name fields
-      const unitNames = [unit["ユニット"], unit["ユニット名"], unit["name"], unit["Name"]].filter(Boolean).map(x=>String(x).trim());
-      if(unitNames.indexOf(v) !== -1) return true;
-    }
-  }
-  return false;
+function fmtNumber(n){
+  if(n === undefined || n === null || n === "") return "-";
+  const num = Number(n);
+  if(isNaN(num)) return "-";
+  return Math.round(num).toLocaleString('ja-JP');
 }
 
 /* render single card */
@@ -259,7 +267,8 @@ function renderCard(u){
   rareRow.className = "rare-row";
   const rareBadge = document.createElement("div");
   const rare = (u["レア"] || "").toString();
-  rareBadge.className = "rare-badge";
+  const rc = rarityClassFromString(rare);
+  rareBadge.className = rc ? rc : "rare-badge";
   rareBadge.textContent = rare || "";
   rareRow.appendChild(rareBadge);
   iconArea.appendChild(rareRow);
@@ -304,6 +313,7 @@ function renderCard(u){
   return a;
 }
 
+/* intensity helper for icon opacity */
 function intensityFromValue(v){
   const n = Number(v) || 0;
   const clamped = Math.max(2, Math.min(6, n));
@@ -317,11 +327,6 @@ function applyFiltersAndSort(){
   const mv = filterMove.value;
   const rg = filterRange.value;
   const ob = filterObtain.value;
-  const sUnit = filterSeriesUnit.value;
-  const tagUnit = filterTagUnit.value;
-  const sPilot = filterSeriesPilot.value;
-  const tagPilot = filterTagPilot.value;
-
   let list = units.slice();
 
   if(r) list = list.filter(u => (u["レア"]||"") === r);
@@ -330,32 +335,6 @@ function applyFiltersAndSort(){
   if(rg) list = list.filter(u => (u["最大射程"]||"") === rg);
   if(ob) list = list.filter(u => (u["入手"]||"") === ob);
 
-  // Series (Unit) filter: check unit's series list contains selected
-  if(sUnit){
-    list = list.filter(u => unitHasSeries(u, sUnit));
-  }
-  // Tag (Unit)
-  if(tagUnit){
-    list = list.filter(u => unitHasTag(u, tagUnit));
-  }
-
-  // Series/Tag (Pilot) filters: keep unit if any pilot linked to unit has the selected pilot series/tag
-  if(sPilot || tagPilot){
-    list = list.filter(u => {
-      // find pilots that link to this unit
-      const linkedPilots = pilots.filter(p => pilotLinksToUnit(p, u));
-      if(linkedPilots.length === 0) return false;
-      if(sPilot){
-        if(!linkedPilots.some(p => pilotHasSeries(p, sPilot))) return false;
-      }
-      if(tagPilot){
-        if(!linkedPilots.some(p => pilotHasTag(p, tagPilot))) return false;
-      }
-      return true;
-    });
-  }
-
-  // Sorting
   const key = sortBy.value;
   list.sort((a,b)=>{
     if(key === "name"){
@@ -404,6 +383,7 @@ function updatePagerUI(){
   pageCountBottom.textContent = pageCount;
   pageInputTop.value = currentPage;
   pageInputBottom.value = currentPage;
+  // disable buttons appropriately
   const disablePrev = currentPage <= 1;
   const disableNext = currentPage >= pageCount;
   prevTop.disabled = prevBottom.disabled = disablePrev;
@@ -419,6 +399,7 @@ function goToPage(n){
   currentPage = p;
   updatePagerUI();
   renderCurrentPage();
+  // scroll to top of grid for convenience
   window.scrollTo({ top: grid.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
 }
 
@@ -436,14 +417,15 @@ lastBottom.addEventListener("click", ()=> goToPage(pageCount));
 pageInputBottom.addEventListener("change", ()=> goToPage(Number(pageInputBottom.value) || 1));
 
 /* control events */
-[filterRarity, filterType, filterMove, filterRange, filterObtain,
- filterSeriesUnit, filterTagUnit, filterSeriesPilot, filterTagPilot, sortBy].forEach(el=>{
-  el.addEventListener("change", ()=> { currentPage = 1; applyFiltersAndSort(); });
-});
+filterRarity.addEventListener("change", ()=> { currentPage = 1; applyFiltersAndSort(); });
+filterType.addEventListener("change", ()=> { currentPage = 1; applyFiltersAndSort(); });
+filterMove.addEventListener("change", ()=> { currentPage = 1; applyFiltersAndSort(); });
+filterRange.addEventListener("change", ()=> { currentPage = 1; applyFiltersAndSort(); });
+filterObtain.addEventListener("change", ()=> { currentPage = 1; applyFiltersAndSort(); });
+sortBy.addEventListener("change", ()=> { currentPage = 1; applyFiltersAndSort(); });
 sortDirBtn.addEventListener("click", ()=> { sortDirAsc = !sortDirAsc; sortDirBtn.textContent = sortDirAsc ? "Asc" : "Desc"; applyFiltersAndSort(); });
 resetBtn.addEventListener("click", ()=>{
   filterRarity.value = ""; filterType.value = ""; filterMove.value = ""; filterRange.value = ""; filterObtain.value = "";
-  filterSeriesUnit.value = ""; filterTagUnit.value = ""; filterSeriesPilot.value = ""; filterTagPilot.value = "";
   sortBy.value = "D0"; sortDirAsc = false; sortDirBtn.textContent = "Desc";
   currentPage = 1;
   applyFiltersAndSort();
@@ -465,38 +447,16 @@ function populateSortOptions(){
   sortBy.value = "D0";
 }
 
-/* populate filter select with options (preserve exact strings) */
-function populateFilter(selectEl, items){
-  selectEl.innerHTML = '<option value="">All</option>';
-  items.forEach(it=>{
-    const opt = document.createElement("option");
-    opt.value = it;
-    opt.textContent = it;
-    selectEl.appendChild(opt);
-  });
-}
-
-/* init: fetch units, pilots, series_tag_options */
+/* init: only fetch units.json (no combi parts) */
 async function init(){
   try{
-    const [u,p,s] = await Promise.all([fetchJson(UNITS_JSON), fetchJson(PILOTS_JSON), fetchJson(SERIES_TAG_JSON)]);
-    units = Array.isArray(u) ? u : [];
-    pilots = Array.isArray(p) ? p : [];
-    seriesTagOptions = s || { series_unit:[], tag_unit:[], series_pilot:[], tag_pilot:[] };
-
-    // populate basic filters from units
+    units = await fetchJson(UNITS_JSON);
+    if(!Array.isArray(units)) units = [];
     populateFilter(filterRarity, uniqueValues(units, "レア"));
     populateFilter(filterType, uniqueValues(units, "タイプ"));
     populateFilter(filterMove, uniqueValues(units, "移動力"));
     populateFilter(filterRange, uniqueValues(units, "最大射程"));
     populateFilter(filterObtain, uniqueValues(units, "入手"));
-
-    // populate series/tag selects from series_tag_options.json (preserve exact strings)
-    populateFilter(filterSeriesUnit, seriesTagOptions.series_unit || []);
-    populateFilter(filterTagUnit, seriesTagOptions.tag_unit || []);
-    populateFilter(filterSeriesPilot, seriesTagOptions.series_pilot || []);
-    populateFilter(filterTagPilot, seriesTagOptions.tag_pilot || []);
-
     populateSortOptions();
     applyFiltersAndSort();
   }catch(err){
