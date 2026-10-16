@@ -27,7 +27,7 @@
     padding:8px 0;
     background:#fff;
     border-bottom:1px solid #eee;
-    position:static; /* not fixed/sticky: allow full page scroll */
+    position:static; /* allow full page scroll */
     z-index:10;
   }
   h1{margin:0;font-size:18px}
@@ -95,6 +95,11 @@
   .rarity-ssr-ssp { background: linear-gradient(90deg,#ff8a33 0%,#ff9f4d 25%,#ffc24f 55%,#ffe27a 85%); color:#1a1a1a; border-radius:6px; padding:3px 6px; font-weight:450; display:inline-block; font-size:11px; }
   .rarity-ssr-sp { background: linear-gradient(90deg,#ffd8b4 0%,#ffe0c2 25%,#ffecb3 55%,#fff7d5 85%); color:#1a1a1a; border-radius:6px; padding:3px 6px; font-weight:100; display:inline-block; font-size:11px; }
 
+  /* Tag1/Tag2 width reduced to 70% */
+  #filter-tag1, #filter-tag2 {
+    width: 70%;
+  }
+
   @media (max-width:520px){
     header{flex-direction:column;align-items:stretch}
     .controls{margin-left:0}
@@ -109,23 +114,23 @@
 
   <div class="filters" aria-label="Filters">
     <label><span class="small">Rare</span>
-      <select id="filter-rarity" multiple size="1" title="Select one or more Rares"><option value="">All</option></select>
+      <select id="filter-rarity" multiple title="Select one or more Rares"><option value="">All</option></select>
     </label>
 
     <label><span class="small">Type</span>
-      <select id="filter-type" multiple size="1" title="Select one or more Types"><option value="">All</option></select>
+      <select id="filter-type" multiple title="Select one or more Types"><option value="">All</option></select>
     </label>
 
     <label><span class="small">Move</span>
-      <select id="filter-move" multiple size="1" title="Select one or more Move values"><option value="">All</option></select>
+      <select id="filter-move" multiple title="Select one or more Move values"><option value="">All</option></select>
     </label>
 
     <label><span class="small">Range</span>
-      <select id="filter-range" multiple size="1" title="Select one or more Range values"><option value="">All</option></select>
+      <select id="filter-range" multiple title="Select one or more Range values"><option value="">All</option></select>
     </label>
 
     <label><span class="small">Obtain</span>
-      <select id="filter-obtain" multiple size="1" title="Select one or more Obtain values"><option value="">All</option></select>
+      <select id="filter-obtain" multiple title="Select one or more Obtain values"><option value="">All</option></select>
     </label>
 
     <!-- Series / Tag1 / Tag2 (single-select each) -->
@@ -173,6 +178,7 @@ const COMBI_FIELD_MAP_JSON = () => `${JSON_BASE_URL}/combi_field_map.json`;
 const SERIES_TAG_JSON = () => `${JSON_BASE_URL}/series_tag_options.json`;
 
 const PAGE_SIZE = 100;
+const STORAGE_KEY = "unitListFilters_v1";
 
 const FIELD_LABELS = {
   "D0": "Damage",
@@ -227,16 +233,12 @@ function uniqueValues(arr, key){
   const s = new Set();
   arr.forEach(x => {
     const v = (x[key] || "").toString().trim();
-    if(v !== "") {
-      // if comma-separated values exist, don't split here — these selects are single-field values
-      s.add(v);
-    }
+    if(v !== "") s.add(v);
   });
   return Array.from(s).sort((a,b)=> a.localeCompare(b, 'ja'));
 }
 
 function populateMultiSelect(selectEl, values){
-  // keep an "All" option at top (value "")
   selectEl.innerHTML = '';
   const allOpt = document.createElement("option");
   allOpt.value = "";
@@ -329,7 +331,6 @@ function renderCard(u){
   rareRow.className = "rare-row";
   const rareBadge = document.createElement("div");
   const rare = (u["レア"] || "").toString();
-  // keep simple class mapping
   let rc = "";
   const s = String(rare).replace(/\s+/g,"").toUpperCase();
   if(s.indexOf("UR") !== -1 && s.indexOf("3") !== -1) rc = "rarity-ur3";
@@ -419,6 +420,66 @@ function getMultiSelectValues(selectEl){
   return vals;
 }
 
+/* Save/load UI state to sessionStorage */
+function collectUIState() {
+  return {
+    rarities: getMultiSelectValues(filterRarity),
+    types: getMultiSelectValues(filterType),
+    moves: getMultiSelectValues(filterMove),
+    ranges: getMultiSelectValues(filterRange),
+    obtains: getMultiSelectValues(filterObtain),
+    series: filterSeries.value || "",
+    tag1: filterTag1.value || "",
+    tag2: filterTag2.value || "",
+    sortBy: sortBy.value || "D0",
+    sortDirAsc: !!sortDirAsc,
+    page: currentPage || 1
+  };
+}
+function saveUIState() {
+  try {
+    const st = collectUIState();
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(st));
+  } catch (e) {
+    console.warn("Could not save UI state:", e);
+  }
+}
+function loadSavedUIState() {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) {
+    console.warn("Could not load saved UI state:", e);
+    return null;
+  }
+}
+function applyUIState(state) {
+  if(!state) return;
+  function setMulti(selectEl, values) {
+    const vals = Array.isArray(values) ? values : [];
+    Array.from(selectEl.options).forEach(opt => {
+      if(opt.value === "") {
+        // "All" option: select it only if no values provided
+        opt.selected = vals.length === 0;
+      } else {
+        opt.selected = vals.includes(opt.value);
+      }
+    });
+  }
+  setMulti(filterRarity, state.rarities || []);
+  setMulti(filterType, state.types || []);
+  setMulti(filterMove, state.moves || []);
+  setMulti(filterRange, state.ranges || []);
+  setMulti(filterObtain, state.obtains || []);
+  if(state.series !== undefined) filterSeries.value = state.series;
+  if(state.tag1 !== undefined) filterTag1.value = state.tag1;
+  if(state.tag2 !== undefined) filterTag2.value = state.tag2;
+  if(state.sortBy) sortBy.value = state.sortBy;
+  sortDirAsc = !!state.sortDirAsc;
+  currentPage = Math.max(1, Number(state.page || 1));
+}
+
 /* apply filters and render (AND across Series, Tag1, Tag2; multi-selects for Rare/Type/Move/Range/Obtain) */
 function applyFiltersAndRender(){
   const rarities = getMultiSelectValues(filterRarity);
@@ -499,6 +560,8 @@ function applyFiltersAndRender(){
   currentFiltered = list;
   totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
   if(currentPage > totalPages) currentPage = totalPages;
+  // persist UI state
+  saveUIState();
   renderPage();
 }
 
@@ -510,6 +573,8 @@ function renderPage(){
     emptyEl.style.display = "block";
     summary.textContent = `Showing 0 / ${units.length} units`;
     pageInfo.textContent = `Page 0 / 0`;
+    prevPageBtn.disabled = true;
+    nextPageBtn.disabled = true;
     return;
   } else {
     emptyEl.style.display = "none";
@@ -547,12 +612,18 @@ async function init(cacheBust=false){
     populateSeriesAndTags();
     populateSortOptions();
 
-    // defaults
-    sortBy.value = "D0";
-    sortDirAsc = false;
-
-    // initial filter & render
-    applyFiltersAndRender();
+    // try to restore saved state; if none, do normal initial render
+    const saved = loadSavedUIState();
+    if(saved){
+      applyUIState(saved);
+      // ensure sortBy exists in options
+      if(!Array.from(sortBy.options).some(o=>o.value===saved.sortBy)) sortBy.value = "D0";
+      applyFiltersAndRender();
+    } else {
+      sortBy.value = "D0";
+      sortDirAsc = false;
+      applyFiltersAndRender();
+    }
   }catch(err){
     errorEl.style.display = "block";
     errorEl.textContent = "Load error: " + err.message;
@@ -575,10 +646,10 @@ filterTag2.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRend
 sortBy.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
 
 prevPageBtn.addEventListener("click", ()=>{
-  if(currentPage > 1){ currentPage--; renderPage(); window.scrollTo({top:0,behavior:'smooth'}); }
+  if(currentPage > 1){ currentPage--; saveUIState(); renderPage(); window.scrollTo({top:0,behavior:'smooth'}); }
 });
 nextPageBtn.addEventListener("click", ()=>{
-  if(currentPage < totalPages){ currentPage++; renderPage(); window.scrollTo({top:0,behavior:'smooth'}); }
+  if(currentPage < totalPages){ currentPage++; saveUIState(); renderPage(); window.scrollTo({top:0,behavior:'smooth'}); }
 });
 
 resetBtn.addEventListener("click", ()=>{
@@ -596,7 +667,26 @@ resetBtn.addEventListener("click", ()=>{
   sortBy.value = "D0";
   sortDirAsc = false;
   currentPage = 1;
+  // clear saved state
+  try { sessionStorage.removeItem(STORAGE_KEY); } catch(e){}
   applyFiltersAndRender();
+});
+
+/* Save state before navigating away via card links */
+grid.addEventListener("click", function(e){
+  let el = e.target;
+  while(el && el !== grid) {
+    if(el.tagName && el.tagName.toLowerCase() === "a" && el.classList.contains("card")) {
+      saveUIState();
+      return;
+    }
+    el = el.parentElement;
+  }
+});
+
+/* Save on beforeunload */
+window.addEventListener("beforeunload", function(){
+  saveUIState();
 });
 
 /* initial load */
