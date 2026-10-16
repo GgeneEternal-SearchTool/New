@@ -78,6 +78,7 @@ const JSON_BASE_URL = "./json-file";
 const UNITS_JSON = JSON_BASE_URL + "/units.json";
 const PILOTS_JSON = JSON_BASE_URL + "/pilots.json";
 const COMBI_PART_PREFIX = JSON_BASE_URL + "/combi_part_";
+const COMBI_INDEX_JSON = JSON_BASE_URL + "/combi_index.json";
 const MAX_COMBI_PARTS_TO_CHECK = 200;
 const MAX_CONSECUTIVE_MISSES = 5;
 
@@ -116,8 +117,8 @@ let sortKey = "D0";
 let sortDesc = true;
 
 /* ===== ヘルパー ===== */
-async function fetchJson(url){
-  const res = await fetch(url);
+async function fetchJson(url, opts){
+  const res = await fetch(url, opts || {});
   if(!res.ok) throw new Error("Fetch failed: " + url + " (" + res.status + ")");
   return res.json();
 }
@@ -155,7 +156,7 @@ function buildPidMap(){
   return map;
 }
 
-/* combi part 自動検出（HEAD で存在チェック） */
+/* 既存の detectCombiParts（フォールバック用） */
 async function detectCombiParts(){
   const parts = [];
   let consecutiveMisses = 0;
@@ -179,49 +180,140 @@ async function detectCombiParts(){
   return parts;
 }
 
-/* combi を読み、該当 uid の行だけ抽出して正規化 */
+/* ---------- 新: combi_index を読み、uid に紐づくパートだけ返す ---------- */
+/* キャッシュキー */
+const COMBI_INDEX_CACHE_KEY = "combi_index_v1";
+
+/* try to load cached index from sessionStorage */
+function loadCachedCombiIndex(){
+  try{
+    const raw = sessionStorage.getItem(COMBI_INDEX_CACHE_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){
+    return null;
+  }
+}
+
+/* save index to sessionStorage */
+function saveCachedCombiIndex(idx){
+  try{
+    sessionStorage.setItem(COMBI_INDEX_CACHE_KEY, JSON.stringify(idx));
+  }catch(e){
+    // ignore
+  }
+}
+
+/* fetch combi_index.json from server and cache it */
+async function fetchCombiIndexFromServer(){
+  try{
+    const idx = await fetchJson(COMBI_INDEX_JSON);
+    saveCachedCombiIndex(idx);
+    return idx;
+  }catch(e){
+    console.warn("Could not fetch combi_index.json:", e);
+    return null;
+  }
+}
+
+/* get part URLs for a given uid using index (cached or fetched).
+   Returns array of full URLs (e.g., "./json-file/combi_part_03.json") or [] if none. */
+async function getPartsForUnit(uid){
+  const uidStr = String(Number(uid));
+  // 1) try cached index
+  let idx = loadCachedCombiIndex();
+  if(idx && idx[uidStr] && idx[uidStr].length > 0){
+    return idx[uidStr].map(fn => `${JSON_BASE_URL}/${fn}`);
+  }
+  // 2) try fetch index from server
+  idx = await fetchCombiIndexFromServer();
+  if(idx && idx[uidStr] && idx[uidStr].length > 0){
+    return idx[uidStr].map(fn => `${JSON_BASE_URL}/${fn}`);
+  }
+  // 3) not found in index: return empty array (caller may fallback to full scan)
+  return [];
+}
+
+/* combi 行の正規化（元の loadCombiForUnit と同じ処理を関数化） */
+function normalizeCombiRow(r){
+  const nr = Object.assign({}, r);
+  nr.p = (nr.p !== undefined && nr.p !== null && nr.p !== "") ? Number(nr.p) : null;
+  nr.pilot_name = nr.pilot_name || nr["Pilot.キャラ"] || "";
+  nr.D0 = (nr.D0 !== undefined && nr.D0 !== null && nr.D0 !== "") ? Number(nr.D0) : null;
+  nr.D4 = (nr.D4 !== undefined && nr.D4 !== null && nr.D4 !== "") ? Number(nr.D4) : null;
+  nr.CD = (nr.CD !== undefined && nr.CD !== null && nr.CD !== "") ? Number(nr.CD) : null;
+  nr.HB0 = (nr.HB0 !== undefined && nr.HB0 !== null && nr.HB0 !== "") ? Number(nr.HB0) : null;
+  nr.HB1 = (nr.HB1 !== undefined && nr.HB1 !== null && nr.HB1 !== "") ? Number(nr.HB1) : null;
+  nr.HB2 = (nr.HB2 !== undefined && nr.HB2 !== null && nr.HB2 !== "") ? Number(nr.HB2) : null;
+  nr.HB3 = (nr.HB3 !== undefined && nr.HB3 !== null && nr.HB3 !== "") ? Number(nr.HB3) : null;
+  nr.HB0_F = (nr.HB0_F !== undefined && nr.HB0_F !== null && nr.HB0_F !== "") ? Number(nr.HB0_F) : null;
+  nr.HB1_F = (nr.HB1_F !== undefined && nr.HB1_F !== null && nr.HB1_F !== "") ? Number(nr.HB1_F) : null;
+  nr.HB2_F = (nr.HB2_F !== undefined && nr.HB2_F !== null && nr.HB2_F !== "") ? Number(nr.HB2_F) : null;
+  nr.HB3_F = (nr.HB3_F !== undefined && nr.HB3_F !== null && nr.HB3_F !== "") ? Number(nr.HB3_F) : null;
+  for(const ck of ["C01","C02","C03","C06","C07","C08","C09","C10","C11","C12"]){
+    if(nr[ck] !== undefined && nr[ck] !== null && nr[ck] !== ""){
+      nr[ck] = Number(nr[ck]);
+    } else {
+      nr[ck] = 0;
+    }
+  }
+  nr.t2 = (nr.t2 !== undefined && nr.t2 !== null) ? Number(nr.t2) : 0;
+  return nr;
+}
+
+/* ---------- 改良版 loadCombiForUnit: index を使ってピンポイント取得 ---------- */
 async function loadCombiForUnit(uid){
   combiRows = [];
   loadingNote.textContent = "読み込み中";
   combiSummary.textContent = "";
-  const partUrls = await detectCombiParts();
-  if(partUrls.length === 0){
-    combiSummary.textContent = "データが見つかりません";
+
+  // 1) try to get part URLs from combi_index.json
+  let partUrls = [];
+  try{
+    partUrls = await getPartsForUnit(uid);
+  }catch(e){
+    console.warn("getPartsForUnit failed:", e);
+    partUrls = [];
+  }
+
+  // 2) If index returned nothing, fallback to detectCombiParts() (full scan)
+  if(!partUrls || partUrls.length === 0){
+    // attempt to detect parts (HEAD) and then scan them sequentially
+    const allParts = await detectCombiParts();
+    if(!allParts || allParts.length === 0){
+      combiSummary.textContent = "データが見つかりません";
+      loadingNote.textContent = "";
+      return;
+    }
+    // scan all parts but stop early if desired (we will scan all to be safe)
+    for(const url of allParts){
+      try{
+        const part = await fetchJson(url);
+        for(const r of part){
+          const ru = (r.u !== undefined && r.u !== null && r.u !== "") ? Number(r.u) : null;
+          if(ru === uid){
+            const nr = normalizeCombiRow(r);
+            combiRows.push(nr);
+          }
+        }
+      }catch(e){
+        console.warn("combi part load failed (fallback):", url, e);
+      }
+    }
     loadingNote.textContent = "";
+    combiSummary.textContent = `該当 ${combiRows.length} 件 (fallback scan)`;
+    applyPilotSortAndRender();
     return;
   }
-  // 診断表示（簡潔）
-  combiSummary.textContent = `検出されたパート数: ${partUrls.length}`;
+
+  // 3) If we have pinpointed partUrls, fetch only those
   for(const url of partUrls){
     try{
       const part = await fetchJson(url);
       for(const r of part){
         const ru = (r.u !== undefined && r.u !== null && r.u !== "") ? Number(r.u) : null;
         if(ru === uid){
-          const nr = Object.assign({}, r);
-          nr.p = (nr.p !== undefined && nr.p !== null && nr.p !== "") ? Number(nr.p) : null;
-          nr.pilot_name = nr.pilot_name || nr["Pilot.キャラ"] || "";
-          nr.D0 = (nr.D0 !== undefined && nr.D0 !== null && nr.D0 !== "") ? Number(nr.D0) : null;
-          nr.D4 = (nr.D4 !== undefined && nr.D4 !== null && nr.D4 !== "") ? Number(nr.D4) : null;
-          nr.CD = (nr.CD !== undefined && nr.CD !== null && nr.CD !== "") ? Number(nr.CD) : null;
-          nr.HB0 = (nr.HB0 !== undefined && nr.HB0 !== null && nr.HB0 !== "") ? Number(nr.HB0) : null;
-          nr.HB1 = (nr.HB1 !== undefined && nr.HB1 !== null && nr.HB1 !== "") ? Number(nr.HB1) : null;
-          nr.HB2 = (nr.HB2 !== undefined && nr.HB2 !== null && nr.HB2 !== "") ? Number(nr.HB2) : null;
-          nr.HB3 = (nr.HB3 !== undefined && nr.HB3 !== null && nr.HB3 !== "") ? Number(nr.HB3) : null;
-          nr.HB0_F = (nr.HB0_F !== undefined && nr.HB0_F !== null && nr.HB0_F !== "") ? Number(nr.HB0_F) : null;
-          nr.HB1_F = (nr.HB1_F !== undefined && nr.HB1_F !== null && nr.HB1_F !== "") ? Number(nr.HB1_F) : null;
-          nr.HB2_F = (nr.HB2_F !== undefined && nr.HB2_F !== null && nr.HB2_F !== "") ? Number(nr.HB2_F) : null;
-          nr.HB3_F = (nr.HB3_F !== undefined && nr.HB3_F !== null && nr.HB3_F !== "") ? Number(nr.HB3_F) : null;
-          // C01..C12 を数値化しておく（存在すれば）
-          for(const ck of ["C01","C02","C03","C06","C07","C08","C09","C10","C11","C12"]){
-            if(nr[ck] !== undefined && nr[ck] !== null && nr[ck] !== ""){
-              nr[ck] = Number(nr[ck]);
-            } else {
-              nr[ck] = 0;
-            }
-          }
-          // t2
-          nr.t2 = (nr.t2 !== undefined && nr.t2 !== null) ? Number(nr.t2) : 0;
+          const nr = normalizeCombiRow(r);
           combiRows.push(nr);
         }
       }
@@ -229,12 +321,13 @@ async function loadCombiForUnit(uid){
       console.warn("combi part load failed:", url, e);
     }
   }
+
   loadingNote.textContent = "";
   combiSummary.textContent = `該当 ${combiRows.length} 件`;
   applyPilotSortAndRender();
 }
 
-/* パイロットカードを作る */
+/* ---------- パイロットカードを作る ---------- */
 function renderPilotCard(pilotObj, combi){
   const div = document.createElement("div");
   div.className = "pilot-card";
@@ -257,12 +350,10 @@ function renderPilotCard(pilotObj, combi){
   const dmg = document.createElement("div");
   dmg.className = "p-dmg";
   const dval = combi[sortKey] !== undefined && combi[sortKey] !== null ? combi[sortKey] : (combi.D0 || null);
-  // choose display value: if sortKey is HB* show HB, else D0 etc
   let dmgText = "-";
   if(sortKey && sortKey !== "name"){
     const v = combi[sortKey];
     if(v !== undefined && v !== null && !isNaN(Number(v))){
-      // if key starts with HB show as HB format else integer
       if(String(sortKey).startsWith("HB")){
         dmgText = fmtHB(v);
       } else {
@@ -270,7 +361,6 @@ function renderPilotCard(pilotObj, combi){
       }
     }
   } else {
-    // default D0
     dmgText = fmtDamage(combi.D0);
   }
   dmg.textContent = dmgText;
@@ -293,16 +383,6 @@ function renderPilotCard(pilotObj, combi){
   // 条件バッジ（C01..C08 の条件に応じて表示）
   const badges = document.createElement("div");
   badges.className = "badges";
-  // mapping: condition -> label
-  const condMap = [
-    ["C01","PA相性"],
-    ["C02","PAタグ"],
-    ["C03","PAシリーズ"],
-    // C06 & C07 both 1 -> シリーズ＆タグ
-    ["C06C07","PAシリーズ＆タグ"],
-    ["C08","PAユニット"]
-  ];
-  // C06 & C07 both 1 check
   if((combi.C06 === 1) && (combi.C07 === 1)){
     badges.appendChild(makeBadge("PAシリーズ＆タグ","pa"));
   } else {
@@ -337,24 +417,19 @@ function renderPilotCard(pilotObj, combi){
 
 /* 並べ替えと描画 */
 function applyPilotSortAndRender(){
-  // build pidMap
   const pidMap = buildPidMap();
-
-  // filter/sort combiRows
   let list = combiRows.slice();
 
-  // sortKey may be "name" or D0/HB*
   if(sortKey === "name"){
     list.sort((a,b)=>{
-      const sa = ( (pidMap[a.p] && pidMap[a.p]["Pilot.キャラ"]) || a.pilot_name || "" ).toString();
-      const sb = ( (pidMap[b.p] && pidMap[b.p]["Pilot.キャラ"]) || b.pilot_name || "" ).toString();
+      const sa = ((pidMap[a.p] && pidMap[a.p]["Pilot.キャラ"]) || a.pilot_name || "").toString();
+      const sb = ((pidMap[b.p] && pidMap[b.p]["Pilot.キャラ"]) || b.pilot_name || "").toString();
       return sortDesc ? sb.localeCompare(sa, 'ja') : sa.localeCompare(sb, 'ja');
     });
   } else {
     list.sort((a,b)=>{
       const va = (a[sortKey] !== undefined && a[sortKey] !== null) ? Number(a[sortKey]) : null;
       const vb = (b[sortKey] !== undefined && b[sortKey] !== null) ? Number(b[sortKey]) : null;
-      // treat null as -Infinity for descending so nulls go to end
       const na = (va === null || isNaN(va)) ? -Infinity : va;
       const nb = (vb === null || isNaN(vb)) ? -Infinity : vb;
       return sortDesc ? nb - na : na - nb;
@@ -367,10 +442,9 @@ function applyPilotSortAndRender(){
     return;
   }
   combiSummary.textContent = `該当 ${list.length} 件`;
-
+  const pidCache = buildPidMap(); // small optimization
   for(const combi of list){
-    const p = (combi.p !== null && buildPidMap()[combi.p]) ? buildPidMap()[combi.p] : null;
-    // if pilot object not found, create fallback object with Pilot.キャラ from combi
+    const p = (combi.p !== null && pidCache[combi.p]) ? pidCache[combi.p] : null;
     const pilotObj = p || { "Pilot.キャラ": combi.pilot_name || "不明", "Pilot.画像リンク": "" };
     pilotGrid.appendChild(renderPilotCard(pilotObj, combi));
   }
@@ -379,12 +453,10 @@ function applyPilotSortAndRender(){
 /* 並べ替えドロップダウンを作る */
 function populateSortOptions(){
   pilotSort.innerHTML = "";
-  // 名前オプション
   const optName = document.createElement("option");
   optName.value = "name";
   optName.textContent = "名前";
   pilotSort.appendChild(optName);
-  // other keys
   Object.keys(FIELD_LABELS).forEach(k => {
     if(k === "name") return;
     const opt = document.createElement("option");
@@ -398,13 +470,11 @@ function populateSortOptions(){
 /* 初期化 */
 async function init(){
   try{
-    // load units and pilots
     const unitsData = await fetchJson(UNITS_JSON);
     units = unitsData || [];
     const pilotsData = await fetchJson(PILOTS_JSON);
     pilots = pilotsData || [];
 
-    // find current unit by uid
     const uid = Number(uidParam);
     currentUnit = units.find(u => Number(u.uid) === uid);
     if(!currentUnit){
@@ -413,14 +483,14 @@ async function init(){
       loadingNote.textContent = "";
       return;
     }
+
     unitThumb.src = currentUnit["画像リンク"] || "";
     unitName.textContent = currentUnit["ユニット"] || ("ID:" + currentUnit.uid);
     unitMeta.textContent = `${currentUnit["レア"] || ""} / ${currentUnit["タイプ"] || ""} / 移動:${currentUnit["移動力"] || ""} / 射程:${currentUnit["最大射程"] || ""} / 入手:${currentUnit["入手"] || ""}`;
 
-    // populate sort options
     populateSortOptions();
 
-    // load combi rows for this unit
+    // load combi rows for this unit (uses combi_index.json if available)
     await loadCombiForUnit(currentUnit.uid);
   }catch(err){
     console.error(err);
