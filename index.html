@@ -205,6 +205,19 @@
     <label><span class="small">移動力</span><br/><select id="filter-move"><option value="">全て</option></select></label>
     <label><span class="small">最大射程</span><br/><select id="filter-range"><option value="">全て</option></select></label>
     <label><span class="small">入手</span><br/><select id="filter-obtain"><option value="">全て</option></select></label>
+
+    <!-- 追加: シリーズ/タグフィルター -->
+    <label>
+      <span class="small">種別</span><br/>
+      <select id="filter-series-tag-type" title="シリーズかタグかを選択">
+        <option value="series_unit">シリーズ</option>
+        <option value="tag_unit">タグ</option>
+      </select>
+    </label>
+    <label>
+      <span class="small">選択</span><br/>
+      <select id="filter-series-tag-value"><option value="">全て</option></select>
+    </label>
   </div>
 
   <div class="controls">
@@ -232,6 +245,7 @@
 const JSON_BASE_URL = "./json-file";
 const UNITS_JSON = () => `${JSON_BASE_URL}/units.json`;
 const COMBI_FIELD_MAP_JSON = () => `${JSON_BASE_URL}/combi_field_map.json`;
+const SERIES_TAG_JSON = () => `${JSON_BASE_URL}/series_tag_options.json`; // 追加
 
 /* 並べ替えラベル */
 const FIELD_LABELS = {
@@ -248,7 +262,7 @@ const FIELD_LABELS = {
   "HB3_F": "耐久回数EX (full)"
 };
 
-let units = [], fieldMap = {};
+let units = [], fieldMap = {}, seriesTagOptions = {};
 const grid = document.getElementById("grid");
 const summary = document.getElementById("summary");
 const emptyEl = document.getElementById("empty");
@@ -258,6 +272,8 @@ const filterType = document.getElementById("filter-type");
 const filterMove = document.getElementById("filter-move");
 const filterRange = document.getElementById("filter-range");
 const filterObtain = document.getElementById("filter-obtain");
+const filterSeriesTagType = document.getElementById("filter-series-tag-type");
+const filterSeriesTagValue = document.getElementById("filter-series-tag-value");
 const sortBy = document.getElementById("sort-by");
 const sortDirBtn = document.getElementById("sort-dir");
 const reloadBtn = document.getElementById("reload");
@@ -404,6 +420,20 @@ function renderCard(u){
   return a;
 }
 
+/* シリーズ/タグ選択肢を value セレクトに反映 */
+function populateSeriesTagValue(typeKey){
+  // typeKey は series_unit / tag_unit（units 用）
+  filterSeriesTagValue.innerHTML = '<option value="">全て</option>';
+  if(!seriesTagOptions || !seriesTagOptions[typeKey]) return;
+  const arr = seriesTagOptions[typeKey];
+  arr.forEach(v => {
+    const opt = document.createElement("option");
+    opt.value = v;
+    opt.textContent = v;
+    filterSeriesTagValue.appendChild(opt);
+  });
+}
+
 /* フィルタ適用と描画 */
 function applyFiltersAndRender(){
   const r = filterRarity.value;
@@ -411,6 +441,8 @@ function applyFiltersAndRender(){
   const mv = filterMove.value;
   const rg = filterRange.value;
   const ob = filterObtain.value;
+  const stType = filterSeriesTagType.value; // series_unit or tag_unit
+  const stVal = filterSeriesTagValue.value;
   let list = units.slice();
 
   if(r) list = list.filter(u => (u["レア"]||"") === r);
@@ -418,6 +450,23 @@ function applyFiltersAndRender(){
   if(mv) list = list.filter(u => (u["移動力"]||"") === mv);
   if(rg) list = list.filter(u => (u["最大射程"]||"") === rg);
   if(ob) list = list.filter(u => (u["入手"]||"") === ob);
+
+  // シリーズ/タグフィルター（ユニット側のフィールド名にマップ）
+  if(stVal){
+    if(stType === "series_unit"){
+      list = list.filter(u => {
+        const s = (u["シリーズ連結"] || "").toString();
+        if(!s) return false;
+        return s.split(",").map(x=>x.trim()).some(x => x === stVal);
+      });
+    } else if(stType === "tag_unit"){
+      list = list.filter(u => {
+        const s = (u["タグ連結"] || "").toString();
+        if(!s) return false;
+        return s.split(",").map(x=>x.trim()).some(x => x === stVal);
+      });
+    }
+  }
 
   const key = sortBy.value;
   list.sort((a,b)=>{
@@ -452,6 +501,9 @@ async function init(cacheBust=false){
   errorEl.style.display = "none";
   try{
     try{ fieldMap = await fetchJson(COMBI_FIELD_MAP_JSON(), cacheBust); }catch(e){ fieldMap = {}; }
+    // series/tag オプションを先に読み込む（存在しない場合は空オブジェクト）
+    try{ seriesTagOptions = await fetchJson(SERIES_TAG_JSON(), cacheBust); }catch(e){ seriesTagOptions = {}; }
+
     units = await fetchJson(UNITS_JSON(), cacheBust);
 
     populateFilter(filterRarity, uniqueValues(units, "レア"));
@@ -459,6 +511,11 @@ async function init(cacheBust=false){
     populateFilter(filterMove, uniqueValues(units, "移動力"));
     populateFilter(filterRange, uniqueValues(units, "最大射程"));
     populateFilter(filterObtain, uniqueValues(units, "入手"));
+
+    // シリーズ/タグの value をセット（units 用: series_unit / tag_unit）
+    // seriesTagOptions のキー名に合わせて読み込む
+    // 例: series_unit, tag_unit
+    populateSeriesTagValue(filterSeriesTagType.value || "series_unit");
 
     populateSortOptions();
 
@@ -482,6 +539,15 @@ filterMove.addEventListener("change", applyFiltersAndRender);
 filterRange.addEventListener("change", applyFiltersAndRender);
 filterObtain.addEventListener("change", applyFiltersAndRender);
 sortBy.addEventListener("change", applyFiltersAndRender);
+filterSeriesTagType.addEventListener("change", ()=>{
+  // 種別を切り替えたら value を再構築して描画
+  populateSeriesTagValue(filterSeriesTagType.value);
+  // 選択をクリアして再描画
+  filterSeriesTagValue.value = "";
+  applyFiltersAndRender();
+});
+filterSeriesTagValue.addEventListener("change", applyFiltersAndRender);
+
 sortDirBtn.addEventListener("click", ()=>{
   sortDirAsc = !sortDirAsc;
   sortDirBtn.textContent = sortDirAsc ? "昇順" : "降順";
@@ -490,6 +556,7 @@ sortDirBtn.addEventListener("click", ()=>{
 reloadBtn.addEventListener("click", ()=> init(true));
 resetBtn.addEventListener("click", ()=>{
   filterRarity.value = ""; filterType.value = ""; filterMove.value = ""; filterRange.value = ""; filterObtain.value = "";
+  filterSeriesTagType.value = "series_unit"; filterSeriesTagValue.value = "";
   sortBy.value = "D0"; sortDirAsc = false; sortDirBtn.textContent = "降順";
   applyFiltersAndRender();
 });
