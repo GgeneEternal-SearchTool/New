@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Gジェネ検索 — ユニット一覧</title>
+<title>Unit List</title>
 <style>
   :root{
     --gap:10px;
@@ -11,182 +11,34 @@
     --card-w:90px;
     --accent:#2b6cb0;
     --muted:#666;
-    font-family: system-ui, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Arial;
+    font-family: system-ui, "Segoe UI", "Noto Sans JP", Arial, sans-serif;
   }
-
-  /* ページ全体 */
   body{margin:16px;color:#111;background:#fff}
   header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:12px}
   h1{margin:0;font-size:18px}
-
-  /* フィルター / コントロール */
   .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
   .filters select,.filters input{padding:6px;border:1px solid #ddd;border-radius:6px;background:#fff}
   .controls{margin-left:auto;display:flex;gap:8px;align-items:center}
   .btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
   .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-
-  /* グリッド */
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-w),1fr));gap:var(--gap)}
-  a.card{
-    border:1px solid #eee;
-    border-radius:8px;
-    padding:8px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:6px;
-    background:#fff;
-    position:relative;
-    overflow:visible;
-    text-decoration:none;
-    color:inherit;
-    min-width:var(--card-w);
-    max-width:var(--card-w);
-    box-sizing:border-box;
-  }
-  a.card, a.card * { text-decoration: none !important; }
-
-  /* アイコン領域（画像の外側・上部） */
-  .icon-area{
-    position:static;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:6px;
-    width:100%;
-    pointer-events:none;
-    margin:0;
-  }
-  .icon-top{
-    width:100%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:6px;
-    padding:0 6px;
-    box-sizing:border-box;
-  }
-  .icon-circle{
-    min-width:20px;
-    height:20px;
-    border-radius:50%;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    color:#fff;
-    font-weight:700;
-    font-size:11px;
-    box-shadow:0 1px 2px rgba(0,0,0,0.12);
-    padding:0 6px;
-  }
+  a.card{border:1px solid #eee;border-radius:8px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff;overflow:visible;text-decoration:none;color:inherit;min-width:var(--card-w);max-width:var(--card-w);box-sizing:border-box}
+  .icon-area{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;pointer-events:none;margin:0}
+  .icon-top{width:100%;display:flex;justify-content:center;align-items:center;gap:6px;padding:0 6px;box-sizing:border-box}
+  .icon-circle{min-width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:11px;box-shadow:0 1px 2px rgba(0,0,0,0.12);padding:0 6px}
   .icon-circle.dim{ opacity:0.45; }
-
-  .rare-row{
-    width:100%;
-    display:flex;
-    justify-content:center;
-  }
-  .rare-badge{
-    display:inline-block;
-    padding:4px 8px;
-    border-radius:10px;
-    color:#fff;
-    font-weight:700;
-    font-size:11px;
-    white-space:nowrap;
-    box-shadow:0 1px 2px rgba(0,0,0,0.12);
-  }
-
-  /* 画像領域 */
-  .thumb-wrap{
-    width:var(--thumb);
-    height:var(--thumb);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    margin-top:0;
-  }
-  .thumb{
-    width:var(--thumb);
-    height:var(--thumb);
-    object-fit:cover;
-    border-radius:4px;
-    border:1px solid #ddd;
-    display:block;
-  }
-
-  /* テキスト */
+  .rare-row{width:100%;display:flex;justify-content:center}
+  .rare-badge{display:inline-block;padding:4px 8px;border-radius:10px;color:#fff;font-weight:700;font-size:11px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,0.12)}
+  .thumb-wrap{width:var(--thumb);height:var(--thumb);display:flex;align-items:center;justify-content:center;margin-top:0}
+  .thumb{width:var(--thumb);height:var(--thumb);object-fit:cover;border-radius:4px;border:1px solid #ddd;display:block}
   .name{font-size:12px;text-align:center;line-height:1.2;margin:0}
   .meta{font-size:12px;color:#000;font-weight:800;margin:0}
-
   .count{margin-top:8px;color:var(--muted);font-size:13px}
   .small{font-size:12px;color:#444}
   .empty{padding:40px;text-align:center;color:var(--muted)}
-  footer{margin-top:18px;color:var(--muted);font-size:13px}
-
-  /* --- レアラベル用クラス（一覧用） --- */
-  .rarity-ur3 {
-    background: linear-gradient(90deg,
-      #e6d9ff 0%,
-      #ffd9e6 18%,
-      #e9dbff 36%,
-      #e8f7d9 56%,
-      #d9f7fb 76%,
-      #cfeaff 100%
-    );
-    color: #1a1a1a;
-    font-weight: 450;
-    border-radius: 6px;
-    padding: 3px 6px;
-    display:inline-block;
-    font-size:11px;
-  }
-  .rarity-ur0 {
-    background: linear-gradient(90deg,
-      #f3efff 0%,
-      #fff3f6 18%,
-      #f6efff 36%,
-      #f6fbef 56%,
-      #eefbfd 76%,
-      #eef7ff 100%
-    );
-    color: #000000;
-    font-weight:100;
-    border-radius:6px;
-    padding:3px 6px;
-    display:inline-block;
-    font-size:11px;
-  }
-  .rarity-ssr-ssp {
-    background: linear-gradient(90deg,
-      #ff8a33 0%,
-      #ff9f4d 25%,
-      #ffc24f 55%,
-      #ffe27a 85%
-    );
-    color: #1a1a1a;
-    border-radius: 6px;
-    padding:3px 6px;
-    font-weight:450;
-    display:inline-block;
-    font-size:11px;
-  }
-  .rarity-ssr-sp {
-    background: linear-gradient(90deg,
-      #ffd8b4 0%,
-      #ffe0c2 25%,
-      #ffecb3 55%,
-      #fff7d5 85%
-    );
-    color: #1a1a1a;
-    border-radius: 6px;
-    padding:3px 6px;
-    font-weight:100;
-    display:inline-block;
-    font-size:11px;
-  }
-
+  .pager{display:flex;gap:8px;align-items:center;justify-content:center;margin:12px 0;flex-wrap:wrap}
+  .pager .page-input{width:56px;padding:6px;border-radius:6px;border:1px solid #ddd;text-align:center}
+  .pager .info{font-size:13px;color:#444}
   @media (max-width:520px){
     header{flex-direction:column;align-items:stretch}
     .controls{margin-left:0}
@@ -197,82 +49,131 @@
 </head>
 <body>
 <header>
-  <h1>ユニット一覧</h1>
+  <h1>Unit List</h1>
 
-  <div class="filters" aria-label="フィルター">
-    <label><span class="small">レア</span><br/><select id="filter-rarity"><option value="">全て</option></select></label>
-    <label><span class="small">タイプ</span><br/><select id="filter-type"><option value="">全て</option></select></label>
-    <label><span class="small">移動力</span><br/><select id="filter-move"><option value="">全て</option></select></label>
-    <label><span class="small">最大射程</span><br/><select id="filter-range"><option value="">全て</option></select></label>
-    <label><span class="small">入手</span><br/><select id="filter-obtain"><option value="">全て</option></select></label>
+  <div class="filters" aria-label="filters">
+    <label><span class="small">Rare</span><br/><select id="filter-rarity"><option value="">All</option></select></label>
+    <label><span class="small">Type</span><br/><select id="filter-type"><option value="">All</option></select></label>
+    <label><span class="small">Move</span><br/><select id="filter-move"><option value="">All</option></select></label>
+    <label><span class="small">Range</span><br/><select id="filter-range"><option value="">All</option></select></label>
+    <label><span class="small">Obtain</span><br/><select id="filter-obtain"><option value="">All</option></select></label>
+
+    <!-- Series/Tag filters (Unit) -->
+    <label><span class="small">Series (Unit)</span><br/><select id="filter-series-unit"><option value="">All</option></select></label>
+    <label><span class="small">Tag (Unit)</span><br/><select id="filter-tag-unit"><option value="">All</option></select></label>
+
+    <!-- Series/Tag filters (Pilot) -->
+    <label><span class="small">Series (Pilot)</span><br/><select id="filter-series-pilot"><option value="">All</option></select></label>
+    <label><span class="small">Tag (Pilot)</span><br/><select id="filter-tag-pilot"><option value="">All</option></select></label>
   </div>
 
   <div class="controls">
-    <label class="small">並べ替え</label>
+    <label class="small">Sort by</label>
     <select id="sort-by" class="btn"></select>
-    <button id="sort-dir" class="btn">昇順</button>
-    <button id="reload" class="btn">データ再読み込み</button>
-    <button id="reset" class="btn">リセット</button>
+    <button id="sort-dir" class="btn">Desc</button>
+    <button id="reset" class="btn">Reset</button>
   </div>
 </header>
 
 <main>
-  <div id="summary" class="count">読み込み中...</div>
+  <div id="summary" class="count">loading...</div>
+
+  <!-- Top pager -->
+  <div id="pager-top" class="pager" aria-hidden="false">
+    <button id="first-top" class="btn">First</button>
+    <button id="prev-top" class="btn">Prev</button>
+    <div class="info">Page <input id="page-input-top" class="page-input" type="number" min="1" value="1"> / <span id="page-count-top">1</span></div>
+    <button id="next-top" class="btn">Next</button>
+    <button id="last-top" class="btn">Last</button>
+  </div>
+
   <div id="grid" class="grid" aria-live="polite"></div>
-  <div id="empty" class="empty" style="display:none">該当するユニットが見つかりません。</div>
+  <div id="empty" class="empty" style="display:none">No units found.</div>
   <div id="error" style="color:#b33;margin-top:12px;display:none"></div>
+
+  <!-- Bottom pager -->
+  <div id="pager-bottom" class="pager" aria-hidden="false">
+    <button id="first-bottom" class="btn">First</button>
+    <button id="prev-bottom" class="btn">Prev</button>
+    <div class="info">Page <input id="page-input-bottom" class="page-input" type="number" min="1" value="1"> / <span id="page-count-bottom">1</span></div>
+    <button id="next-bottom" class="btn">Next</button>
+    <button id="last-bottom" class="btn">Last</button>
+  </div>
 </main>
 
 <footer>
-  <div>データ: GitHub JSON を参照</div>
+  <div>Data: GitHub JSON</div>
 </footer>
 
 <script>
-/* ===== 設定 ===== */
-const JSON_BASE_URL = "./json-file";
-const UNITS_JSON = () => `${JSON_BASE_URL}/units.json`;
-const COMBI_FIELD_MAP_JSON = () => `${JSON_BASE_URL}/combi_field_map.json`;
+/* ===== Configuration ===== */
+const JSON_BASE = "./json-file";
+const UNITS_JSON = `${JSON_BASE}/units.json`;
+const PILOTS_JSON = `${JSON_BASE}/pilots.json`;
+const SERIES_TAG_JSON = `${JSON_BASE}/series_tag_options.json`;
+const PAGE_SIZE = 100;
 
-/* 並べ替えラベル */
-const FIELD_LABELS = {
-  "D0": "Damage",
-  "D4": "Damage-full active",
-  "CD": "Critical Damage (full active)",
-  "HB0": "耐久回数ビーム",
-  "HB1": "耐久回数物理",
-  "HB2": "耐久回数特殊",
-  "HB3": "耐久回数EX",
-  "HB0_F": "耐久回数ビーム (full)",
-  "HB1_F": "耐久回数物理 (full)",
-  "HB2_F": "耐久回数特殊 (full)",
-  "HB3_F": "耐久回数EX (full)"
-};
-
-let units = [], fieldMap = {};
+/* ===== DOM ===== */
 const grid = document.getElementById("grid");
 const summary = document.getElementById("summary");
 const emptyEl = document.getElementById("empty");
 const errorEl = document.getElementById("error");
+
 const filterRarity = document.getElementById("filter-rarity");
 const filterType = document.getElementById("filter-type");
 const filterMove = document.getElementById("filter-move");
 const filterRange = document.getElementById("filter-range");
 const filterObtain = document.getElementById("filter-obtain");
+const filterSeriesUnit = document.getElementById("filter-series-unit");
+const filterTagUnit = document.getElementById("filter-tag-unit");
+const filterSeriesPilot = document.getElementById("filter-series-pilot");
+const filterTagPilot = document.getElementById("filter-tag-pilot");
+
 const sortBy = document.getElementById("sort-by");
 const sortDirBtn = document.getElementById("sort-dir");
-const reloadBtn = document.getElementById("reload");
 const resetBtn = document.getElementById("reset");
 
-let sortDirAsc = true;
+/* pager elements */
+const firstTop = document.getElementById("first-top");
+const prevTop = document.getElementById("prev-top");
+const nextTop = document.getElementById("next-top");
+const lastTop = document.getElementById("last-top");
+const pageInputTop = document.getElementById("page-input-top");
+const pageCountTop = document.getElementById("page-count-top");
 
-/* ===== ヘルパー ===== */
-async function fetchJson(url, cacheBust=false){
-  const u = cacheBust ? `${url}?v=${Date.now()}` : url;
-  const res = await fetch(u);
-  if(!res.ok) throw new Error(`Fetch failed: ${u} (${res.status})`);
+const firstBottom = document.getElementById("first-bottom");
+const prevBottom = document.getElementById("prev-bottom");
+const nextBottom = document.getElementById("next-bottom");
+const lastBottom = document.getElementById("last-bottom");
+const pageInputBottom = document.getElementById("page-input-bottom");
+const pageCountBottom = document.getElementById("page-count-bottom");
+
+/* field labels for sort dropdown */
+const FIELD_LABELS = {
+  "D0": "Damage",
+  "D4": "Damage-full active",
+  "CD": "Critical Damage (full active)",
+  "HB0": "HB Beam",
+  "HB1": "HB Physical",
+  "HB2": "HB Special",
+  "HB3": "HB EX"
+};
+
+/* ===== State ===== */
+let units = [];
+let pilots = [];
+let seriesTagOptions = { series_unit: [], tag_unit: [], series_pilot: [], tag_pilot: [] };
+let filteredSorted = [];
+let currentPage = 1;
+let pageCount = 1;
+let sortDirAsc = false;
+
+/* ===== Helpers ===== */
+async function fetchJson(url){
+  const res = await fetch(url);
+  if(!res.ok) throw new Error(`Fetch failed: ${url} (${res.status})`);
   return res.json();
 }
-
 function uniqueValues(arr, key){
   const s = new Set();
   arr.forEach(x => {
@@ -281,51 +182,51 @@ function uniqueValues(arr, key){
   });
   return Array.from(s).sort((a,b)=> a.localeCompare(b, 'ja'));
 }
-
-function populateFilter(selectEl, values){
-  selectEl.innerHTML = '<option value="">全て</option>';
-  values.forEach(v => {
-    const opt = document.createElement("option");
-    opt.value = v;
-    opt.textContent = v;
-    selectEl.appendChild(opt);
-  });
+function splitCommaValues(str){
+  if(!str) return [];
+  return str.split(',').map(s => s.trim()).filter(s => s !== "");
+}
+function unitHasSeries(unit, seriesName){
+  const joined = unit["シリーズ連結"] || unit["シリーズ"] || unit["series"] || "";
+  const arr = splitCommaValues(joined);
+  return arr.indexOf(seriesName) !== -1;
+}
+function unitHasTag(unit, tagName){
+  const joined = unit["タグ連結"] || unit["タグ"] || unit["tags"] || "";
+  const arr = splitCommaValues(joined);
+  return arr.indexOf(tagName) !== -1;
+}
+function pilotHasSeries(pilot, seriesName){
+  const joined = pilot["シリーズ連結"] || pilot["シリーズ"] || pilot["series"] || "";
+  const arr = splitCommaValues(joined);
+  return arr.indexOf(seriesName) !== -1;
+}
+function pilotHasTag(pilot, tagName){
+  const joined = pilot["タグ連結"] || pilot["タグ"] || pilot["tags"] || "";
+  const arr = splitCommaValues(joined);
+  return arr.indexOf(tagName) !== -1;
+}
+/* Determine whether a pilot links to a unit.
+   Accepts several possible pilot fields: "LINKED UNIT", "LINKED_UNIT", "linked_unit", or unit name.
+*/
+function pilotLinksToUnit(pilot, unit){
+  const linkFields = ["LINKED UNIT","LINKED_UNIT","linked_unit","LINKED_UNIT_NAME","ユニット識別","ユニット","LINKED UNIT NAME"];
+  for(const f of linkFields){
+    if(pilot[f]){
+      const v = String(pilot[f]).trim();
+      if(!v) continue;
+      // match by uid numeric
+      if(String(unit.uid) === v) return true;
+      if(String(unit.uid) === String(Number(v))) return true;
+      // match by unit name fields
+      const unitNames = [unit["ユニット"], unit["ユニット名"], unit["name"], unit["Name"]].filter(Boolean).map(x=>String(x).trim());
+      if(unitNames.indexOf(v) !== -1) return true;
+    }
+  }
+  return false;
 }
 
-function populateSortOptions(){
-  sortBy.innerHTML = "";
-  const optName = document.createElement("option");
-  optName.value = "name";
-  optName.textContent = "名前";
-  sortBy.appendChild(optName);
-  Object.keys(FIELD_LABELS).forEach(k => {
-    const opt = document.createElement("option");
-    opt.value = k;
-    opt.textContent = FIELD_LABELS[k] + " (" + k + ")";
-    sortBy.appendChild(opt);
-  });
-}
-
-/* 数値 2-6 を不透明度に変換（移動力/射程の濃淡） */
-function intensityFromValue(v){
-  const n = Number(v) || 0;
-  const clamped = Math.max(2, Math.min(6, n));
-  return 0.35 + (clamped - 2) * ((1.0 - 0.35) / (6 - 2));
-}
-
-/* レアに応じた背景スタイルは CSS クラスで管理するため不要だが互換性用に残す */
-function rarityClassFromString(rare){
-  if(!rare) return "";
-  const s = String(rare).replace(/\s+/g,"").toUpperCase();
-  if(s.indexOf("UR") !== -1 && s.indexOf("3") !== -1) return "rarity-ur3";
-  if(s.indexOf("UR") !== -1 && (s.indexOf("0") !== -1 || s.indexOf("０") !== -1)) return "rarity-ur0";
-  if(s.indexOf("SSR") !== -1 && s.indexOf("SSP") !== -1) return "rarity-ssr-ssp";
-  if(s.indexOf("SSP") !== -1 || s.indexOf("SP") !== -1) return "rarity-ssr-sp";
-  if(s.indexOf("SSR") !== -1) return "rarity-ssr-ssp";
-  return "";
-}
-
-/* カード描画（レアバッジにクラスを付与） */
+/* render single card */
 function renderCard(u){
   const a = document.createElement("a");
   a.href = `detail.html?uid=${encodeURIComponent(u.uid)}`;
@@ -342,14 +243,14 @@ function renderCard(u){
   const left = document.createElement("div");
   left.className = "icon-circle" + (moveVal ? "" : " dim");
   left.style.background = `rgba(220,20,60,${intensityFromValue(moveVal)})`;
-  left.textContent = "移" + (moveVal || "-");
+  left.textContent = "M" + (moveVal || "-");
   top.appendChild(left);
 
   const right = document.createElement("div");
   const rangeVal = (u["最大射程"] || "").toString();
   right.className = "icon-circle" + (rangeVal ? "" : " dim");
   right.style.background = `rgba(30,144,255,${intensityFromValue(rangeVal)})`;
-  right.textContent = "射" + (rangeVal || "-");
+  right.textContent = "R" + (rangeVal || "-");
   top.appendChild(right);
 
   iconArea.appendChild(top);
@@ -357,10 +258,8 @@ function renderCard(u){
   const rareRow = document.createElement("div");
   rareRow.className = "rare-row";
   const rareBadge = document.createElement("div");
-  // apply class based on rarity string
   const rare = (u["レア"] || "").toString();
-  const rc = rarityClassFromString(rare);
-  rareBadge.className = rc ? rc : "rare-badge";
+  rareBadge.className = "rare-badge";
   rareBadge.textContent = rare || "";
   rareRow.appendChild(rareBadge);
   iconArea.appendChild(rareRow);
@@ -385,18 +284,19 @@ function renderCard(u){
   const meta = document.createElement("div");
   meta.className = "meta";
   const key = sortBy.value || "D0";
-  const val = u[key];
   if(key === "name"){
     meta.textContent = u["ユニット"] || "";
-  } else if(val === undefined || val === null || val === ""){
-    meta.textContent = FIELD_LABELS[key] ? (FIELD_LABELS[key] + ": -") : "-";
   } else {
-    // 数値なら丸めて表示（千区切り）
-    const n = Number(val);
-    if(!isNaN(n)){
-      meta.textContent = FIELD_LABELS[key] + ": " + Math.round(n).toLocaleString('ja-JP');
+    const val = u[key];
+    if(val === undefined || val === null || val === ""){
+      meta.textContent = (FIELD_LABELS[key] || key) + ": -";
     } else {
-      meta.textContent = FIELD_LABELS[key] + ": " + String(val);
+      const n = Number(val);
+      if(!isNaN(n)){
+        meta.textContent = (FIELD_LABELS[key] || key) + ": " + Math.round(n).toLocaleString('ja-JP');
+      } else {
+        meta.textContent = (FIELD_LABELS[key] || key) + ": " + String(val);
+      }
     }
   }
   a.appendChild(meta);
@@ -404,13 +304,24 @@ function renderCard(u){
   return a;
 }
 
-/* フィルタ適用と描画 */
-function applyFiltersAndRender(){
+function intensityFromValue(v){
+  const n = Number(v) || 0;
+  const clamped = Math.max(2, Math.min(6, n));
+  return 0.35 + (clamped - 2) * ((1.0 - 0.35) / (6 - 2));
+}
+
+/* apply filters + sort, then paginate */
+function applyFiltersAndSort(){
   const r = filterRarity.value;
   const t = filterType.value;
   const mv = filterMove.value;
   const rg = filterRange.value;
   const ob = filterObtain.value;
+  const sUnit = filterSeriesUnit.value;
+  const tagUnit = filterTagUnit.value;
+  const sPilot = filterSeriesPilot.value;
+  const tagPilot = filterTagPilot.value;
+
   let list = units.slice();
 
   if(r) list = list.filter(u => (u["レア"]||"") === r);
@@ -419,6 +330,32 @@ function applyFiltersAndRender(){
   if(rg) list = list.filter(u => (u["最大射程"]||"") === rg);
   if(ob) list = list.filter(u => (u["入手"]||"") === ob);
 
+  // Series (Unit) filter: check unit's series list contains selected
+  if(sUnit){
+    list = list.filter(u => unitHasSeries(u, sUnit));
+  }
+  // Tag (Unit)
+  if(tagUnit){
+    list = list.filter(u => unitHasTag(u, tagUnit));
+  }
+
+  // Series/Tag (Pilot) filters: keep unit if any pilot linked to unit has the selected pilot series/tag
+  if(sPilot || tagPilot){
+    list = list.filter(u => {
+      // find pilots that link to this unit
+      const linkedPilots = pilots.filter(p => pilotLinksToUnit(p, u));
+      if(linkedPilots.length === 0) return false;
+      if(sPilot){
+        if(!linkedPilots.some(p => pilotHasSeries(p, sPilot))) return false;
+      }
+      if(tagPilot){
+        if(!linkedPilots.some(p => pilotHasTag(p, tagPilot))) return false;
+      }
+      return true;
+    });
+  }
+
+  // Sorting
   const key = sortBy.value;
   list.sort((a,b)=>{
     if(key === "name"){
@@ -437,64 +374,140 @@ function applyFiltersAndRender(){
     return sortDirAsc ? sa.localeCompare(sb, 'ja') : sb.localeCompare(sa, 'ja');
   });
 
-  grid.innerHTML = "";
-  if(list.length === 0){
-    emptyEl.style.display = "block";
-  } else {
-    emptyEl.style.display = "none";
-    list.forEach(u => grid.appendChild(renderCard(u)));
-  }
-  summary.textContent = `表示 ${list.length} / 全 ${units.length} 件`;
+  filteredSorted = list;
+  pageCount = Math.max(1, Math.ceil(filteredSorted.length / PAGE_SIZE));
+  if(currentPage > pageCount) currentPage = pageCount;
+  updatePagerUI();
+  renderCurrentPage();
 }
 
-/* 初期化 */
-async function init(cacheBust=false){
-  errorEl.style.display = "none";
-  try{
-    try{ fieldMap = await fetchJson(COMBI_FIELD_MAP_JSON(), cacheBust); }catch(e){ fieldMap = {}; }
-    units = await fetchJson(UNITS_JSON(), cacheBust);
+/* render current page */
+function renderCurrentPage(){
+  grid.innerHTML = "";
+  if(filteredSorted.length === 0){
+    emptyEl.style.display = "block";
+    summary.textContent = `Showing 0 / ${units.length}`;
+    return;
+  }
+  emptyEl.style.display = "none";
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const end = Math.min(filteredSorted.length, start + PAGE_SIZE);
+  for(let i=start;i<end;i++){
+    grid.appendChild(renderCard(filteredSorted[i]));
+  }
+  summary.textContent = `Showing ${start+1}-${end} / ${filteredSorted.length} (Total ${units.length})`;
+}
 
+/* pager UI sync */
+function updatePagerUI(){
+  pageCountTop.textContent = pageCount;
+  pageCountBottom.textContent = pageCount;
+  pageInputTop.value = currentPage;
+  pageInputBottom.value = currentPage;
+  const disablePrev = currentPage <= 1;
+  const disableNext = currentPage >= pageCount;
+  prevTop.disabled = prevBottom.disabled = disablePrev;
+  firstTop.disabled = firstBottom.disabled = disablePrev;
+  nextTop.disabled = nextBottom.disabled = disableNext;
+  lastTop.disabled = lastBottom.disabled = disableNext;
+}
+
+/* pager actions */
+function goToPage(n){
+  const p = Math.max(1, Math.min(pageCount, Math.floor(n)));
+  if(p === currentPage) return;
+  currentPage = p;
+  updatePagerUI();
+  renderCurrentPage();
+  window.scrollTo({ top: grid.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+}
+
+/* event wiring for pager (top & bottom) */
+firstTop.addEventListener("click", ()=> goToPage(1));
+prevTop.addEventListener("click", ()=> goToPage(currentPage - 1));
+nextTop.addEventListener("click", ()=> goToPage(currentPage + 1));
+lastTop.addEventListener("click", ()=> goToPage(pageCount));
+pageInputTop.addEventListener("change", ()=> goToPage(Number(pageInputTop.value) || 1));
+
+firstBottom.addEventListener("click", ()=> goToPage(1));
+prevBottom.addEventListener("click", ()=> goToPage(currentPage - 1));
+nextBottom.addEventListener("click", ()=> goToPage(currentPage + 1));
+lastBottom.addEventListener("click", ()=> goToPage(pageCount));
+pageInputBottom.addEventListener("change", ()=> goToPage(Number(pageInputBottom.value) || 1));
+
+/* control events */
+[filterRarity, filterType, filterMove, filterRange, filterObtain,
+ filterSeriesUnit, filterTagUnit, filterSeriesPilot, filterTagPilot, sortBy].forEach(el=>{
+  el.addEventListener("change", ()=> { currentPage = 1; applyFiltersAndSort(); });
+});
+sortDirBtn.addEventListener("click", ()=> { sortDirAsc = !sortDirAsc; sortDirBtn.textContent = sortDirAsc ? "Asc" : "Desc"; applyFiltersAndSort(); });
+resetBtn.addEventListener("click", ()=>{
+  filterRarity.value = ""; filterType.value = ""; filterMove.value = ""; filterRange.value = ""; filterObtain.value = "";
+  filterSeriesUnit.value = ""; filterTagUnit.value = ""; filterSeriesPilot.value = ""; filterTagPilot.value = "";
+  sortBy.value = "D0"; sortDirAsc = false; sortDirBtn.textContent = "Desc";
+  currentPage = 1;
+  applyFiltersAndSort();
+});
+
+/* populate sort options */
+function populateSortOptions(){
+  sortBy.innerHTML = "";
+  const optName = document.createElement("option");
+  optName.value = "name";
+  optName.textContent = "Name";
+  sortBy.appendChild(optName);
+  Object.keys(FIELD_LABELS).forEach(k => {
+    const opt = document.createElement("option");
+    opt.value = k;
+    opt.textContent = FIELD_LABELS[k] + " (" + k + ")";
+    sortBy.appendChild(opt);
+  });
+  sortBy.value = "D0";
+}
+
+/* populate filter select with options (preserve exact strings) */
+function populateFilter(selectEl, items){
+  selectEl.innerHTML = '<option value="">All</option>';
+  items.forEach(it=>{
+    const opt = document.createElement("option");
+    opt.value = it;
+    opt.textContent = it;
+    selectEl.appendChild(opt);
+  });
+}
+
+/* init: fetch units, pilots, series_tag_options */
+async function init(){
+  try{
+    const [u,p,s] = await Promise.all([fetchJson(UNITS_JSON), fetchJson(PILOTS_JSON), fetchJson(SERIES_TAG_JSON)]);
+    units = Array.isArray(u) ? u : [];
+    pilots = Array.isArray(p) ? p : [];
+    seriesTagOptions = s || { series_unit:[], tag_unit:[], series_pilot:[], tag_pilot:[] };
+
+    // populate basic filters from units
     populateFilter(filterRarity, uniqueValues(units, "レア"));
     populateFilter(filterType, uniqueValues(units, "タイプ"));
     populateFilter(filterMove, uniqueValues(units, "移動力"));
     populateFilter(filterRange, uniqueValues(units, "最大射程"));
     populateFilter(filterObtain, uniqueValues(units, "入手"));
 
+    // populate series/tag selects from series_tag_options.json (preserve exact strings)
+    populateFilter(filterSeriesUnit, seriesTagOptions.series_unit || []);
+    populateFilter(filterTagUnit, seriesTagOptions.tag_unit || []);
+    populateFilter(filterSeriesPilot, seriesTagOptions.series_pilot || []);
+    populateFilter(filterTagPilot, seriesTagOptions.tag_pilot || []);
+
     populateSortOptions();
-
-    sortBy.value = "D0";
-    sortDirAsc = false;
-    sortDirBtn.textContent = sortDirAsc ? "昇順" : "降順";
-
-    applyFiltersAndRender();
+    applyFiltersAndSort();
   }catch(err){
-    errorEl.style.display = "block";
-    errorEl.textContent = "読み込みエラー: " + err.message;
-    summary.textContent = "読み込みエラー";
     console.error(err);
+    errorEl.style.display = "block";
+    errorEl.textContent = "Load error: " + err.message;
+    summary.textContent = "Load error";
   }
 }
 
-/* イベント */
-filterRarity.addEventListener("change", applyFiltersAndRender);
-filterType.addEventListener("change", applyFiltersAndRender);
-filterMove.addEventListener("change", applyFiltersAndRender);
-filterRange.addEventListener("change", applyFiltersAndRender);
-filterObtain.addEventListener("change", applyFiltersAndRender);
-sortBy.addEventListener("change", applyFiltersAndRender);
-sortDirBtn.addEventListener("click", ()=>{
-  sortDirAsc = !sortDirAsc;
-  sortDirBtn.textContent = sortDirAsc ? "昇順" : "降順";
-  applyFiltersAndRender();
-});
-reloadBtn.addEventListener("click", ()=> init(true));
-resetBtn.addEventListener("click", ()=>{
-  filterRarity.value = ""; filterType.value = ""; filterMove.value = ""; filterRange.value = ""; filterObtain.value = "";
-  sortBy.value = "D0"; sortDirAsc = false; sortDirBtn.textContent = "降順";
-  applyFiltersAndRender();
-});
-
-/* 初回読み込み */
+/* initial run */
 init();
 </script>
 </body>
