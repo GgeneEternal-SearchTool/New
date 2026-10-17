@@ -810,10 +810,10 @@ function renderPilotCard(pilotObj, combi){
     const dft = toDiffFrom100(combi.DFT4);
     const dfe = toDiffFrom100(combi.DFE4);
     // 各行は「・Beam -56%」の形式。パーセント部分を太字で大きくする
-    addLine(col4, `・Beam ${dfb !== null ? dfb : "-"}`, false, dfb !== null ? `<strong style="font-size:18px">${dfb}</strong>` : null);
-    addLine(col4, `・物理 ${dfp !== null ? dfp : "-"}`, false, dfp !== null ? `<strong style="font-size:18px">${dfp}</strong>` : null);
-    addLine(col4, `・特殊 ${dft !== null ? dft : "-"}`, false, dft !== null ? `<strong style="font-size:18px">${dft}</strong>` : null);
-    addLine(col4, `・EX ${dfe !== null ? dfe : "-"}`, false, dfe !== null ? `<strong style="font-size:18px">${dfe}</strong>` : null);
+    addLine(col4, `・Beam `, false, dfb !== null ? `<strong style="font-size:18px">${dfb}</strong>` : null);
+    addLine(col4, `・物理 `, false, dfp !== null ? `<strong style="font-size:18px">${dfp}</strong>` : null);
+    addLine(col4, `・特殊 `, false, dft !== null ? `<strong style="font-size:18px">${dft}</strong>` : null);
+    addLine(col4, `・EX `, false, dfe !== null ? `<strong style="font-size:18px">${dfe}</strong>` : null);
   } else {
     // Default: show D0 summary
     addLine(col4, "開始時", true);
