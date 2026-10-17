@@ -202,13 +202,15 @@
     </div>
 
     <div class="filters-row">
-      <div style="font-weight:700">Toggles (show only pilots with)</div>
+      <div style="font-weight:700">Ability</div>
       <div class="toggles">
+        <button id="toggle-twoaction" class="btn toggle">２回行動</button>
+        <button id="toggle-pilot-ability" class="btn toggle">Pilot Ability Active</button>
         <button id="toggle-autoheal" class="btn toggle">自動回復</button>
         <button id="toggle-moveup" class="btn toggle">移動力UP</button>
         <button id="toggle-counterdef" class="btn toggle">反撃支援防御</button>
         <button id="toggle-forcecs" class="btn toggle">強制CS</button>
-        <button id="toggle-pilot-ability" class="btn toggle">Pilot Ability Active</button>
+
       </div>
     </div>
 
@@ -319,6 +321,7 @@ const toggleMoveup = document.getElementById("toggle-moveup");
 const toggleCounterdef = document.getElementById("toggle-counterdef");
 const toggleForcecs = document.getElementById("toggle-forcecs");
 const togglePilotAbility = document.getElementById("toggle-pilot-ability");
+const toggleTwoAction = document.getElementById("toggle-twoaction");
 const skillFilterRow = document.getElementById("skill-filter-row");
 
 const pilotSort = document.getElementById("pilot-sort");
@@ -952,7 +955,8 @@ function applyFiltersAndRender(){
     moveup: toggleMoveup.classList.contains("active"),
     counterdef: toggleCounterdef.classList.contains("active"),
     forcecs: toggleForcecs.classList.contains("active"),
-    pilotAbility: togglePilotAbility.classList.contains("active")
+    pilotAbility: togglePilotAbility.classList.contains("active"),
+    twoaction: toggleTwoAction.classList.contains("active")
   };
 
   let list = combiRows.slice();
@@ -983,6 +987,11 @@ function applyFiltersAndRender(){
       const case1 = (c.C01 === 1 || c.C02 === 1 || c.C03 === 1 || c.C08 === 1);
       const case2 = (c.C06 === 1 && c.C07 === 1);
       if(!(case1 || case2)) return false;
+    }
+
+    // ２回行動フィルタ: トグルが active のときは C14_flag === true の組み合わせのみ残す
+    if(toggles.twoaction){
+      if(!c || !c.C14_flag) return false;
     }
 
     if(selectedSkillFilters.size > 0){
@@ -1067,7 +1076,8 @@ function saveDetailState(){
         moveup: toggleMoveup.classList.contains("active"),
         counterdef: toggleCounterdef.classList.contains("active"),
         forcecs: toggleForcecs.classList.contains("active"),
-        pilotAbility: togglePilotAbility.classList.contains("active")
+        pilotAbility: togglePilotAbility.classList.contains("active"),
+        twoaction: toggleTwoAction.classList.contains("active")
       },
       scrollY: window.scrollY || 0
     };
@@ -1115,6 +1125,7 @@ function restoreDetailState(){
       setToggle(toggleCounterdef, !!state.toggles.counterdef);
       setToggle(toggleForcecs, !!state.toggles.forcecs);
       setToggle(togglePilotAbility, !!state.toggles.pilotAbility);
+      setToggle(toggleTwoAction, !!state.toggles.twoaction);
     }
 
     // reflect selectedSkillFilters visually
@@ -1280,13 +1291,14 @@ sortDirBtn.addEventListener("click", ()=>{
   applyFiltersAndRender();
 });
 
-[ toggleAutoheal, toggleMoveup, toggleCounterdef, toggleForcecs, togglePilotAbility ].forEach(btn=>{
+[ toggleAutoheal, toggleMoveup, toggleCounterdef, toggleForcecs, togglePilotAbility, toggleTwoAction ].forEach(btn=>{
   btn.addEventListener("click", ()=>{
     btn.classList.toggle("active");
     currentPage = 1;
     applyFiltersAndRender();
   });
 });
+
 
 [ filterPilotRarity, filterPilotType, filterPilotObtain, filterPilotSeries, filterPilotTag ].forEach(sel=>{
   sel.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
