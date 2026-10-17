@@ -38,7 +38,7 @@
   .series-tag-icon{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:12px;color:#fff;font-weight:700;font-size:12px;box-shadow:0 1px 2px rgba(0,0,0,0.12);gap:6px}
   .series-tag-icon.series{background: linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #93c5fd 100%); color:#fff;}
   .series-tag-icon.tag{
-    background: linear-gradient(90deg, #3c5a03 0%, #049b0e 50%, #3dd738 100%);
+    background: linear-gradient(90deg, #3c5a03 0%, #049b0e 50%, #289b24 100%);
     color: #f4f4f4; /* 白ではなく濃い文字色にしてコントラストを確保 */
   }
   .feature-line{color:var(--orange);font-weight:800;font-size:15px}
@@ -88,9 +88,9 @@
 
   .p-name{font-weight:700;margin-bottom:6px}
   /* Damage larger and red */
-  .p-dmg{color:#b33;font-weight:900;font-size:20px}
+  .p-dmg{color:#b33;font-weight:900;font-size:30px}
   /* HB /耐久回数 style: larger and blue */
-  .p-hb{color:#1e40af;font-weight:900;font-size:20px}
+  .p-hb{color:#1e40af;font-weight:900;font-size:30px}
 
   .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
   .badge{background:#eee;padding:3px 6px;border-radius:8px;font-size:12px;color:#222;font-weight:700}
@@ -736,12 +736,12 @@ function renderPilotCard(pilotObj, combi){
   if((combi.C06 === 1) && (combi.C07 === 1)){
     const b = document.createElement("div"); b.className = "badge pa"; b.textContent = "PAシリーズ＆タグ"; badges.appendChild(b);
   } else {
-    if(combi.C01 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PA相性"; badges.appendChild(b); }
-    if(combi.C02 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAタグ"; badges.appendChild(b); }
-    if(combi.C03 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAシリーズ"; badges.appendChild(b); }
-    if(combi.C06 === 1 && combi.C07 !== 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAシリーズ"; badges.appendChild(b); }
-    if(combi.C07 === 1 && combi.C06 !== 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAタグ"; badges.appendChild(b); }
-    if(combi.C08 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAユニット"; badges.appendChild(b); }
+    if(combi.C01 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="相性"; badges.appendChild(b); }
+    if(combi.C02 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="Tag"; badges.appendChild(b); }
+    if(combi.C03 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="Series"; badges.appendChild(b); }
+    if(combi.C06 === 1 && combi.C07 !== 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="Series"; badges.appendChild(b); }
+    if(combi.C07 === 1 && combi.C06 !== 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="Tag"; badges.appendChild(b); }
+    if(combi.C08 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="Unit"; badges.appendChild(b); }
   }
   col3.appendChild(badges);
 
@@ -768,7 +768,7 @@ function renderPilotCard(pilotObj, combi){
 
   if(sk === "D0"){
     // Case1: Damage (D0)
-    addLine(col4, "初期状態（発動無し）", true);
+    addLine(col4, "開始時", true);
     const PT0 = combi.PT0 || combi["PT0"] || "";
     const P0 = (combi.P0 !== undefined && combi.P0 !== null) ? Math.round(Number(combi.P0)) : (combi.P0 || "-");
     // 表示は一回だけ：例 "格闘 838"
@@ -816,7 +816,7 @@ function renderPilotCard(pilotObj, combi){
     addLine(col4, `・EX ${dfe !== null ? dfe : "-"}`, false, dfe !== null ? `<strong style="font-size:18px">${dfe}</strong>` : null);
   } else {
     // Default: show D0 summary
-    addLine(col4, "初期状態（発動無し）", true);
+    addLine(col4, "開始時", true);
     const PT0 = combi.PT0 || combi["PT0"] || "";
     const P0 = (combi.P0 !== undefined && combi.P0 !== null) ? Math.round(Number(combi.P0)) : (combi.P0 || "-");
     addLine(col4, `${PT0 || "格闘"} ${P0}`);
