@@ -11,6 +11,7 @@
     --pilot-thumb:56px;
     --muted:#666;
     --accent:#2b6cb0;
+    --orange:#d97706;
     font-family: system-ui, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Segoe UI", Arial;
   }
   body{margin:16px;color:#111;background:#fff}
@@ -18,62 +19,157 @@
   .top{display:flex;gap:12px;align-items:center}
   .thumb{width:var(--thumb-large);height:var(--thumb-large);object-fit:cover;border:1px solid #ddd;border-radius:6px}
   .info{flex:1}
+  .unit-row{display:flex;gap:12px;align-items:flex-start}
   .label{font-size:13px;color:#666}
   .value{font-size:16px;margin-bottom:6px}
   .controls{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
+  .btn.toggle{background:#fff}
+  .btn.toggle.active{background:var(--accent);color:#fff;border-color:var(--accent)}
   .select{padding:6px;border-radius:6px;border:1px solid #ccc;background:#fff}
   .grid{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
   .pilot-card{border:1px solid #eee;padding:8px;border-radius:8px;display:flex;gap:8px;align-items:flex-start;background:#fff}
   .p-thumb{width:var(--pilot-thumb);height:var(--pilot-thumb);object-fit:cover;border-radius:6px;border:1px solid #ddd}
-  .p-info{font-size:13px;flex:1}
+  .p-info{font-size:13px;flex:1;display:flex;flex-direction:column}
+  .p-top{display:flex;align-items:center;gap:8px}
   .p-name{font-weight:700;margin-bottom:6px}
   .p-dmg{color:#b33;font-weight:700;font-size:15px}
   .p-hb{color:#111;font-weight:600;font-size:13px;margin-top:4px}
   .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
   .badge{background:#eee;padding:3px 6px;border-radius:8px;font-size:12px;color:#222;font-weight:700}
-  .badge.pa{background:#2b6cb0;color:#fff} /* Pilot Ability 系バッジ色 */
+  .badge.pa{background:#2b6cb0;color:#fff}
   .two-action{display:inline-flex;align-items:center;gap:6px;margin-top:6px}
   .two-action .icon{width:18px;height:18px;border-radius:50%;background:green;display:inline-block}
   .loading{color:#666}
   .note{font-size:13px;color:#666;margin-top:8px}
   .diag{font-size:12px;color:#999;margin-top:6px}
+
+  /* unit info specifics */
+  .unit-meta-block{display:flex;flex-direction:column;gap:6px}
+  .unit-stats{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .rarity-badge{display:inline-block;padding:6px 10px;border-radius:10px;font-weight:700;font-size:12px;color:#fff}
+  .stat-item{font-size:14px;color:#333}
+  .feature-line{color:var(--orange);font-weight:800;font-size:15px}
+  .weapon-icons{display:flex;gap:8px;align-items:center}
+  .weapon-icon{width:20px;height:20px;border-radius:4px;background:#eee;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+  .weapon-icon.hidden{display:none}
+  .weapon-power{font-size:13px;color:#333}
+  .weapon-list{margin-top:6px;padding-left:18px}
+  .map-row{display:flex;gap:12px;align-items:center;margin-top:6px}
+
+  /* filters area */
+  .filters-area{margin-top:18px;border:1px solid #f0f0f0;padding:10px;border-radius:8px;display:flex;flex-direction:column;gap:8px}
+  .filters-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .filters-row .label-inline{font-size:13px;color:#666;margin-right:6px}
+  .multi-select{min-width:160px}
+
+  /* pagination */
+  .pager{display:flex;gap:8px;align-items:center;margin-top:10px}
+  .page-info{font-size:13px;color:var(--muted)}
+
   @media (max-width:720px){
     .top{flex-direction:column;align-items:flex-start}
     .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+    .unit-row{flex-direction:column;align-items:flex-start}
   }
 </style>
 </head>
 <body>
-<a class="back" href="index.html">← ユニット一覧へ戻る</a>
+<a class="back" href="index.html">← Unit List</a>
 
 <main>
   <div id="unit-area" class="top">
     <img id="unit-thumb" class="thumb" src="" alt="" />
     <div class="info">
       <div id="unit-name" style="font-size:20px;font-weight:700"></div>
-      <div class="label">レア / タイプ / 移動力 / 最大射程 / 入手</div>
-      <div id="unit-meta" class="value"></div>
-      <div class="controls">
+
+      <div class="unit-row" style="margin-top:8px">
+        <div class="unit-meta-block">
+          <div class="unit-stats">
+            <div id="unit-rarity" class="rarity-badge"></div>
+            <div id="unit-move" class="stat-item"></div>
+            <div id="unit-range" class="stat-item"></div>
+            <div id="unit-obtain" class="stat-item"></div>
+          </div>
+
+          <div id="unit-core-stats" style="margin-top:6px">
+            <div id="unit-hp" class="stat-item"></div>
+            <div id="unit-attack" class="stat-item"></div>
+            <div id="unit-defense" class="stat-item"></div>
+          </div>
+
+          <div id="unit-feature" class="feature-line"></div>
+
+          <div id="unit-shield" class="stat-item"></div>
+
+          <div style="display:flex;gap:12px;align-items:center;margin-top:6px">
+            <div class="weapon-icons" aria-hidden="true">
+              <div id="icon-physical" class="weapon-icon">物</div>
+              <div id="icon-beam" class="weapon-icon">ビ</div>
+              <div id="icon-special" class="weapon-icon">特</div>
+            </div>
+            <div>
+              <div id="weapon-power" class="weapon-power"></div>
+              <div id="weapon-range" class="weapon-power"></div>
+            </div>
+          </div>
+
+          <ul id="weapon-effects" class="weapon-list" style="margin-top:6px"></ul>
+
+          <div class="map-row" id="map-row" style="margin-top:6px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTER area (replaces "該当パイロット" heading) -->
+  <div class="filters-area" aria-label="Pilot Filters">
+    <div style="font-weight:700">FILTER</div>
+
+    <div class="filters-row">
+      <span class="label-inline">Rarity</span>
+      <select id="filter-pilot-rarity" class="select multi-select" multiple></select>
+
+      <span class="label-inline">Type</span>
+      <select id="filter-pilot-type" class="select multi-select" multiple></select>
+
+      <span class="label-inline">Obtain</span>
+      <select id="filter-pilot-obtain" class="select multi-select" multiple></select>
+    </div>
+
+    <div class="filters-row">
+      <span class="label-inline">Toggles (show only pilots with)</span>
+      <button id="toggle-autoheal" class="btn toggle">自動回復</button>
+      <button id="toggle-moveup" class="btn toggle">移動力UP</button>
+      <button id="toggle-counterdef" class="btn toggle">反撃支援防御</button>
+      <button id="toggle-forcecs" class="btn toggle">強制CS</button>
+
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
         <label style="display:flex;flex-direction:column">
           <span style="font-size:12px;color:#666">並べ替え</span>
           <select id="pilot-sort" class="select"></select>
         </label>
         <button id="sort-dir" class="btn">降順</button>
-        <div id="loading-note" class="note">読み込み中</div>
       </div>
     </div>
   </div>
 
-  <section>
-    <h3 style="margin-top:18px">該当パイロット</h3>
-    <div id="combi-summary" class="diag" aria-live="polite"></div>
-    <div id="pilot-grid" class="grid"></div>
-  </section>
+  <div id="combi-summary" class="diag" aria-live="polite" style="margin-top:10px"></div>
+
+  <div id="pilot-list-area">
+    <div id="pilot-grid" class="grid" style="margin-top:10px"></div>
+
+    <div class="pager">
+      <button id="prev-page" class="btn">Prev</button>
+      <div class="page-info" id="page-info">Page 1</div>
+      <button id="next-page" class="btn">Next</button>
+    </div>
+  </div>
+
 </main>
 
 <script>
-/* ===== 設定 ===== */
+/* ===== Settings ===== */
 const JSON_BASE_URL = "./json-file";
 const UNITS_JSON = JSON_BASE_URL + "/units.json";
 const PILOTS_JSON = JSON_BASE_URL + "/pilots.json";
@@ -81,8 +177,8 @@ const COMBI_PART_PREFIX = JSON_BASE_URL + "/combi_part_";
 const COMBI_INDEX_JSON = JSON_BASE_URL + "/combi_index.json";
 const MAX_COMBI_PARTS_TO_CHECK = 200;
 const MAX_CONSECUTIVE_MISSES = 5;
+const PAGE_SIZE = 50;
 
-/* 並べ替えラベル（index.html と同じキーを使う） */
 const FIELD_LABELS = {
   "D0": "Damage",
   "D4": "Damage (full)",
@@ -101,12 +197,39 @@ const FIELD_LABELS = {
 /* ===== DOM ===== */
 const unitThumb = document.getElementById("unit-thumb");
 const unitName = document.getElementById("unit-name");
-const unitMeta = document.getElementById("unit-meta");
-const combiSummary = document.getElementById("combi-summary");
-const pilotGrid = document.getElementById("pilot-grid");
+const unitRarity = document.getElementById("unit-rarity");
+const unitMove = document.getElementById("unit-move");
+const unitRange = document.getElementById("unit-range");
+const unitObtain = document.getElementById("unit-obtain");
+const unitHP = document.getElementById("unit-hp");
+const unitAttack = document.getElementById("unit-attack");
+const unitDefense = document.getElementById("unit-defense");
+const unitFeature = document.getElementById("unit-feature");
+const unitShield = document.getElementById("unit-shield");
+const iconPhysical = document.getElementById("icon-physical");
+const iconBeam = document.getElementById("icon-beam");
+const iconSpecial = document.getElementById("icon-special");
+const weaponPower = document.getElementById("weapon-power");
+const weaponRange = document.getElementById("weapon-range");
+const weaponEffects = document.getElementById("weapon-effects");
+const mapRow = document.getElementById("map-row");
+
+const filterPilotRarity = document.getElementById("filter-pilot-rarity");
+const filterPilotType = document.getElementById("filter-pilot-type");
+const filterPilotObtain = document.getElementById("filter-pilot-obtain");
+const toggleAutoheal = document.getElementById("toggle-autoheal");
+const toggleMoveup = document.getElementById("toggle-moveup");
+const toggleCounterdef = document.getElementById("toggle-counterdef");
+const toggleForcecs = document.getElementById("toggle-forcecs");
+
 const pilotSort = document.getElementById("pilot-sort");
 const sortDirBtn = document.getElementById("sort-dir");
-const loadingNote = document.getElementById("loading-note");
+const loadingNote = document.getElementById("combi-summary");
+
+const pilotGrid = document.getElementById("pilot-grid");
+const prevPageBtn = document.getElementById("prev-page");
+const nextPageBtn = document.getElementById("next-page");
+const pageInfo = document.getElementById("page-info");
 
 const params = new URLSearchParams(location.search);
 const uidParam = params.get("uid");
@@ -115,8 +238,11 @@ let units = [], pilots = [], combiRows = [];
 let currentUnit = null;
 let sortKey = "D0";
 let sortDesc = true;
+let currentPage = 1;
+let totalPages = 1;
+let currentFiltered = [];
 
-/* ===== ヘルパー ===== */
+/* ===== Helpers ===== */
 async function fetchJson(url, opts){
   const res = await fetch(url, opts || {});
   if(!res.ok) throw new Error("Fetch failed: " + url + " (" + res.status + ")");
@@ -134,14 +260,18 @@ function fmtHB(v){
   if(isNaN(n)) return "-";
   return n.toFixed(2);
 }
-function makeBadge(text, cls){
-  const d = document.createElement("div");
-  d.className = "badge " + (cls || "");
-  d.textContent = text;
-  return d;
+function rarityClassFromString(rare){
+  if(!rare) return "";
+  const s = String(rare).replace(/\s+/g,"").toUpperCase();
+  if(s.indexOf("UR") !== -1 && s.indexOf("3") !== -1) return "rarity-ur3";
+  if(s.indexOf("UR") !== -1 && (s.indexOf("0") !== -1 || s.indexOf("０") !== -1)) return "rarity-ur0";
+  if(s.indexOf("SSR") !== -1 && s.indexOf("SSP") !== -1) return "rarity-ssr-ssp";
+  if(s.indexOf("SSP") !== -1 || s.indexOf("SP") !== -1) return "rarity-ssr-sp";
+  if(s.indexOf("SSR") !== -1) return "rarity-ssr-ssp";
+  return "";
 }
 
-/* pidMap 作成（柔軟にキーを探す） */
+/* pidMap */
 function buildPidMap(){
   const map = {};
   (pilots || []).forEach(p => {
@@ -156,7 +286,7 @@ function buildPidMap(){
   return map;
 }
 
-/* 既存の detectCombiParts（フォールバック用） */
+/* detectCombiParts fallback (HEAD) */
 async function detectCombiParts(){
   const parts = [];
   let consecutiveMisses = 0;
@@ -180,31 +310,18 @@ async function detectCombiParts(){
   return parts;
 }
 
-/* ---------- 新: combi_index を読み、uid に紐づくパートだけ返す ---------- */
-/* キャッシュキー */
+/* combi_index handling (cached in sessionStorage) */
 const COMBI_INDEX_CACHE_KEY = "combi_index_v1";
-
-/* try to load cached index from sessionStorage */
 function loadCachedCombiIndex(){
   try{
     const raw = sessionStorage.getItem(COMBI_INDEX_CACHE_KEY);
     if(!raw) return null;
     return JSON.parse(raw);
-  }catch(e){
-    return null;
-  }
+  }catch(e){ return null; }
 }
-
-/* save index to sessionStorage */
 function saveCachedCombiIndex(idx){
-  try{
-    sessionStorage.setItem(COMBI_INDEX_CACHE_KEY, JSON.stringify(idx));
-  }catch(e){
-    // ignore
-  }
+  try{ sessionStorage.setItem(COMBI_INDEX_CACHE_KEY, JSON.stringify(idx)); }catch(e){}
 }
-
-/* fetch combi_index.json from server and cache it */
 async function fetchCombiIndexFromServer(){
   try{
     const idx = await fetchJson(COMBI_INDEX_JSON);
@@ -215,26 +332,20 @@ async function fetchCombiIndexFromServer(){
     return null;
   }
 }
-
-/* get part URLs for a given uid using index (cached or fetched).
-   Returns array of full URLs (e.g., "./json-file/combi_part_03.json") or [] if none. */
 async function getPartsForUnit(uid){
   const uidStr = String(Number(uid));
-  // 1) try cached index
   let idx = loadCachedCombiIndex();
   if(idx && idx[uidStr] && idx[uidStr].length > 0){
     return idx[uidStr].map(fn => `${JSON_BASE_URL}/${fn}`);
   }
-  // 2) try fetch index from server
   idx = await fetchCombiIndexFromServer();
   if(idx && idx[uidStr] && idx[uidStr].length > 0){
     return idx[uidStr].map(fn => `${JSON_BASE_URL}/${fn}`);
   }
-  // 3) not found in index: return empty array (caller may fallback to full scan)
   return [];
 }
 
-/* combi 行の正規化（元の loadCombiForUnit と同じ処理を関数化） */
+/* normalize combi row */
 function normalizeCombiRow(r){
   const nr = Object.assign({}, r);
   nr.p = (nr.p !== undefined && nr.p !== null && nr.p !== "") ? Number(nr.p) : null;
@@ -261,39 +372,29 @@ function normalizeCombiRow(r){
   return nr;
 }
 
-/* ---------- 改良版 loadCombiForUnit: index を使ってピンポイント取得 ---------- */
+/* load combi rows for unit using index (pinpoint) */
 async function loadCombiForUnit(uid){
   combiRows = [];
   loadingNote.textContent = "読み込み中";
   combiSummary.textContent = "";
 
-  // 1) try to get part URLs from combi_index.json
   let partUrls = [];
-  try{
-    partUrls = await getPartsForUnit(uid);
-  }catch(e){
-    console.warn("getPartsForUnit failed:", e);
-    partUrls = [];
-  }
+  try{ partUrls = await getPartsForUnit(uid); }catch(e){ partUrls = []; }
 
-  // 2) If index returned nothing, fallback to detectCombiParts() (full scan)
   if(!partUrls || partUrls.length === 0){
-    // attempt to detect parts (HEAD) and then scan them sequentially
     const allParts = await detectCombiParts();
     if(!allParts || allParts.length === 0){
       combiSummary.textContent = "データが見つかりません";
       loadingNote.textContent = "";
       return;
     }
-    // scan all parts but stop early if desired (we will scan all to be safe)
     for(const url of allParts){
       try{
         const part = await fetchJson(url);
         for(const r of part){
           const ru = (r.u !== undefined && r.u !== null && r.u !== "") ? Number(r.u) : null;
           if(ru === uid){
-            const nr = normalizeCombiRow(r);
-            combiRows.push(nr);
+            combiRows.push(normalizeCombiRow(r));
           }
         }
       }catch(e){
@@ -302,19 +403,17 @@ async function loadCombiForUnit(uid){
     }
     loadingNote.textContent = "";
     combiSummary.textContent = `該当 ${combiRows.length} 件 (fallback scan)`;
-    applyPilotSortAndRender();
+    applyFiltersAndRender(); // render with filters/pagination
     return;
   }
 
-  // 3) If we have pinpointed partUrls, fetch only those
   for(const url of partUrls){
     try{
       const part = await fetchJson(url);
       for(const r of part){
         const ru = (r.u !== undefined && r.u !== null && r.u !== "") ? Number(r.u) : null;
         if(ru === uid){
-          const nr = normalizeCombiRow(r);
-          combiRows.push(nr);
+          combiRows.push(normalizeCombiRow(r));
         }
       }
     }catch(e){
@@ -324,10 +423,10 @@ async function loadCombiForUnit(uid){
 
   loadingNote.textContent = "";
   combiSummary.textContent = `該当 ${combiRows.length} 件`;
-  applyPilotSortAndRender();
+  applyFiltersAndRender();
 }
 
-/* ---------- パイロットカードを作る ---------- */
+/* ---------- Pilot card rendering (modified to include right-side attributes) ---------- */
 function renderPilotCard(pilotObj, combi){
   const div = document.createElement("div");
   div.className = "pilot-card";
@@ -341,15 +440,19 @@ function renderPilotCard(pilotObj, combi){
   const info = document.createElement("div");
   info.className = "p-info";
 
+  const top = document.createElement("div");
+  top.className = "p-top";
+
+  const leftCol = document.createElement("div");
+  leftCol.style.flex = "1";
+
   const name = document.createElement("div");
   name.className = "p-name";
   name.textContent = pilotObj["Pilot.キャラ"] || combi.pilot_name || "不明";
-  info.appendChild(name);
+  leftCol.appendChild(name);
 
-  // ダメージ（千区切り）
   const dmg = document.createElement("div");
   dmg.className = "p-dmg";
-  const dval = combi[sortKey] !== undefined && combi[sortKey] !== null ? combi[sortKey] : (combi.D0 || null);
   let dmgText = "-";
   if(sortKey && sortKey !== "name"){
     const v = combi[sortKey];
@@ -364,9 +467,10 @@ function renderPilotCard(pilotObj, combi){
     dmgText = fmtDamage(combi.D0);
   }
   dmg.textContent = dmgText;
-  info.appendChild(dmg);
+  leftCol.appendChild(dmg);
 
-  // 耐久回数（HB1 を優先して表示 if available; else HB0）
+  const hbEl = document.createElement("div");
+  hbEl.className = "p-hb";
   const hbKeyCandidates = ["HB1","HB0","HB2","HB3"];
   let hbVal = null;
   for(const k of hbKeyCandidates){
@@ -375,27 +479,57 @@ function renderPilotCard(pilotObj, combi){
       break;
     }
   }
-  const hbEl = document.createElement("div");
-  hbEl.className = "p-hb";
   hbEl.textContent = hbVal !== null ? `耐久: ${fmtHB(hbVal)}` : `耐久: -`;
-  info.appendChild(hbEl);
+  leftCol.appendChild(hbEl);
 
-  // 条件バッジ（C01..C08 の条件に応じて表示）
+  top.appendChild(leftCol);
+
+  // right column: show Pilot.特徴のタイプ, Pilot.特徴, Pilot.条件 if non-zero (values only)
+  const rightCol = document.createElement("div");
+  rightCol.style.minWidth = "120px";
+  rightCol.style.textAlign = "right";
+  rightCol.style.fontSize = "13px";
+  rightCol.style.color = "#333";
+
+  const ftype = pilotObj["Pilot.特徴のタイプ"];
+  const ftext = pilotObj["Pilot.特徴"];
+  const fcond = pilotObj["Pilot.条件"];
+
+  if(ftype !== undefined && ftype !== null && String(ftype).trim() !== "" && Number(ftype) !== 0){
+    const el = document.createElement("div");
+    el.textContent = String(ftype);
+    rightCol.appendChild(el);
+  }
+  if(ftext !== undefined && ftext !== null && String(ftext).trim() !== "" && Number(ftext) !== 0){
+    const el = document.createElement("div");
+    el.textContent = String(ftext);
+    rightCol.appendChild(el);
+  }
+  if(fcond !== undefined && fcond !== null && String(fcond).trim() !== "" && Number(fcond) !== 0){
+    const el = document.createElement("div");
+    el.textContent = String(fcond);
+    rightCol.appendChild(el);
+  }
+
+  top.appendChild(rightCol);
+
+  info.appendChild(top);
+
+  // badges and t2 as before
   const badges = document.createElement("div");
   badges.className = "badges";
   if((combi.C06 === 1) && (combi.C07 === 1)){
-    badges.appendChild(makeBadge("PAシリーズ＆タグ","pa"));
+    const b = document.createElement("div"); b.className = "badge pa"; b.textContent = "PAシリーズ＆タグ"; badges.appendChild(b);
   } else {
-    if(combi.C01 === 1) badges.appendChild(makeBadge("PA相性","pa"));
-    if(combi.C02 === 1) badges.appendChild(makeBadge("PAタグ","pa"));
-    if(combi.C03 === 1) badges.appendChild(makeBadge("PAシリーズ","pa"));
-    if(combi.C06 === 1 && combi.C07 !== 1) badges.appendChild(makeBadge("PAシリーズ","pa"));
-    if(combi.C07 === 1 && combi.C06 !== 1) badges.appendChild(makeBadge("PAタグ","pa"));
-    if(combi.C08 === 1) badges.appendChild(makeBadge("PAユニット","pa"));
+    if(combi.C01 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PA相性"; badges.appendChild(b); }
+    if(combi.C02 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAタグ"; badges.appendChild(b); }
+    if(combi.C03 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAシリーズ"; badges.appendChild(b); }
+    if(combi.C06 === 1 && combi.C07 !== 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAシリーズ"; badges.appendChild(b); }
+    if(combi.C07 === 1 && combi.C06 !== 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAタグ"; badges.appendChild(b); }
+    if(combi.C08 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAユニット"; badges.appendChild(b); }
   }
   info.appendChild(badges);
 
-  // 2回行動アイコン（t2）
   if(combi.t2 === 1){
     const two = document.createElement("div");
     two.className = "two-action";
@@ -415,42 +549,7 @@ function renderPilotCard(pilotObj, combi){
   return div;
 }
 
-/* 並べ替えと描画 */
-function applyPilotSortAndRender(){
-  const pidMap = buildPidMap();
-  let list = combiRows.slice();
-
-  if(sortKey === "name"){
-    list.sort((a,b)=>{
-      const sa = ((pidMap[a.p] && pidMap[a.p]["Pilot.キャラ"]) || a.pilot_name || "").toString();
-      const sb = ((pidMap[b.p] && pidMap[b.p]["Pilot.キャラ"]) || b.pilot_name || "").toString();
-      return sortDesc ? sb.localeCompare(sa, 'ja') : sa.localeCompare(sb, 'ja');
-    });
-  } else {
-    list.sort((a,b)=>{
-      const va = (a[sortKey] !== undefined && a[sortKey] !== null) ? Number(a[sortKey]) : null;
-      const vb = (b[sortKey] !== undefined && b[sortKey] !== null) ? Number(b[sortKey]) : null;
-      const na = (va === null || isNaN(va)) ? -Infinity : va;
-      const nb = (vb === null || isNaN(vb)) ? -Infinity : vb;
-      return sortDesc ? nb - na : na - nb;
-    });
-  }
-
-  pilotGrid.innerHTML = "";
-  if(list.length === 0){
-    combiSummary.textContent = "該当 0 件";
-    return;
-  }
-  combiSummary.textContent = `該当 ${list.length} 件`;
-  const pidCache = buildPidMap(); // small optimization
-  for(const combi of list){
-    const p = (combi.p !== null && pidCache[combi.p]) ? pidCache[combi.p] : null;
-    const pilotObj = p || { "Pilot.キャラ": combi.pilot_name || "不明", "Pilot.画像リンク": "" };
-    pilotGrid.appendChild(renderPilotCard(pilotObj, combi));
-  }
-}
-
-/* 並べ替えドロップダウンを作る */
+/* ---------- Filtering, sorting, pagination ---------- */
 function populateSortOptions(){
   pilotSort.innerHTML = "";
   const optName = document.createElement("option");
@@ -467,7 +566,205 @@ function populateSortOptions(){
   pilotSort.value = sortKey;
 }
 
-/* 初期化 */
+function uniqueValuesFromPilots(key){
+  const s = new Set();
+  (pilots || []).forEach(p => {
+    const v = (p[key] || "").toString().trim();
+    if(v !== "") s.add(v);
+  });
+  return Array.from(s).sort((a,b)=> a.localeCompare(b,'ja'));
+}
+
+function populatePilotFilterOptions(){
+  populateSelect(filterPilotRarity, uniqueValuesFromPilots("Pilot.レア"));
+  populateSelect(filterPilotType, uniqueValuesFromPilots("Pilot.タイプ"));
+  populateSelect(filterPilotObtain, uniqueValuesFromPilots("Pilot.入手"));
+}
+
+function populateSelect(el, values){
+  el.innerHTML = "";
+  values.forEach(v=>{
+    const opt = document.createElement("option");
+    opt.value = v;
+    opt.textContent = v;
+    el.appendChild(opt);
+  });
+}
+
+function getMultiSelectValues(selectEl){
+  // returns array of selected values; if none selected, return []
+  return Array.from(selectEl.selectedOptions).map(o=>o.value).filter(v=>v!=="");
+}
+
+function applyFiltersAndRender(){
+  // Build pid map
+  const pidMap = buildPidMap();
+
+  // filters
+  const rarities = getMultiSelectValues(filterPilotRarity);
+  const types = getMultiSelectValues(filterPilotType);
+  const obtains = getMultiSelectValues(filterPilotObtain);
+
+  const toggles = {
+    autoheal: toggleAutoheal.classList.contains("active"),
+    moveup: toggleMoveup.classList.contains("active"),
+    counterdef: toggleCounterdef.classList.contains("active"),
+    forcecs: toggleForcecs.classList.contains("active")
+  };
+
+  // Start from combiRows, map to pilot objects
+  let list = combiRows.slice();
+
+  // Filter by pilot properties using pidMap
+  list = list.filter(c => {
+    const p = (c.p !== null && pidMap[c.p]) ? pidMap[c.p] : null;
+    if(!p) return false;
+    // multi-select filters
+    if(rarities.length && !rarities.includes((p["Pilot.レア"]||"").toString())) return false;
+    if(types.length && !types.includes((p["Pilot.タイプ"]||"").toString())) return false;
+    if(obtains.length && !obtains.includes((p["Pilot.入手"]||"").toString())) return false;
+    // toggles: if active, require field != 0 (or truthy)
+    if(toggles.autoheal && Number(p["Pilot.自動回復"]||0) === 0) return false;
+    if(toggles.moveup && Number(p["Pilot.移動力UP"]||0) === 0) return false;
+    if(toggles.counterdef && Number(p["Pilot.反撃支援防御"]||0) === 0) return false;
+    if(toggles.forcecs && Number(p["Pilot.強制CS"]||0) === 0) return false;
+    return true;
+  });
+
+  // Sorting
+  const key = pilotSort.value || "D0";
+  if(key === "name"){
+    list.sort((a,b)=>{
+      const sa = ((pidMap[a.p] && pidMap[a.p]["Pilot.キャラ"]) || a.pilot_name || "").toString();
+      const sb = ((pidMap[b.p] && pidMap[b.p]["Pilot.キャラ"]) || b.pilot_name || "").toString();
+      return sortDesc ? sb.localeCompare(sa,'ja') : sa.localeCompare(sb,'ja');
+    });
+  } else {
+    list.sort((a,b)=>{
+      const va = (a[key] !== undefined && a[key] !== null) ? Number(a[key]) : null;
+      const vb = (b[key] !== undefined && b[key] !== null) ? Number(b[key]) : null;
+      const na = (va === null || isNaN(va)) ? -Infinity : va;
+      const nb = (vb === null || isNaN(vb)) ? -Infinity : vb;
+      return sortDesc ? nb - na : na - nb;
+    });
+  }
+
+  currentFiltered = list;
+  totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  if(currentPage > totalPages) currentPage = totalPages;
+  renderPage();
+}
+
+function renderPage(){
+  pilotGrid.innerHTML = "";
+  const total = currentFiltered.length;
+  if(total === 0){
+    loadingNote.textContent = "該当 0 件";
+    pageInfo.textContent = `Page 0 / 0`;
+    prevPageBtn.disabled = true;
+    nextPageBtn.disabled = true;
+    return;
+  }
+  loadingNote.textContent = `該当 ${total} 件`;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, total);
+  const pageItems = currentFiltered.slice(start, end);
+
+  const pidMap = buildPidMap();
+  for(const combi of pageItems){
+    const p = (combi.p !== null && pidMap[combi.p]) ? pidMap[combi.p] : null;
+    const pilotObj = p || { "Pilot.キャラ": combi.pilot_name || "不明", "Pilot.画像リンク": "" };
+    pilotGrid.appendChild(renderPilotCard(pilotObj, combi));
+  }
+
+  pageInfo.textContent = `Page ${currentPage} / ${totalPages}`;
+  prevPageBtn.disabled = (currentPage <= 1);
+  nextPageBtn.disabled = (currentPage >= totalPages);
+}
+
+/* ---------- Unit info rendering ---------- */
+function renderUnitInfo(u){
+  unitThumb.src = u["画像リンク"] || "";
+  unitName.textContent = u["ユニット"] || ("ID:" + u.uid);
+
+  // rarity badge text and class
+  const rareText = u["レア"] || "";
+  unitRarity.textContent = rareText;
+  const rc = rarityClassFromString(rareText);
+  unitRarity.className = "rarity-badge " + (rc || "");
+  // move / range / obtain
+  unitMove.textContent = `移動: ${u["移動力"] || "-"}`;
+  unitRange.textContent = `最大射程: ${u["最大射程"] || "-"}`;
+  unitObtain.textContent = `入手: ${u["入手"] || "-"}`;
+
+  // HP / attack / defense
+  unitHP.textContent = `HP: ${u["HP"] !== undefined && u["HP"] !== null && u["HP"] !== "" ? new Intl.NumberFormat('ja-JP').format(Number(u["HP"])) : "-"}`;
+  unitAttack.textContent = `攻撃力: ${u["(A) 攻撃"] !== undefined && u["(A) 攻撃"] !== null && u["(A) 攻撃"] !== "" ? new Intl.NumberFormat('ja-JP').format(Number(u["(A) 攻撃"])) : "-"}`;
+  unitDefense.textContent = `防御力: ${u["防御力"] !== undefined && u["防御力"] !== null && u["防御力"] !== "" ? new Intl.NumberFormat('ja-JP').format(Number(u["防御力"])) : "-"}`;
+
+  // feature line
+  const feat = u["特徴"] || "";
+  unitFeature.textContent = feat ? feat : "";
+
+  // shield defense (0.2 -> 20%)
+  const shield = u["シールド防御"];
+  if(shield !== undefined && shield !== null && shield !== ""){
+    const n = Number(shield);
+    if(!isNaN(n)){
+      unitShield.textContent = `シールド防御: ${Math.round(n * 100)}%`;
+    } else {
+      unitShield.textContent = "";
+    }
+  } else {
+    unitShield.textContent = "";
+  }
+
+  // weapon icons
+  const wPhys = String(u["武装 物理"] || "0");
+  const wBeam = String(u["武装 ビーム"] || "0");
+  const wSpec = String(u["武装 特殊"] || "0");
+  iconPhysical.classList.toggle("hidden", !(wPhys === "1" || wPhys === "1.0" || wPhys === "true"));
+  iconBeam.classList.toggle("hidden", !(wBeam === "1" || wBeam === "1.0" || wBeam === "true"));
+  iconSpecial.classList.toggle("hidden", !(wSpec === "1" || wSpec === "1.0" || wSpec === "true"));
+
+  // weapon power / range
+  weaponPower.textContent = u["武装 Power"] !== undefined && u["武装 Power"] !== null && u["武装 Power"] !== "" ? `武装 Power: ${u["武装 Power"]}` : "";
+  weaponRange.textContent = u["武装 Range"] !== undefined && u["武装 Range"] !== null && u["武装 Range"] !== "" ? `武装 Range: ${u["武装 Range"]}` : "";
+
+  // weapon effects list (only non-zero)
+  const effectKeys = [
+    ["武装 敵防御力減少","敵防御力減少"],
+    ["武装 防御力減","敵防御力減少"],
+    ["武装 ビーム被ダメ減","敵ビーム被ダメ減少"],
+    ["武装 物理被ダメ減","敵物理被ダメ減少"],
+    ["武装 特殊被ダメ減","敵特殊被ダメ減少"],
+    ["武装 攻撃力減","敵攻撃力減少"],
+    ["武装 物理Power減","敵物理Power減少"],
+    ["武装 ビームPower減","敵ビームPower減少"],
+    ["武装 特殊Power減","敵特殊Power減少"]
+  ];
+  weaponEffects.innerHTML = "";
+  for(const [k,label] of effectKeys){
+    const v = u[k];
+    if(v !== undefined && v !== null && v !== "" && Number(v) !== 0){
+      const li = document.createElement("li");
+      li.textContent = `${label}: ${v}`;
+      weaponEffects.appendChild(li);
+    }
+  }
+
+  // MAP兵器 trio (display inline)
+  mapRow.innerHTML = "";
+  const mapA = u["MAP兵器"];
+  const mapPower = u["MAP兵器　Power"] || u["MAP兵器 Power"] || u["MAP兵器 Power"];
+  const mapShape = u["MAP兵器Shape"] || u["MAP兵器Shape"] || u["MAP兵器Shape"];
+  // show only if any present (if value is empty string or 0, still show if non-empty)
+  const m1 = document.createElement("div"); m1.textContent = `MAP兵器: ${mapA || "-"}`; mapRow.appendChild(m1);
+  const m2 = document.createElement("div"); m2.textContent = `Power: ${mapPower || "-"}`; mapRow.appendChild(m2);
+  const m3 = document.createElement("div"); m3.textContent = `Shape: ${mapShape || "-"}`; mapRow.appendChild(m3);
+}
+
+/* ---------- Initialization ---------- */
 async function init(){
   try{
     const unitsData = await fetchJson(UNITS_JSON);
@@ -478,39 +775,55 @@ async function init(){
     const uid = Number(uidParam);
     currentUnit = units.find(u => Number(u.uid) === uid);
     if(!currentUnit){
-      document.getElementById("unit-name").textContent = "ユニットが見つかりません";
-      combiSummary.textContent = "ユニット ID を確認してください";
+      unitName.textContent = "ユニットが見つかりません";
       loadingNote.textContent = "";
       return;
     }
 
-    unitThumb.src = currentUnit["画像リンク"] || "";
-    unitName.textContent = currentUnit["ユニット"] || ("ID:" + currentUnit.uid);
-    unitMeta.textContent = `${currentUnit["レア"] || ""} / ${currentUnit["タイプ"] || ""} / 移動:${currentUnit["移動力"] || ""} / 射程:${currentUnit["最大射程"] || ""} / 入手:${currentUnit["入手"] || ""}`;
+    renderUnitInfo(currentUnit);
 
+    // populate pilot filter options
+    populatePilotFilterOptions();
     populateSortOptions();
 
-    // load combi rows for this unit (uses combi_index.json if available)
+    // load combi rows for this unit
     await loadCombiForUnit(currentUnit.uid);
   }catch(err){
     console.error(err);
-    combiSummary.textContent = "読み込みエラー";
-    loadingNote.textContent = "";
+    loadingNote.textContent = "読み込みエラー";
   }
 }
 
-/* イベント */
+/* ---------- Events ---------- */
 pilotSort.addEventListener("change", ()=>{
   sortKey = pilotSort.value || "D0";
-  applyPilotSortAndRender();
+  applyFiltersAndRender();
 });
 sortDirBtn.addEventListener("click", ()=>{
   sortDesc = !sortDesc;
   sortDirBtn.textContent = sortDesc ? "降順" : "昇順";
-  applyPilotSortAndRender();
+  applyFiltersAndRender();
 });
 
-/* 起動 */
+[ toggleAutoheal, toggleMoveup, toggleCounterdef, toggleForcecs ].forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    btn.classList.toggle("active");
+    applyFiltersAndRender();
+  });
+});
+
+[ filterPilotRarity, filterPilotType, filterPilotObtain ].forEach(sel=>{
+  sel.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
+});
+
+prevPageBtn.addEventListener("click", ()=>{
+  if(currentPage > 1){ currentPage--; renderPage(); window.scrollTo({top:0,behavior:'smooth'}); }
+});
+nextPageBtn.addEventListener("click", ()=>{
+  if(currentPage < totalPages){ currentPage++; renderPage(); window.scrollTo({top:0,behavior:'smooth'}); }
+});
+
+/* ---------- Start ---------- */
 init();
 </script>
 </body>
