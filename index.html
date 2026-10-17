@@ -6,7 +6,7 @@
 <title>Unit List</title>
 <style>
   :root{
-    --gap:6px;           /* smaller gap between cards */
+    --gap:6px;
     --thumb:60px;
     --card-w:90px;
     --accent:#2b6cb0;
@@ -15,7 +15,6 @@
     font-family: system-ui, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Arial;
   }
 
-  /* Page layout */
   html,body{height:100%;margin:0}
   body{color:#111;background:#fff;padding:16px}
   header{
@@ -27,12 +26,11 @@
     padding:8px 0;
     background:#fff;
     border-bottom:1px solid #eee;
-    position:static; /* allow full page scroll */
+    position:static;
     z-index:10;
   }
   h1{margin:0;font-size:18px}
 
-  /* Filters / Controls */
   .filters{
     display:flex;
     flex-wrap:wrap;
@@ -44,56 +42,47 @@
     padding:6px;border:1px solid #ddd;border-radius:6px;background:#fff;
   }
 
-  /* Label appearance */
   .filters label{
     display:flex;
     flex-direction:column;
     align-items:flex-start;
-    font-size:11px;        /* change this number to adjust label font-size */
+    font-size:11px;
     margin:0;
-    max-width: 180px;       /* minimum label width; change as needed */
+    max-width: 180px;
   }
 
-  /* Row break element to force new line in flex layout */
   .filters-row-break{
     flex-basis:100%;
     height:0;
   }
 
-  /* Series full row */
   .filters-fullrow{
     flex-basis:100%;
     width:100%;
     margin-top:4px;
   }
 
-  /* Inline container for Tag1/Tag2 */
   .filters-inline{
     display:flex;
-    gap:8px;               /* gap between Tag1 and Tag2 */
+    gap:8px;
     align-items:flex-start;
     width:100%;
   }
 
-  /* Each Tag item width (70% as requested) */
   .filters-inline-item{
     display:flex;
     flex-direction:column;
     align-items:flex-start;
-    width:70%;             /* change this number to adjust Tag width */
+    width:70%;
   }
-
-  /* If you prefer Tag1/Tag2 to share space equally, use width:48% above instead */
 
   .controls{margin-left:auto;display:flex;gap:8px;align-items:center}
   .btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
   .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 
-  /* Pagination controls */
   .pager{display:flex;gap:8px;align-items:center;margin-left:8px}
   .pager .page-info{font-size:13px;color:var(--muted)}
 
-  /* Grid and cards */
   main{min-height:60vh}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-w),1fr));gap:var(--gap)}
   a.card{
@@ -115,7 +104,6 @@
   }
   a.card, a.card * { text-decoration: none !important; }
 
-  /* Icon area */
   .icon-area{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;pointer-events:none;margin:0}
   .icon-top{width:100%;display:flex;justify-content:center;align-items:center;gap:6px;padding:0 6px;box-sizing:border-box}
   .icon-circle{min-width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:11px;box-shadow:0 1px 2px rgba(0,0,0,0.12);padding:0 6px}
@@ -124,11 +112,9 @@
   .rare-row{width:100%;display:flex;justify-content:center}
   .rare-badge{display:inline-block;padding:4px 8px;border-radius:8px;color:#fff;font-weight:700;font-size:11px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,0.12)}
 
-  /* Thumb */
   .thumb-wrap{width:var(--thumb);height:var(--thumb);display:flex;align-items:center;justify-content:center;margin-top:0}
   .thumb{width:var(--thumb);height:var(--thumb);object-fit:cover;border-radius:4px;border:1px solid #ddd;display:block}
 
-  /* Text */
   .name{font-size:12px;text-align:center;line-height:1.2;margin:0}
   .meta{font-size:12px;color:#000;font-weight:800;margin:0;min-height:1.2em}
   .meta-number{color:var(--meta-red);font-weight:900;font-size:14px;line-height:1}
@@ -138,7 +124,6 @@
   .empty{padding:40px;text-align:center;color:var(--muted)}
   footer{margin-top:18px;color:var(--muted);font-size:13px}
 
-  /* Rarity classes (kept) */
   .rarity-ur3 { background: linear-gradient(90deg,#e6d9ff 0%,#ffd9e6 18%,#e9dbff 36%,#e8f7d9 56%,#d9f7fb 76%,#cfeaff 100%); color:#1a1a1a; font-weight:450; border-radius:6px; padding:3px 6px; display:inline-block; font-size:11px; }
   .rarity-ur0 { background: linear-gradient(90deg,#f3efff 0%,#fff3f6 18%,#f6efff 36%,#f6fbef 56%,#eefbfd 76%,#eef7ff 100%); color:#000000; font-weight:100; border-radius:6px; padding:3px 6px; display:inline-block; font-size:11px; }
   .rarity-ssr-ssp { background: linear-gradient(90deg,#ff8a33 0%,#ff9f4d 25%,#ffc24f 55%,#ffe27a 85%); color:#1a1a1a; border-radius:6px; padding:3px 6px; font-weight:450; display:inline-block; font-size:11px; }
@@ -179,18 +164,14 @@
       <select id="filter-obtain" multiple title="Select one or more Obtain values"><option value="">All</option></select>
     </label>
 
-    <!-- force new line -->
     <div class="filters-row-break"></div>
 
-    <!-- Series full row -->
     <label class="filters-fullrow"><span class="small">Series</span>
       <select id="filter-series" title="Series"><option value="">All</option></select>
     </label>
 
-    <!-- force new line -->
     <div class="filters-row-break"></div>
 
-    <!-- Tag1 and Tag2 inline -->
     <div class="filters-inline">
       <label class="filters-inline-item"><span class="small">Tag1</span>
         <select id="filter-tag1" title="Tag1"><option value="">All</option></select>
@@ -275,7 +256,7 @@ const nextPageBtn = document.getElementById("next-page");
 const pageInfo = document.getElementById("page-info");
 const resetBtn = document.getElementById("reset");
 
-let sortDirAsc = false; // default descending for numeric fields
+let sortDirAsc = false;
 
 /* ===== Helpers ===== */
 async function fetchJson(url, cacheBust=false){
@@ -336,14 +317,12 @@ function populateSortOptions(){
   });
 }
 
-/* numeric check */
 function isNumericValue(v){
   if(v === undefined || v === null || v === "") return false;
   const n = Number(v);
   return Number.isFinite(n);
 }
 
-/* format display: HB* show 2 decimals, others integer rounded */
 function formatValueForDisplay(key, v){
   if(v === undefined || v === null || v === "") return "-";
   const n = Number(v);
@@ -354,7 +333,6 @@ function formatValueForDisplay(key, v){
   return Math.round(n).toLocaleString('ja-JP');
 }
 
-/* render a single card */
 function renderCard(u){
   const a = document.createElement("a");
   a.href = `detail.html?uid=${encodeURIComponent(u.uid)}`;
@@ -443,6 +421,29 @@ function renderCard(u){
   return a;
 }
 
+/* ---------- Normalization helpers to handle half/full-width differences ---------- */
+/* Use Unicode NFKC to normalize full-width punctuation to ASCII equivalents,
+   convert full-width spaces to normal spaces, collapse whitespace, and trim. */
+function normalizeStringForMatch(v){
+  if(v === undefined || v === null) return "";
+  // NFKC converts full-width punctuation and numbers to ASCII equivalents
+  let s = String(v).normalize('NFKC');
+  // convert full-width spaces to normal spaces (NFKC already does this, but keep safe)
+  s = s.replace(/\u3000/g, ' ');
+  // collapse whitespace and trim
+  s = s.replace(/\s+/g, ' ').trim();
+  return s;
+}
+
+/* Normalize array-like values (comma separated or array) and return normalized tokens */
+function normalizeArrayLikeForMatch(v){
+  if(v === undefined || v === null) return [];
+  if(Array.isArray(v)) return v.map(x => normalizeStringForMatch(x)).filter(Boolean);
+  // split on commas (both half and full width), semicolons, slashes, and vertical bars and Japanese delimiter '、'
+  const parts = String(v).split(/[,，;；\/\\|、]/).map(s => normalizeStringForMatch(s)).filter(Boolean);
+  return parts;
+}
+
 /* populate series/tag selects from series_tag_options.json */
 function populateSeriesAndTags(){
   filterSeries.innerHTML = '<option value="">All</option>';
@@ -500,6 +501,15 @@ function saveUIState() {
     console.warn("Could not save UI state:", e);
   }
 }
+function loadUIState(){
+  try{
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){ return null; }
+}
+
+/* loadSavedUIState / applyUIState (compat helper names) */
 function loadSavedUIState() {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
@@ -535,98 +545,100 @@ function applyUIState(state) {
   currentPage = Math.max(1, Number(state.page || 1));
 }
 
-/* apply filters and render (AND across Series, Tag1, Tag2; multi-selects for Rare/Type/Move/Range/Obtain) */
+/* ---------- Filtering / rendering (normalized matching) ---------- */
 function applyFiltersAndRender(){
   const rarities = getMultiSelectValues(filterRarity);
   const types = getMultiSelectValues(filterType);
   const moves = getMultiSelectValues(filterMove);
   const ranges = getMultiSelectValues(filterRange);
   const obtains = getMultiSelectValues(filterObtain);
+  const seriesSel = filterSeries.value || "";
+  const tag1Sel = filterTag1.value || "";
+  const tag2Sel = filterTag2.value || "";
 
-  const seriesVal = filterSeries.value;
-  const tag1Val = filterTag1.value;
-  const tag2Val = filterTag2.value;
+  // normalized selected values for matching
+  const normSeriesSel = normalizeStringForMatch(seriesSel);
+  const normTag1Sel = normalizeStringForMatch(tag1Sel);
+  const normTag2Sel = normalizeStringForMatch(tag2Sel);
 
   let list = units.slice();
 
-  if(rarities.length){
-    list = list.filter(u => rarities.includes((u["レア"]||"").toString()));
-  }
-  if(types.length){
-    list = list.filter(u => types.includes((u["タイプ"]||"").toString()));
-  }
-  if(moves.length){
-    list = list.filter(u => moves.includes((u["移動力"]||"").toString()));
-  }
-  if(ranges.length){
-    list = list.filter(u => ranges.includes((u["最大射程"]||"").toString()));
-  }
-  if(obtains.length){
-    list = list.filter(u => obtains.includes((u["入手"]||"").toString()));
-  }
-
-  // Series: exact match against comma-separated "シリーズ連結"
-  if(seriesVal){
-    list = list.filter(u => {
-      const s = (u["シリーズ連結"] || "").toString();
-      if(!s) return false;
-      return s.split(",").map(x=>x.trim()).some(x => x === seriesVal);
-    });
-  }
-
-  // Tag1: exact match against "タグ連結"
-  if(tag1Val){
-    list = list.filter(u => {
-      const s = (u["タグ連結"] || "").toString();
-      if(!s) return false;
-      return s.split(",").map(x=>x.trim()).some(x => x === tag1Val);
-    });
-  }
-
-  // Tag2: AND with Tag1
-  if(tag2Val){
-    list = list.filter(u => {
-      const s = (u["タグ連結"] || "").toString();
-      if(!s) return false;
-      return s.split(",").map(x=>x.trim()).some(x => x === tag2Val);
-    });
-  }
-
-  // Sorting
-  const key = sortBy.value;
-  list.sort((a,b)=>{
-    if(key === "name"){
-      const sa = (a["ユニット"]||"").toString();
-      const sb = (b["ユニット"]||"").toString();
-      return sortDirAsc ? sa.localeCompare(sb, 'ja') : sb.localeCompare(sa, 'ja');
+  list = list.filter(u => {
+    // basic filters (exact match on displayed strings)
+    if(rarities.length > 0){
+      const rv = (u["レア"] || "").toString();
+      if(!rarities.includes(rv)) return false;
     }
-    const va = a[key], vb = b[key];
-    const na = (va === undefined || va === null || va === "") ? null : Number(va);
-    const nb = (vb === undefined || vb === null || vb === "") ? null : Number(vb);
-    if(!isNaN(na) && !isNaN(nb)){
-      return sortDirAsc ? na - nb : nb - na;
+    if(types.length > 0){
+      const tv = (u["タイプ"] || u["機体タイプ"] || "").toString();
+      if(!types.includes(tv)) return false;
     }
-    const sa = (va||"").toString();
-    const sb = (vb||"").toString();
-    return sortDirAsc ? sa.localeCompare(sb, 'ja') : sb.localeCompare(sa, 'ja');
+    if(moves.length > 0){
+      const mv = (u["移動力"] || "").toString();
+      if(!moves.includes(mv)) return false;
+    }
+    if(ranges.length > 0){
+      const rv = (u["最大射程"] || "").toString();
+      if(!ranges.includes(rv)) return false;
+    }
+    if(obtains.length > 0){
+      const ov = (u["入手"] || "").toString();
+      if(!obtains.includes(ov)) return false;
+    }
+
+    // series filter: compare normalized forms
+    if(normSeriesSel){
+      const seriesCandidates = u["シリーズ連結"] || u["シリーズ"] || u["Series"] || u["SeriesName"] || "";
+      const unitSeries = normalizeArrayLikeForMatch(seriesCandidates);
+      if(!unitSeries.some(s => s === normSeriesSel)) return false;
+    }
+
+    // tag filters: compare normalized forms and support multiple separators and full/half width
+    if(normTag1Sel){
+      const tagCandidates = u["タグ連結"] || u["タグ"] || u["Tag"] || u["TagName"] || "";
+      const unitTags = normalizeArrayLikeForMatch(tagCandidates);
+      if(!unitTags.some(t => t === normTag1Sel)) return false;
+    }
+    if(normTag2Sel){
+      const tagCandidates = u["タグ連結"] || u["タグ"] || u["Tag"] || u["TagName"] || "";
+      const unitTags = normalizeArrayLikeForMatch(tagCandidates);
+      if(!unitTags.some(t => t === normTag2Sel)) return false;
+    }
+
+    return true;
   });
 
-  // Save filtered list and compute pagination
+  // sorting
+  const key = sortBy.value || "D0";
+  if(key === "name"){
+    list.sort((a,b)=>{
+      const sa = (a["ユニット"] || "").toString();
+      const sb = (b["ユニット"] || "").toString();
+      return sortDirAsc ? sa.localeCompare(sb,'ja') : sb.localeCompare(sa,'ja');
+    });
+  } else {
+    list.sort((a,b)=>{
+      const va = (a[key] !== undefined && a[key] !== null) ? Number(a[key]) : null;
+      const vb = (b[key] !== undefined && b[key] !== null) ? Number(b[key]) : null;
+      const na = (va === null || isNaN(va)) ? -Infinity : va;
+      const nb = (vb === null || isNaN(vb)) ? -Infinity : vb;
+      return sortDirAsc ? na - nb : nb - na;
+    });
+  }
+
   currentFiltered = list;
   totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
   if(currentPage > totalPages) currentPage = totalPages;
-  // persist UI state
-  saveUIState();
   renderPage();
+  saveUIState();
 }
 
-/* render current page */
 function renderPage(){
   grid.innerHTML = "";
   const total = currentFiltered.length;
+  summary.textContent = `該当 ${total} 件`;
   if(total === 0){
     emptyEl.style.display = "block";
-    summary.textContent = `Showing 0 / ${units.length} units`;
     pageInfo.textContent = `Page 0 / 0`;
     prevPageBtn.disabled = true;
     nextPageBtn.disabled = true;
@@ -634,30 +646,27 @@ function renderPage(){
   } else {
     emptyEl.style.display = "none";
   }
-
   const start = (currentPage - 1) * PAGE_SIZE;
   const end = Math.min(start + PAGE_SIZE, total);
   const pageItems = currentFiltered.slice(start, end);
-
-  pageItems.forEach(u => grid.appendChild(renderCard(u)));
-
-  summary.textContent = `Showing ${start + 1}–${end} / ${units.length} units (filtered ${total})`;
+  pageItems.forEach(u => {
+    grid.appendChild(renderCard(u));
+  });
   pageInfo.textContent = `Page ${currentPage} / ${totalPages}`;
-
   prevPageBtn.disabled = (currentPage <= 1);
   nextPageBtn.disabled = (currentPage >= totalPages);
 }
 
-/* Initialization */
-async function init(cacheBust=false){
+/* ---------- Initialization ---------- */
+async function init(){
   errorEl.style.display = "none";
   try{
-    try{ fieldMap = await fetchJson(COMBI_FIELD_MAP_JSON(), cacheBust); }catch(e){ fieldMap = {}; }
-    try{ seriesTagOptions = await fetchJson(SERIES_TAG_JSON(), cacheBust); }catch(e){ seriesTagOptions = {}; }
+    try{ fieldMap = await fetchJson(COMBI_FIELD_MAP_JSON(), true); }catch(e){ fieldMap = {}; }
+    try{ seriesTagOptions = await fetchJson(SERIES_TAG_JSON(), true); }catch(e){ seriesTagOptions = {}; }
 
-    units = await fetchJson(UNITS_JSON(), cacheBust);
+    units = await fetchJson(UNITS_JSON(), true);
 
-    // populate multi-selects (Rare, Type, Move, Range, Obtain)
+    // populate basic selects from units (rarity/type/move/range/obtain)
     populateMultiSelect(filterRarity, uniqueValues(units, "レア"));
     populateMultiSelect(filterType, uniqueValues(units, "タイプ"));
     populateMultiSelect(filterMove, uniqueValues(units, "移動力"));
@@ -667,33 +676,32 @@ async function init(cacheBust=false){
     populateSeriesAndTags();
     populateSortOptions();
 
-    // try to restore saved state; if none, do normal initial render
-    const saved = loadSavedUIState();
-    if(saved){
-      applyUIState(saved);
+    // restore UI state if present
+    const st = loadSavedUIState();
+    if(st){
+      applyUIState(st);
       // ensure sortBy exists in options
-      if(!Array.from(sortBy.options).some(o=>o.value===saved.sortBy)) sortBy.value = "D0";
+      if(!Array.from(sortBy.options).some(o=>o.value===st.sortBy)) sortBy.value = "D0";
       applyFiltersAndRender();
     } else {
       sortBy.value = "D0";
       sortDirAsc = false;
       applyFiltersAndRender();
     }
-  }catch(err){
+  }catch(e){
+    console.error(e);
     errorEl.style.display = "block";
-    errorEl.textContent = "Load error: " + err.message;
-    summary.textContent = "Load error";
-    console.error(err);
+    errorEl.textContent = "読み込みエラー: " + (e && e.message ? e.message : String(e));
   }
 }
 
-/* Events */
-filterRarity.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
-filterType.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
-filterMove.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
-filterRange.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
-filterObtain.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
-
+/* ---------- Events ---------- */
+[filterRarity, filterType, filterMove, filterRange, filterObtain].forEach(sel=>{
+  sel.addEventListener("change", ()=>{
+    currentPage = 1;
+    applyFiltersAndRender();
+  });
+});
 filterSeries.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
 filterTag1.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
 filterTag2.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
@@ -701,30 +709,34 @@ filterTag2.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRend
 sortBy.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
 
 prevPageBtn.addEventListener("click", ()=>{
-  if(currentPage > 1){ currentPage--; saveUIState(); renderPage(); window.scrollTo({top:0,behavior:'smooth'}); }
+  if(currentPage > 1){ currentPage--; renderPage(); window.scrollTo({top:0,behavior:'smooth'}); saveUIState(); }
 });
 nextPageBtn.addEventListener("click", ()=>{
-  if(currentPage < totalPages){ currentPage++; saveUIState(); renderPage(); window.scrollTo({top:0,behavior:'smooth'}); }
+  if(currentPage < totalPages){ currentPage++; renderPage(); window.scrollTo({top:0,behavior:'smooth'}); saveUIState(); }
 });
 
 resetBtn.addEventListener("click", ()=>{
   // clear multi-selects
-  Array.from(filterRarity.options).forEach(o => o.selected = (o.value === ""));
-  Array.from(filterType.options).forEach(o => o.selected = (o.value === ""));
-  Array.from(filterMove.options).forEach(o => o.selected = (o.value === ""));
-  Array.from(filterRange.options).forEach(o => o.selected = (o.value === ""));
-  Array.from(filterObtain.options).forEach(o => o.selected = (o.value === ""));
-  // clear single selects
+  Array.from([filterRarity, filterType, filterMove, filterRange, filterObtain]).forEach(sel=>{
+    Array.from(sel.options).forEach(opt => opt.selected = false);
+    sel.value = "";
+  });
   filterSeries.value = "";
   filterTag1.value = "";
   filterTag2.value = "";
-  // reset sort and page
-  sortBy.value = "D0";
+  sortBy.value = "name";
   sortDirAsc = false;
   currentPage = 1;
-  // clear saved state
   try { sessionStorage.removeItem(STORAGE_KEY); } catch(e){}
   applyFiltersAndRender();
+});
+
+/* keyboard shortcut: toggle sort direction (S) */
+window.addEventListener("keydown", (ev)=>{
+  if(ev.key === "s" || ev.key === "S"){
+    sortDirAsc = !sortDirAsc;
+    applyFiltersAndRender();
+  }
 });
 
 /* Save state before navigating away via card links */
@@ -740,9 +752,7 @@ grid.addEventListener("click", function(e){
 });
 
 /* Save on beforeunload */
-window.addEventListener("beforeunload", function(){
-  saveUIState();
-});
+window.addEventListener("beforeunload", saveUIState);
 
 /* initial load */
 init();
