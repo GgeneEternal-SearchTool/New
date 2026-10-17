@@ -170,10 +170,28 @@
       <select id="filter-range" multiple title="Select one or more Range values"><option value="">All</option></select>
     </label>
 
+
+
     <label><span class="small">Obtain</span>
       <select id="filter-obtain" multiple title="Select one or more Obtain values"><option value="">All</option></select>
     </label>
 
+    <!-- Map兵器フィルタ（Obtain の右に表示） -->
+    <label><span class="small">Map兵器</span>
+      <select id="filter-map" title="Map兵器">
+        <option value="">All</option>
+        <option value="none">無</option>
+        <option value="has">有</option>
+        <option value="shape:扇形">扇形</option>
+        <option value="shape:菱形">菱形</option>
+        <option value="shape:長方形">長方形</option>
+        <option value="shape:範囲">範囲</option>
+        <option value="shape:移動">移動</option>
+      </select>
+    </label>
+
+
+    
     <!-- force new line -->
     <div class="filters-row-break"></div>
 
@@ -260,6 +278,7 @@ const filterType = document.getElementById("filter-type");
 const filterMove = document.getElementById("filter-move");
 const filterRange = document.getElementById("filter-range");
 const filterObtain = document.getElementById("filter-obtain");
+const filterMap = document.getElementById("filter-map");
 const filterSeries = document.getElementById("filter-series");
 const filterTag1 = document.getElementById("filter-tag1");
 const filterTag2 = document.getElementById("filter-tag2");
@@ -499,6 +518,7 @@ function collectUIState() {
     moves: getMultiSelectValues(filterMove),
     ranges: getMultiSelectValues(filterRange),
     obtains: getMultiSelectValues(filterObtain),
+    map: (filterMap && filterMap.value) ? filterMap.value : "",
     series: filterSeries.value || "",
     tag1: filterTag1.value || "",
     tag2: filterTag2.value || "",
@@ -551,6 +571,7 @@ function applyUIState(state) {
   setMulti(filterMove, state.moves || []);
   setMulti(filterRange, state.ranges || []);
   setMulti(filterObtain, state.obtains || []);
+  if(state.map !== undefined && filterMap) filterMap.value = state.map;
   if(state.series !== undefined) filterSeries.value = state.series;
   if(state.tag1 !== undefined) filterTag1.value = state.tag1;
   if(state.tag2 !== undefined) filterTag2.value = state.tag2;
@@ -606,6 +627,32 @@ function applyFiltersAndRender(){
       const unitSeries = normalizeArrayLikeForMatch(seriesCandidates);
       if(!unitSeries.some(s => s === normSeriesSel)) return false;
     }
+
+
+    // Map兵器フィルタ: filterMap の値に応じて判定
+    if(typeof filterMap !== "undefined" && filterMap){
+      const mf = (filterMap.value || "").toString();
+      if(mf !== ""){
+        // MAP兵器Shape の候補キーを順にチェック（JSONのキー名に合わせて必要なら調整）
+        const rawMapShape = (u["MAP兵器Shape"] || u["MAP兵器 Shape"] || u["MAP兵器"] || u["MAP兵器Shape "] || "").toString().trim();
+        // normalize for matching (NFKC)
+        const mapShapeNorm = normalizeStringForMatch(rawMapShape);
+
+        if(mf === "none"){
+          // 無: MAP兵器Shape が "0" または空
+          if(!(mapShapeNorm === "" || mapShapeNorm === "0")) return false;
+        } else if(mf === "has"){
+          // 有: MAP兵器Shape が存在し "0" でない
+          if(mapShapeNorm === "" || mapShapeNorm === "0") return false;
+        } else if(mf.startsWith("shape:")){
+          // 形状指定: 部分一致（正規化して部分一致）
+          const key = mf.substring(6); // e.g., "扇形"
+          if(!mapShapeNorm.includes(normalizeStringForMatch(key))) return false;
+        }
+      }
+    }
+
+
 
     // tag filters: compare normalized forms and support multiple separators and full/half width
     if(normTag1Sel){
