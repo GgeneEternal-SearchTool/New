@@ -71,7 +71,9 @@
 
   #pilot-grid{margin-top:10px;display:flex;flex-direction:column;gap:8px}
   .pilot-card{border:1px solid #eee;padding:10px;border-radius:8px;display:flex;gap:12px;align-items:flex-start;background:#fff}
-  .p-thumb{width:var(--pilot-thumb);height:var(--pilot-thumb);object-fit:cover;border-radius:6px;border:1px solid #ddd}
+  /* image wrapper: keep image and pill in same column */
+  .p-thumb-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto}
+  .p-thumb{width:var(--pilot-thumb);height:var(--pilot-thumb);object-fit:cover;border-radius:6px;border:1px solid #ddd;display:block}
   .p-info{font-size:13px;flex:1;display:flex;flex-direction:column}
   .p-top{display:flex;gap:8px;align-items:flex-start}
   .p-top > .col-left{flex:3 1 30%}
@@ -86,7 +88,7 @@
   .two-action{display:inline-flex;align-items:center;gap:6px;margin-top:6px}
   .two-action .icon{width:18px;height:18px;border-radius:50%;background:orange;display:inline-block}
 
-  /* 2-action icon style (orange pill) */
+  /* 2-action pill style (orange) placed under image */
   .two-action-pill{
     display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:12px;background:linear-gradient(90deg,#ffb347,#ff7e00);color:#fff;font-weight:800;font-size:12px;
   }
@@ -438,7 +440,7 @@ function normalizeCombiRow(r){
   nr.HB1_F = (nr.HB1_F !== undefined && nr.HB1_F !== null && nr.HB1_F !== "") ? Number(nr.HB1_F) : null;
   nr.HB2_F = (nr.HB2_F !== undefined && nr.HB2_F !== null && nr.HB2_F !== "") ? Number(nr.HB2_F) : null;
   nr.HB3_F = (nr.HB3_F !== undefined && nr.HB3_F !== null && nr.HB3_F !== "") ? Number(nr.HB3_F) : null;
-  for(const ck of ["C01","C02","C03","C06","C07","C08","C09","C10","C11","C12"]){
+  for(const ck of ["C01","C02","C03","C06","C07","C08","C09","C10","C11","C12","C13"]){
     if(nr[ck] !== undefined && nr[ck] !== null && nr[ck] !== ""){
       nr[ck] = Number(nr[ck]);
     } else {
@@ -446,7 +448,16 @@ function normalizeCombiRow(r){
     }
   }
   // include C14 as-is (some parts use "Y")
-  nr.C14 = (r["C14"] !== undefined && r["C14"] !== null) ? r["C14"] : (r.C14 !== undefined ? r.C14 : "");
+  nr.C14_raw = (r["C14"] !== undefined && r["C14"] !== null) ? r["C14"] : (r.C14 !== undefined ? r.C14 : "");
+  nr.C14_flag = (function(v){
+    if(v === undefined || v === null) return false;
+    const s = String(v).trim();
+    if(s === "") return false;
+    if(s.toUpperCase() === "Y") return true;
+    if(s.toLowerCase() === "true") return true;
+    if(!isNaN(Number(s)) && Number(s) === 1) return true;
+    return false;
+  })(nr.C14_raw);
   nr.t2 = (nr.t2 !== undefined && nr.t2 !== null) ? Number(nr.t2) : 0;
   return nr;
 }
@@ -607,33 +618,41 @@ function renderSkillFilterIcons(){
   });
 }
 
-/* ---------- Pilot card rendering (2-action icon) ---------- */
+/* ---------- Pilot card rendering (image wrapper + badges reposition) ---------- */
 function renderPilotCard(pilotObj, combi){
   const div = document.createElement("div");
   div.className = "pilot-card";
+
+  // image wrapper: contains image and two-action pill directly under it
+  const imgWrap = document.createElement("div");
+  imgWrap.className = "p-thumb-wrap";
 
   const img = document.createElement("img");
   img.className = "p-thumb";
   img.src = pilotObj["Pilot.画像リンク"] || "";
   img.alt = pilotObj["Pilot.キャラ"] || "";
-  div.appendChild(img);
+  imgWrap.appendChild(img);
 
-  // if combi.C14 indicates 2-action (Y), show pill under image
-  if(combi && (String(combi.C14).toUpperCase() === "Y" || Number(combi.C14) === 1)){
+  // if combi.C14_flag indicates 2-action, show pill under image (text "２回行動")
+  if(combi && combi.C14_flag){
     const two = document.createElement("div");
     two.className = "two-action-pill";
-    // small icon (emoji fallback) + text
+    // optional small icon (use simple circle) and text "２回行動"
     const ic = document.createElement("span");
-    ic.innerHTML = "⤴"; // simple icon; replace with img if available
-    ic.style.fontWeight = "900";
-    ic.style.fontSize = "14px";
+    ic.style.display = "inline-block";
+    ic.style.width = "12px";
+    ic.style.height = "12px";
+    ic.style.borderRadius = "50%";
+    ic.style.background = "#ff7e00";
+    ic.style.boxShadow = "0 1px 2px rgba(0,0,0,0.12)";
     two.appendChild(ic);
     const txt = document.createElement("span");
-    txt.textContent = "2回行動";
+    txt.textContent = "２回行動";
     two.appendChild(txt);
-    // place pill below image by inserting before info
-    div.appendChild(two);
+    imgWrap.appendChild(two);
   }
+
+  div.appendChild(imgWrap);
 
   const info = document.createElement("div");
   info.className = "p-info";
@@ -661,6 +680,21 @@ function renderPilotCard(pilotObj, combi){
   }
   dmg.textContent = dmgText;
   leftCol.appendChild(dmg);
+
+  // badges moved to col-left bottom
+  const badges = document.createElement("div");
+  badges.className = "badges";
+  if((combi.C06 === 1) && (combi.C07 === 1)){
+    const b = document.createElement("div"); b.className = "badge pa"; b.textContent = "PAシリーズ＆タグ"; badges.appendChild(b);
+  } else {
+    if(combi.C01 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PA相性"; badges.appendChild(b); }
+    if(combi.C02 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAタグ"; badges.appendChild(b); }
+    if(combi.C03 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAシリーズ"; badges.appendChild(b); }
+    if(combi.C06 === 1 && combi.C07 !== 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAシリーズ"; badges.appendChild(b); }
+    if(combi.C07 === 1 && combi.C06 !== 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAタグ"; badges.appendChild(b); }
+    if(combi.C08 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAユニット"; badges.appendChild(b); }
+  }
+  leftCol.appendChild(badges);
 
   top.appendChild(leftCol);
 
@@ -709,20 +743,7 @@ function renderPilotCard(pilotObj, combi){
   top.appendChild(rightCol);
   info.appendChild(top);
 
-  const badges = document.createElement("div");
-  badges.className = "badges";
-  if((combi.C06 === 1) && (combi.C07 === 1)){
-    const b = document.createElement("div"); b.className = "badge pa"; b.textContent = "PAシリーズ＆タグ"; badges.appendChild(b);
-  } else {
-    if(combi.C01 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PA相性"; badges.appendChild(b); }
-    if(combi.C02 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAタグ"; badges.appendChild(b); }
-    if(combi.C03 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAシリーズ"; badges.appendChild(b); }
-    if(combi.C06 === 1 && combi.C07 !== 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAシリーズ"; badges.appendChild(b); }
-    if(combi.C07 === 1 && combi.C06 !== 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAタグ"; badges.appendChild(b); }
-    if(combi.C08 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="PAユニット"; badges.appendChild(b); }
-  }
-  info.appendChild(badges);
-
+  // keep other info (two-action summary inside info if needed)
   if(combi.t2 === 1){
     const two = document.createElement("div");
     two.className = "two-action";
