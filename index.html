@@ -40,6 +40,7 @@
   }
   .filters select,.filters input{
     padding:6px;border:1px solid #ddd;border-radius:6px;background:#fff;
+    max-width:100%;
   }
 
   .filters label{
@@ -67,13 +68,21 @@
     gap:8px;
     align-items:flex-start;
     width:100%;
+    /* 変更: Tag1/Tag2 を必ず同一行に収める（折り返し禁止） */
+    flex-wrap: nowrap;
+    overflow-x: auto; /* 横幅不足時は横スクロールさせる */
+    -webkit-overflow-scrolling: touch;
   }
 
+  /* 変更: 隣接しても干渉しないようにしつつ折り返さない設定
+     flex:0 0 auto で横方向に縮まない（必要なら横スクロール） */
   .filters-inline-item{
     display:flex;
     flex-direction:column;
     align-items:flex-start;
-    width:70%;
+    flex: 0 0 auto;
+    min-width: 160px; /* 必要に応じて調整してください */
+    box-sizing: border-box;
   }
 
   .controls{margin-left:auto;display:flex;gap:8px;align-items:center}
@@ -134,8 +143,9 @@
     .controls{margin-left:0}
     .icon-circle{min-width:16px;height:16px;font-size:10px;padding:0 4px}
     .rare-badge{padding:3px 6px;font-size:10px}
-    .filters-inline { flex-direction:column; }
-    .filters-inline-item { width:100%; }
+    /* 重要: 小画面でも Tag1/Tag2 を同一行に保つため、折り返し禁止を維持します */
+    .filters-inline { flex-wrap: nowrap; overflow-x: auto; }
+    .filters-inline-item { flex: 0 0 auto; min-width: 140px; }
   }
 </style>
 </head>
@@ -164,14 +174,18 @@
       <select id="filter-obtain" multiple title="Select one or more Obtain values"><option value="">All</option></select>
     </label>
 
+    <!-- force new line -->
     <div class="filters-row-break"></div>
 
+    <!-- Series full row -->
     <label class="filters-fullrow"><span class="small">Series</span>
       <select id="filter-series" title="Series"><option value="">All</option></select>
     </label>
 
+    <!-- force new line -->
     <div class="filters-row-break"></div>
 
+    <!-- Tag1 and Tag2 inline -->
     <div class="filters-inline">
       <label class="filters-inline-item"><span class="small">Tag1</span>
         <select id="filter-tag1" title="Tag1"><option value="">All</option></select>
