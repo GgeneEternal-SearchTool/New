@@ -56,7 +56,7 @@
       <div class="info">
         <div class="p-name" id="pilot-name"></div>
         <div id="pilot-highlight" class="highlight" aria-live="polite"></div>
-        <div class="skills" id="pilot-skills"></div>
+        <!-- スキルアイコンは不要のため削除 -->
         <div class="series-tags" id="pilot-series-tags" aria-hidden="false"></div>
         <div id="pilot-extra" class="diag"></div>
       </div>
@@ -103,10 +103,12 @@ const unitHighlight = document.getElementById("unit-highlight");
 
 const pilotThumb = document.getElementById("pilot-thumb");
 const pilotName = document.getElementById("pilot-name");
-const pilotSkills = document.getElementById("pilot-skills");
 const pilotSeriesTagsEl = document.getElementById("pilot-series-tags");
 const pilotExtra = document.getElementById("pilot-extra");
 const pilotHighlight = document.getElementById("pilot-highlight");
+
+/* global series/tag options holder */
+let seriesTagOptions = null;
 
 /* helper fetch */
 async function fetchJson(url){
@@ -132,8 +134,18 @@ function renderSeriesTags(targetEl, obj, sto){
   const unitSeriesCandidates = ["シリーズ連結","シリーズ","Series","SeriesName","series","SeriesName"];
   const unitTagCandidates = ["タグ連結","タグ","Tag","TagName","tag","TagName"];
   let unitSeries = [], unitTags = [];
-  for(const k of unitSeriesCandidates){ if(obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== ""){ unitSeries = normalizeArrayLike(obj[k]); break; } }
-  for(const k of unitTagCandidates){ if(obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== ""){ unitTags = normalizeArrayLike(obj[k]); break; } }
+  for(const k of unitSeriesCandidates){
+    if(obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== ""){
+      unitSeries = normalizeArrayLike(obj[k]);
+      break;
+    }
+  }
+  for(const k of unitTagCandidates){
+    if(obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== ""){
+      unitTags = normalizeArrayLike(obj[k]);
+      break;
+    }
+  }
   // simple matching by trimmed equality
   seriesList.forEach(label=>{
     if(unitSeries.some(us => String(us).trim() === String(label).trim())){
@@ -152,16 +164,6 @@ function renderSeriesTags(targetEl, obj, sto){
     }
   });
 }
-
-/* skill icon map (reuse) */
-const SKILL_ICON_MAP = {
-  "ENセーブ":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/a7/20/p/o0139014415681987764.png?caw=800",
-  "ENチャージ":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/57/e6/p/o0142014615681987771.png?caw=800",
-  "HPリペア":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/46/ad/p/o0139014015681987780.png?caw=800",
-  "MPアップ":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/1b/b8/p/o0140014715681987760.png?caw=800",
-  "アタックバースト":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/74/c0/p/o0143014315681987747.png?caw=800",
-  "クリブースト （率UP)":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/4e/9b/p/o0139014715681987758.png?caw=800"
-};
 
 /* render pilot details */
 function renderPilotDetails(p){
@@ -183,26 +185,12 @@ function renderPilotDetails(p){
     pilotHighlight.appendChild(el);
   }
 
-  // skills
-  pilotSkills.innerHTML = "";
-  const skills = [];
-  for(const k of Object.keys(p || {})){
-    if(k.startsWith("Pilot.Sk.")){
-      const name = k.replace(/^Pilot\.Sk\./,"").trim();
-      if(p[k] && Number(p[k]) !== 0) skills.push(name);
-    }
-  }
-  skills.forEach(s=>{
-    const img = document.createElement("img");
-    img.src = SKILL_ICON_MAP[s] || "";
-    img.className = "skill-icon";
-    img.title = s;
-    pilotSkills.appendChild(img);
-  });
-
   // series/tag for pilot (render into pilot-series-tags)
   pilotSeriesTagsEl.innerHTML = "";
-  // Use renderSeriesTags with pilot object and sto (set by init)
+  if(seriesTagOptions){
+    renderSeriesTags(pilotSeriesTagsEl, p, seriesTagOptions);
+  }
+
   // pilotExtra can show additional debug/info if needed
   pilotExtra.innerHTML = "";
 }
@@ -227,6 +215,12 @@ function renderUnitDetails(u){
   }
 
   unitFeature.textContent = u["武装 Power"] !== undefined && u["武装 Power"] !== null && u["武装 Power"] !== "" ? `武装 Power: ${u["武装 Power"]}` : "";
+
+  // render unit series/tags
+  unitSeriesTagsEl.innerHTML = "";
+  if(seriesTagOptions){
+    renderSeriesTags(unitSeriesTagsEl, u, seriesTagOptions);
+  }
 }
 
 /* init */
@@ -235,6 +229,7 @@ async function init(){
     const units = await fetchJson(UNITS_JSON);
     const pilots = await fetchJson(PILOTS_JSON);
     const sto = await fetchJson(SERIES_TAG_JSON);
+    seriesTagOptions = sto || null;
 
     const uid = Number(uidParam);
     const pid = Number(pidParam);
@@ -247,16 +242,12 @@ async function init(){
 
     if(pilot){
       renderPilotDetails(pilot);
-      // render pilot series/tags using sto
-      renderSeriesTags(pilotSeriesTagsEl, pilot, sto);
     } else {
       pilotName.textContent = "パイロットが見つかりません";
     }
 
     if(unit){
       renderUnitDetails(unit);
-      // render unit series/tags using sto
-      renderSeriesTags(unitSeriesTagsEl, unit, sto);
     } else {
       unitName.textContent = "ユニットが見つかりません";
     }
