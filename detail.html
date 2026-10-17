@@ -39,7 +39,7 @@
   .series-tag-icon.series{background: linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #93c5fd 100%); color:#fff;}
   .series-tag-icon.tag{
     background: linear-gradient(90deg, #3c5a03 0%, #049b0e 50%, #289b24 100%);
-    color: #f4f4f4; /* 白ではなく濃い文字色にしてコントラストを確保 */
+    color: #f4f4f4;
   }
   .feature-line{color:var(--orange);font-weight:800;font-size:15px}
 
@@ -343,6 +343,9 @@ let currentFiltered = [];
 
 const selectedSkillFilters = new Set();
 
+/* state storage key */
+const DETAIL_STATE_KEY = "detail_state_v1";
+
 /* ===== Helpers ===== */
 async function fetchJson(url, opts){
   const res = await fetch(url, opts || {});
@@ -475,7 +478,6 @@ function normalizeCombiRow(r){
     return false;
   })(nr.C14_raw);
   nr.t2 = (nr.t2 !== undefined && nr.t2 !== null) ? Number(nr.t2) : 0;
-
   // common display fields that may exist in combi JSON (P0,P4,PT0,PT4,DR0,DR4,DFB4,DFP4,DFT4,DFE4)
   nr.P0 = (r.P0 !== undefined) ? Number(r.P0) : (r["P0"] !== undefined ? Number(r["P0"]) : null);
   nr.P4 = (r.P4 !== undefined) ? Number(r.P4) : (r["P4"] !== undefined ? Number(r["P4"]) : null);
@@ -487,7 +489,6 @@ function normalizeCombiRow(r){
   nr.DFP4 = (r.DFP4 !== undefined) ? Number(r.DFP4) : (r["DFP4"] !== undefined ? Number(r["DFP4"]) : null);
   nr.DFT4 = (r.DFT4 !== undefined) ? Number(r.DFT4) : (r["DFT4"] !== undefined ? Number(r["DFT4"]) : null);
   nr.DFE4 = (r.DFE4 !== undefined) ? Number(r.DFE4) : (r["DFE4"] !== undefined ? Number(r["DFE4"]) : null);
-
   return nr;
 }
 
@@ -495,10 +496,8 @@ function normalizeCombiRow(r){
 async function loadCombiForUnit(uid){
   combiRows = [];
   combiSummary.textContent = "読み込み中";
-
   let partUrls = [];
   try{ partUrls = await getPartsForUnit(uid); }catch(e){ partUrls = []; }
-
   if(!partUrls || partUrls.length === 0){
     const allParts = await detectCombiParts();
     if(!allParts || allParts.length === 0){
@@ -522,7 +521,6 @@ async function loadCombiForUnit(uid){
     applyFiltersAndRender();
     return;
   }
-
   for(const url of partUrls){
     try{
       const part = await fetchJson(url);
@@ -536,7 +534,6 @@ async function loadCombiForUnit(uid){
       console.warn("combi part load failed:", url, e);
     }
   }
-
   combiSummary.textContent = `該当 ${combiRows.length} 件`;
   applyFiltersAndRender();
 }
@@ -550,10 +547,8 @@ function normalizeArrayLike(v){
 function renderSeriesTagsForUnit(u){
   seriesTagsEl.innerHTML = "";
   if(!seriesTagOptions) return;
-
   const unitSeriesCandidates = ["シリーズ連結","シリーズ","Series","SeriesName","series","SeriesName"];
   const unitTagCandidates = ["タグ連結","タグ","Tag","TagName","tag","TagName"];
-
   let unitSeries = [];
   let unitTags = [];
   for(const k of unitSeriesCandidates){
@@ -569,21 +564,14 @@ function renderSeriesTagsForUnit(u){
     }
   }
   if(unitSeries.length === 0){
-    Object.keys(u).forEach(k=>{
-      if(/シリーズ/i.test(k) && u[k]) unitSeries = normalizeArrayLike(u[k]);
-    });
+    Object.keys(u).forEach(k=>{ if(/シリーズ/i.test(k) && u[k]) unitSeries = normalizeArrayLike(u[k]); });
   }
   if(unitTags.length === 0){
-    Object.keys(u).forEach(k=>{
-      if(/タグ/i.test(k) && u[k]) unitTags = normalizeArrayLike(u[k]);
-    });
+    Object.keys(u).forEach(k=>{ if(/タグ/i.test(k) && u[k]) unitTags = normalizeArrayLike(u[k]); });
   }
-
   const seriesList = Array.isArray(seriesTagOptions.series_unit) ? seriesTagOptions.series_unit : [];
   const tagList = Array.isArray(seriesTagOptions.tag_unit) ? seriesTagOptions.tag_unit : [];
-
   const norm = s => String(s || "").trim();
-
   seriesList.forEach((label)=>{
     if(unitSeries.some(us => norm(us) === norm(label))){
       const d = document.createElement("div");
@@ -592,7 +580,6 @@ function renderSeriesTagsForUnit(u){
       seriesTagsEl.appendChild(d);
     }
   });
-
   tagList.forEach((label)=>{
     if(unitTags.some(ut => norm(ut) === norm(label))){
       const d = document.createElement("div");
@@ -647,210 +634,7 @@ function renderSkillFilterIcons(){
   });
 }
 
-/* ---------- Pilot card rendering (4-column layout) ---------- */
-function renderPilotCard(pilotObj, combi){
-  const div = document.createElement("div");
-  div.className = "pilot-card";
-
-  // image wrapper: contains image only (click navigates to combi.html)
-  const imgWrap = document.createElement("div");
-  imgWrap.className = "p-thumb-wrap";
-
-  const img = document.createElement("img");
-  img.className = "p-thumb";
-  img.src = pilotObj["Pilot.画像リンク"] || "";
-  img.alt = pilotObj["Pilot.キャラ"] || "";
-  img.addEventListener("click", ()=>{
-    const uid = currentUnit && currentUnit.uid ? currentUnit.uid : uidParam;
-    const pid = (combi && combi.p) ? combi.p : (pilotObj.pid || "");
-    // navigate to combi.html with uid and pid
-    location.href = `combi.html?uid=${encodeURIComponent(uid)}&pid=${encodeURIComponent(pid)}`;
-  });
-  imgWrap.appendChild(img);
-
-  div.appendChild(imgWrap);
-
-  const info = document.createElement("div");
-  info.className = "p-info";
-
-  const top = document.createElement("div");
-  top.className = "p-top";
-
-  // 1st column (col-1) - name + damage/hb (no two-action)
-  const col1 = document.createElement("div");
-  col1.className = "col-1";
-  const name = document.createElement("div");
-  name.className = "p-name";
-  name.textContent = pilotObj["Pilot.キャラ"] || combi.pilot_name || "不明";
-  col1.appendChild(name);
-
-  // damage or HB display
-  const isHB = String(sortKey || "").toUpperCase().startsWith("HB");
-  const statEl = document.createElement("div");
-  if(isHB){
-    const hbVal = (combi && combi[sortKey] !== undefined && combi[sortKey] !== null) ? combi[sortKey] : "-";
-    statEl.className = "p-hb";
-    statEl.textContent = (hbVal === null || hbVal === undefined || hbVal === "") ? "-" : Number(hbVal).toFixed(2);
-  } else {
-    const dmgVal = (combi && combi[sortKey] !== undefined && combi[sortKey] !== null) ? combi[sortKey] : combi.D0;
-    statEl.className = "p-dmg";
-    statEl.textContent = fmtDamage(dmgVal);
-  }
-  col1.appendChild(statEl);
-
-  top.appendChild(col1);
-
-  // 2nd column (col-2) - skill icons (centered), badges removed here
-  const col2 = document.createElement("div");
-  col2.className = "col-2";
-  const pilotSkills = extractPilotSkills(pilotObj);
-  const showSkills = pilotSkills.slice(0,3);
-  showSkills.forEach(sname=>{
-    const imgEl = document.createElement("img");
-    imgEl.src = SKILL_ICONS[sname] || "";
-    imgEl.alt = sname;
-    imgEl.title = sname;
-    imgEl.style.width = "30px";
-    imgEl.style.height = "30px";
-    imgEl.style.objectFit = "cover";
-    imgEl.style.margin = "2px 0";
-    col2.appendChild(imgEl);
-  });
-  top.appendChild(col2);
-
-  // 3rd column (col-3) - two-action pill + badges
-  const col3 = document.createElement("div");
-  col3.className = "col-3";
-
-  // two-action pill (use combi.C14_flag)
-  if(combi && combi.C14_flag){
-    const two = document.createElement("div");
-    two.className = "two-action-pill";
-    two.textContent = "２回行動";
-    col3.appendChild(two);
-  }
-
-  // badges
-  const badges = document.createElement("div");
-  badges.className = "badges";
-  if((combi.C06 === 1) && (combi.C07 === 1)){
-    const b = document.createElement("div"); b.className = "badge pa"; b.textContent = "PAシリーズ＆タグ"; badges.appendChild(b);
-  } else {
-    if(combi.C01 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="相性"; badges.appendChild(b); }
-    if(combi.C02 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="Tag"; badges.appendChild(b); }
-    if(combi.C03 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="Series"; badges.appendChild(b); }
-    if(combi.C06 === 1 && combi.C07 !== 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="Series"; badges.appendChild(b); }
-    if(combi.C07 === 1 && combi.C06 !== 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="Tag"; badges.appendChild(b); }
-    if(combi.C08 === 1){ const b=document.createElement("div"); b.className="badge pa"; b.textContent="Unit"; badges.appendChild(b); }
-  }
-  col3.appendChild(badges);
-
-  top.appendChild(col3);
-
-  // 4th column (col-4) - dynamic combi info depending on sortKey
-  const col4 = document.createElement("div");
-  col4.className = "col-4";
-
-  function addLine(parent, text, isTitle=false, percentHtml=null){
-    const el = document.createElement("div");
-    el.className = "combi-line";
-    if(isTitle) el.className = "combi-title";
-    if(percentHtml){
-      // percentHtml is HTML string for bold percent
-      el.innerHTML = text + ' <span class="combi-percent">' + percentHtml + '</span>';
-    } else {
-      el.textContent = text;
-    }
-    parent.appendChild(el);
-  }
-
-  const sk = String(sortKey || "").toUpperCase();
-
-  if(sk === "D0"){
-    // Case1: Damage (D0)
-    addLine(col4, "開始時", true);
-    const PT0 = combi.PT0 || combi["PT0"] || "";
-    const P0 = (combi.P0 !== undefined && combi.P0 !== null) ? Math.round(Number(combi.P0)) : (combi.P0 || "-");
-    // 表示は一回だけ：例 "格闘 838"
-    addLine(col4, `${PT0 || "格闘"} ${P0}`);
-    // DR0 が 1.15 のとき → +15%
-    const DR0 = (combi.DR0 !== undefined && combi.DR0 !== null) ? Number(combi.DR0) : 1.0;
-    const diff = Math.round((DR0 - 1.0) * 100);
-    const sign = (diff >= 0) ? "+" : "";
-    // 大きく太字で差分を表示（例: Damage +15%）
-    const percentHtml = `<strong style="font-size:20px">${sign}${diff}%</strong>`;
-    addLine(col4, `Damage ${sign}${diff}%`, false, percentHtml);
-  } else if(sk === "D4"){
-    // Case2: Damage full (D4)
-    addLine(col4, "全発動", true);
-    const PT4 = combi.PT4 || combi["PT4"] || "";
-    const P4 = (combi.P4 !== undefined && combi.P4 !== null) ? Math.round(Number(combi.P4)) : (combi.P4 || "-");
-    addLine(col4, `${PT4 || "格闘"} ${P4}`);
-    const DR4 = (combi.DR4 !== undefined && combi.DR4 !== null) ? Number(combi.DR4) : 1.0;
-    const diff4 = Math.round((DR4 - 1.0) * 100);
-    const sign4 = (diff4 >= 0) ? "+" : "";
-    const percentHtml4 = `<strong style="font-size:20px">${sign4}${diff4}%</strong>`;
-    addLine(col4, `Damage ${sign4}${diff4}%`, false, percentHtml4);
-
-
-  } else if(sk.includes("HB") && sk.includes("_F")){
-    // Case3: HB full (HB*_F)
-    addLine(col4, "全発動", true);
-    // 被Damage の各値は combi.DFB4 等が 0.44 のように入っている想定
-    const toDiffFrom100 = (v) => {
-      if(v === null || v === undefined || isNaN(Number(v))) return null;
-      const pct = Math.round(Number(v) * 100); // 例 44
-      const diff = 100 - pct; // 56
-      // 表示は符号付きでマイナス（被ダメ減少なら -56%）
-      return (diff === 0) ? "+0%" : (diff > 0 ? `-${diff}%` : `+${Math.abs(diff)}%`);
-    };
-    addLine(col4, `被Damage`);
-    const dfb = toDiffFrom100(combi.DFB4);
-    const dfp = toDiffFrom100(combi.DFP4);
-    const dft = toDiffFrom100(combi.DFT4);
-    const dfe = toDiffFrom100(combi.DFE4);
-    // 各行は「・Beam -56%」の形式。パーセント部分を太字で大きくする
-    addLine(col4, `・Beam `, false, dfb !== null ? `<strong style="font-size:18px">${dfb}</strong>` : null);
-    addLine(col4, `・物理 `, false, dfp !== null ? `<strong style="font-size:18px">${dfp}</strong>` : null);
-    addLine(col4, `・特殊 `, false, dft !== null ? `<strong style="font-size:18px">${dft}</strong>` : null);
-    addLine(col4, `・EX `, false, dfe !== null ? `<strong style="font-size:18px">${dfe}</strong>` : null);
-  } else {
-    // Default: show D0 summary
-    addLine(col4, "開始時", true);
-    const PT0 = combi.PT0 || combi["PT0"] || "";
-    const P0 = (combi.P0 !== undefined && combi.P0 !== null) ? Math.round(Number(combi.P0)) : (combi.P0 || "-");
-    addLine(col4, `${PT0 || "格闘"} ${P0}`);
-    const DR0 = (combi.DR0 !== undefined && combi.DR0 !== null) ? Number(combi.DR0) : 1.0;
-    const diff = Math.round((DR0 - 1.0) * 100);
-    const sign = (diff >= 0) ? "+" : "";
-    addLine(col4, `Damage `, false, `<strong style="font-size:20px">${sign}${diff}%</strong>`);
-  }
-
-  top.appendChild(col4);
-
-  info.appendChild(top);
-
-  div.appendChild(info);
-  return div;
-}
-
-/* ---------- Filtering, sorting, pagination ---------- */
-function populateSortOptions(){
-  pilotSort.innerHTML = "";
-  const optName = document.createElement("option");
-  optName.value = "name";
-  optName.textContent = "名前";
-  pilotSort.appendChild(optName);
-  Object.keys(FIELD_LABELS).forEach(k => {
-    if(k === "name") return;
-    const opt = document.createElement("option");
-    opt.value = k;
-    opt.textContent = FIELD_LABELS[k] + " (" + k + ")";
-    pilotSort.appendChild(opt);
-  });
-  pilotSort.value = sortKey;
-}
-
+/* ---------- Filters / rendering ---------- */
 function uniqueValuesFromPilots(key){
   const s = new Set();
   (pilots || []).forEach(p => {
@@ -889,6 +673,115 @@ function getSelectValue(selectEl){
   return selectEl.value || "";
 }
 
+/* addLine helper: when html provided, strip trailing numeric percent from label to avoid duplicate numbers */
+function addLine(container, text, escapeFlag, html){
+  const el = document.createElement("div");
+  el.className = "combi-line";
+  if(html){
+    // remove trailing numeric percent or leading dash-number from label (examples: " -56%", "ー61%")
+    const labelOnly = String(text).replace(/\s*[ー\-–−]?\d+%?$/u, "").trim();
+    el.innerHTML = (labelOnly ? labelOnly + " " : "") + html;
+  } else {
+    el.textContent = text;
+  }
+  container.appendChild(el);
+}
+
+/* renderPilotCard: builds pilot card and ensures state is saved before navigating to combi.html */
+function renderPilotCard(pilotObj, combi){
+  const card = document.createElement("div");
+  card.className = "pilot-card";
+
+  // left: thumbnail (link to combi page)
+  const thumbWrap = document.createElement("div");
+  thumbWrap.className = "p-thumb-wrap";
+  const a = document.createElement("a");
+  a.href = `combi.html?uid=${encodeURIComponent(currentUnit ? currentUnit.uid : "")}&pid=${encodeURIComponent(combi.p !== null ? combi.p : "")}`;
+  a.addEventListener("click", (ev)=>{
+    // save current UI state to sessionStorage so that back navigation can restore it
+    saveDetailState();
+    // allow navigation to proceed
+  });
+  const img = document.createElement("img");
+  img.className = "p-thumb";
+  img.src = pilotObj["Pilot.画像リンク"] || "";
+  img.alt = pilotObj["Pilot.キャラ"] || "";
+  a.appendChild(img);
+  thumbWrap.appendChild(a);
+  card.appendChild(thumbWrap);
+
+  // right: info
+  const info = document.createElement("div");
+  info.className = "p-info";
+
+  const top = document.createElement("div");
+  top.className = "p-top";
+
+  const col1 = document.createElement("div");
+  col1.className = "col-1";
+  const name = document.createElement("div");
+  name.className = "p-name";
+  name.textContent = pilotObj["Pilot.キャラ"] || combi.pilot_name || "不明";
+  col1.appendChild(name);
+
+  const badges = document.createElement("div");
+  badges.className = "badges";
+  // example badges: show pilot rarity or other flags
+  if(pilotObj["Pilot.レア"]) {
+    const b = document.createElement("div"); b.className = "badge"; b.textContent = pilotObj["Pilot.レア"]; badges.appendChild(b);
+  }
+  col1.appendChild(badges);
+
+  const col2 = document.createElement("div");
+  col2.className = "col-2";
+  const dmg = document.createElement("div");
+  dmg.className = "p-dmg";
+  dmg.textContent = fmtDamage(combi.D0);
+  col2.appendChild(dmg);
+
+  const col3 = document.createElement("div");
+  col3.className = "col-3";
+  const twoAction = document.createElement("div");
+  twoAction.className = "two-action-pill";
+  twoAction.textContent = (combi.PT0 || combi.PT4 || "") || "";
+  col3.appendChild(twoAction);
+
+  const col4 = document.createElement("div");
+  col4.className = "col-4";
+  const combiTitle = document.createElement("div");
+  combiTitle.className = "combi-title";
+  combiTitle.textContent = "Combi";
+  col4.appendChild(combiTitle);
+
+  // show percentages (use addLine to avoid duplicate numbers)
+  const dfb = combi.DFB4 !== undefined ? combi.DFB4 : null;
+  const dfp = combi.DFP4 !== undefined ? combi.DFP4 : null;
+  const dft = combi.DFT4 !== undefined ? combi.DFT4 : null;
+  const dfe = combi.DFE4 !== undefined ? combi.DFE4 : null;
+
+  addLine(col4, `・Beam`, false, dfb !== null ? `<strong style="font-size:18px">${dfb}%</strong>` : null);
+  addLine(col4, `・物理`, false, dfp !== null ? `<strong style="font-size:18px">${dfp}%</strong>` : null);
+  addLine(col4, `・特殊`, false, dft !== null ? `<strong style="font-size:18px">${dft}%</strong>` : null);
+  addLine(col4, `・EX`, false, dfe !== null ? `<strong style="font-size:18px">${dfe}%</strong>` : null);
+
+  top.appendChild(col1);
+  top.appendChild(col2);
+  top.appendChild(col3);
+  top.appendChild(col4);
+
+  info.appendChild(top);
+
+  // optional diag
+  const diag = document.createElement("div");
+  diag.className = "diag";
+  diag.textContent = combi.PT0 ? `PT0: ${combi.PT0}` : "";
+  info.appendChild(diag);
+
+  card.appendChild(info);
+  return card;
+}
+
+/* apply filters and render list */
 function applyFiltersAndRender(){
   const pidMap = buildPidMap();
 
@@ -997,6 +890,100 @@ function renderPage(){
   nextPageBtn.disabled = (currentPage >= totalPages);
 }
 
+/* ---------- State save/restore for back navigation ---------- */
+function saveDetailState(){
+  try{
+    const state = {
+      uid: currentUnit ? currentUnit.uid : null,
+      currentPage,
+      sortKey,
+      sortDesc,
+      selectedSkills: Array.from(selectedSkillFilters),
+      filters: {
+        rarity: filterPilotRarity.value || "",
+        type: filterPilotType.value || "",
+        obtain: filterPilotObtain.value || "",
+        series: filterPilotSeries.value || "",
+        tag: filterPilotTag.value || ""
+      },
+      toggles: {
+        autoheal: toggleAutoheal.classList.contains("active"),
+        moveup: toggleMoveup.classList.contains("active"),
+        counterdef: toggleCounterdef.classList.contains("active"),
+        forcecs: toggleForcecs.classList.contains("active"),
+        pilotAbility: togglePilotAbility.classList.contains("active")
+      },
+      scrollY: window.scrollY || 0
+    };
+    sessionStorage.setItem(DETAIL_STATE_KEY, JSON.stringify(state));
+  }catch(e){
+    // ignore
+  }
+}
+
+function restoreDetailState(){
+  try{
+    const raw = sessionStorage.getItem(DETAIL_STATE_KEY);
+    if(!raw) return false;
+    const state = JSON.parse(raw);
+    if(!state) return false;
+    // only restore if uid matches (or uid not provided)
+    if(state.uid !== null && currentUnit && String(state.uid) !== String(currentUnit.uid)) return false;
+
+    currentPage = state.currentPage || 1;
+    sortKey = state.sortKey || sortKey;
+    sortDesc = (typeof state.sortDesc === "boolean") ? state.sortDesc : sortDesc;
+
+    // restore selected skills
+    selectedSkillFilters.clear();
+    if(Array.isArray(state.selectedSkills)){
+      state.selectedSkills.forEach(s => selectedSkillFilters.add(s));
+    }
+
+    // restore filters
+    if(state.filters){
+      filterPilotRarity.value = state.filters.rarity || "";
+      filterPilotType.value = state.filters.type || "";
+      filterPilotObtain.value = state.filters.obtain || "";
+      filterPilotSeries.value = state.filters.series || "";
+      filterPilotTag.value = state.filters.tag || "";
+    }
+
+    // restore toggles
+    const setToggle = (btn, val) => {
+      if(val) btn.classList.add("active"); else btn.classList.remove("active");
+    };
+    if(state.toggles){
+      setToggle(toggleAutoheal, !!state.toggles.autoheal);
+      setToggle(toggleMoveup, !!state.toggles.moveup);
+      setToggle(toggleCounterdef, !!state.toggles.counterdef);
+      setToggle(toggleForcecs, !!state.toggles.forcecs);
+      setToggle(togglePilotAbility, !!state.toggles.pilotAbility);
+    }
+
+    // reflect selectedSkillFilters visually
+    Array.from(skillFilterRow.children).forEach(img=>{
+      const s = img.dataset.skill;
+      if(selectedSkillFilters.has(s)) img.classList.add("selected"); else img.classList.remove("selected");
+    });
+
+    // set sort UI
+    pilotSort.value = sortKey;
+    sortDirBtn.textContent = sortDesc ? "降順" : "昇順";
+
+    // apply filters and render
+    applyFiltersAndRender();
+
+    // restore scroll after a short delay to ensure layout is ready
+    const scrollY = state.scrollY || 0;
+    setTimeout(()=>{ window.scrollTo({ top: scrollY, behavior: 'auto' }); }, 50);
+
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
 /* ---------- Initialization ---------- */
 async function init(){
   try{
@@ -1015,6 +1002,20 @@ async function init(){
     const uid = Number(uidParam);
     currentUnit = units.find(u => Number(u.uid) === uid);
     if(!currentUnit){
+      // try to restore from sessionStorage if uidParam missing or unit not found
+      const raw = sessionStorage.getItem(DETAIL_STATE_KEY);
+      if(raw){
+        try{
+          const st = JSON.parse(raw);
+          if(st && st.uid){
+            const restored = units.find(u => Number(u.uid) === Number(st.uid));
+            if(restored) currentUnit = restored;
+          }
+        }catch(e){}
+      }
+    }
+
+    if(!currentUnit){
       unitName.textContent = "ユニットが見つかりません";
       combiSummary.textContent = "";
       return;
@@ -1027,7 +1028,17 @@ async function init(){
     populateSortOptions();
     renderSkillFilterIcons();
 
+    // try to restore UI state (filters, page, toggles, selected skills)
+    const restored = restoreDetailState();
+    // load combi rows and then if not restored earlier, apply default render
     await loadCombiForUnit(currentUnit.uid);
+
+    // if restoreDetailState returned false, ensure UI reflects defaults
+    if(!restored){
+      pilotSort.value = sortKey;
+      sortDirBtn.textContent = sortDesc ? "降順" : "昇順";
+      applyFiltersAndRender();
+    }
   }catch(err){
     console.error(err);
     combiSummary.textContent = "読み込みエラー";
@@ -1102,6 +1113,19 @@ function renderUnitInfo(u){
   }
 }
 
+/* ---------- Sort options population ---------- */
+function populateSortOptions(){
+  // basic numeric fields + name
+  const keys = ["D0","D4","CD","HB0","HB1","HB2","HB3","name"];
+  pilotSort.innerHTML = "";
+  keys.forEach(k=>{
+    const opt = document.createElement("option");
+    opt.value = k;
+    opt.textContent = FIELD_LABELS[k] || k;
+    pilotSort.appendChild(opt);
+  });
+}
+
 /* ---------- Events ---------- */
 pilotSort.addEventListener("change", ()=>{
   sortKey = pilotSort.value || "D0";
@@ -1130,6 +1154,11 @@ prevPageBtn.addEventListener("click", ()=>{
 });
 nextPageBtn.addEventListener("click", ()=>{
   if(currentPage < totalPages){ currentPage++; renderPage(); window.scrollTo({top:0,behavior:'smooth'}); }
+});
+
+/* save state on unload as well (best-effort) */
+window.addEventListener("beforeunload", ()=>{
+  saveDetailState();
 });
 
 /* ---------- Start ---------- */
