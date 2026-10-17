@@ -39,7 +39,7 @@
   .series-tag-icon.series{background: linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #93c5fd 100%); color:#fff;}
   .series-tag-icon.tag{
     background: linear-gradient(90deg, #3c5a03 0%, #049b0e 50%, #289b24 100%);
-    color: #f4f4f4; /* 白ではなく濃い文字色にしてコントラストを確保 */
+    color: #f4f4f4;
   }
   .feature-line{color:var(--orange);font-weight:800;font-size:15px}
 
@@ -545,6 +545,29 @@ async function loadCombiForUnit(uid){
 }
 
 /* ---------- series/tag rendering ---------- */
+/* Normalize strings for comparison regardless of full-width/half-width differences.
+   Uses Unicode NFKC to convert full-width ASCII and punctuation to compatibility form,
+   trims and collapses spaces, and lowercases for case-insensitive compare.
+*/
+function normalizeForCompare(s){
+  if(s === undefined || s === null) return "";
+  try{
+    // NFKC converts many full-width characters to half-width equivalents
+    let t = String(s).normalize('NFKC');
+    // Replace full-width middle dot and similar separators with a common comma
+    t = t.replace(/・|･|·/g, ',');
+    // Replace various punctuation variants to their ASCII counterparts
+    t = t.replace(/[：：]/g, ':');
+    t = t.replace(/[、，]/g, ',');
+    t = t.replace(/[（]/g, '(').replace(/[）]/g, ')');
+    // collapse whitespace
+    t = t.replace(/\s+/g, ' ').trim();
+    return t.toLowerCase();
+  }catch(e){
+    return String(s).trim().toLowerCase();
+  }
+}
+
 function normalizeArrayLike(v){
   if(v === undefined || v === null) return [];
   if(Array.isArray(v)) return v.map(x=>String(x).trim()).filter(Boolean);
@@ -585,23 +608,45 @@ function renderSeriesTagsForUnit(u){
   const seriesList = Array.isArray(seriesTagOptions.series_unit) ? seriesTagOptions.series_unit : [];
   const tagList = Array.isArray(seriesTagOptions.tag_unit) ? seriesTagOptions.tag_unit : [];
 
-  const norm = s => String(s || "").trim();
+  // Pre-normalize unitSeries and unitTags for robust matching
+  const normalizedUnitSeries = unitSeries.map(x => normalizeForCompare(x));
+  const normalizedUnitTags = unitTags.map(x => normalizeForCompare(x));
 
   seriesList.forEach((label)=>{
-    if(unitSeries.some(us => norm(us) === norm(label))){
+    const nl = normalizeForCompare(label);
+    // match ignoring full/half width and punctuation differences
+    if(normalizedUnitSeries.some(us => us === nl)){
       const d = document.createElement("div");
       d.className = "series-tag-icon series";
       d.textContent = label;
       seriesTagsEl.appendChild(d);
+    } else {
+      // also allow partial match when label contains separators (e.g., "A・B")
+      const parts = nl.split(',').map(p=>p.trim()).filter(Boolean);
+      if(parts.length > 1 && parts.some(p => normalizedUnitSeries.includes(p))){
+        const d = document.createElement("div");
+        d.className = "series-tag-icon series";
+        d.textContent = label;
+        seriesTagsEl.appendChild(d);
+      }
     }
   });
 
   tagList.forEach((label)=>{
-    if(unitTags.some(ut => norm(ut) === norm(label))){
+    const nl = normalizeForCompare(label);
+    if(normalizedUnitTags.some(ut => ut === nl)){
       const d = document.createElement("div");
       d.className = "series-tag-icon tag";
       d.textContent = label;
       seriesTagsEl.appendChild(d);
+    } else {
+      const parts = nl.split(',').map(p=>p.trim()).filter(Boolean);
+      if(parts.length > 1 && parts.some(p => normalizedUnitTags.includes(p))){
+        const d = document.createElement("div");
+        d.className = "series-tag-icon tag";
+        d.textContent = label;
+        seriesTagsEl.appendChild(d);
+      }
     }
   });
 }
@@ -761,7 +806,6 @@ function renderPilotCard(pilotObj, combi){
     el.className = "combi-line";
     if(isTitle) el.className = "combi-title";
     if(percentHtml){
-      // percentHtml is HTML string for bold percent
       el.innerHTML = text + ' <span class="combi-percent">' + percentHtml + '</span>';
     } else {
       el.textContent = text;
@@ -772,21 +816,16 @@ function renderPilotCard(pilotObj, combi){
   const sk = String(sortKey || "").toUpperCase();
 
   if(sk === "D0"){
-    // Case1: Damage (D0)
     addLine(col4, "開始時", true);
     const PT0 = combi.PT0 || combi["PT0"] || "";
     const P0 = (combi.P0 !== undefined && combi.P0 !== null) ? Math.round(Number(combi.P0)) : (combi.P0 || "-");
-    // 表示は一回だけ：例 "格闘 838"
     addLine(col4, `${PT0 || "格闘"} ${P0}`);
-    // DR0 が 1.15 のとき → +15%
     const DR0 = (combi.DR0 !== undefined && combi.DR0 !== null) ? Number(combi.DR0) : 1.0;
     const diff = Math.round((DR0 - 1.0) * 100);
     const sign = (diff >= 0) ? "+" : "";
-    // 大きく太字で差分を表示（例: Damage +15%）
     const percentHtml = `<strong style="font-size:20px">${sign}${diff}%</strong>`;
     addLine(col4, `Damage `, false, percentHtml);
   } else if(sk === "D4"){
-    // Case2: Damage full (D4)
     addLine(col4, "全発動", true);
     const PT4 = combi.PT4 || combi["PT4"] || "";
     const P4 = (combi.P4 !== undefined && combi.P4 !== null) ? Math.round(Number(combi.P4)) : (combi.P4 || "-");
@@ -796,17 +835,12 @@ function renderPilotCard(pilotObj, combi){
     const sign4 = (diff4 >= 0) ? "+" : "";
     const percentHtml4 = `<strong style="font-size:20px">${sign4}${diff4}%</strong>`;
     addLine(col4, `Damage `, false, percentHtml4);
-
-
   } else if(sk.includes("HB") && sk.includes("_F")){
-    // Case3: HB full (HB*_F)
     addLine(col4, "全発動", true);
-    // 被Damage の各値は combi.DFB4 等が 0.44 のように入っている想定
     const toDiffFrom100 = (v) => {
       if(v === null || v === undefined || isNaN(Number(v))) return null;
-      const pct = Math.round(Number(v) * 100); // 例 44
-      const diff = 100 - pct; // 56
-      // 表示は符号付きでマイナス（被ダメ減少なら -56%）
+      const pct = Math.round(Number(v) * 100);
+      const diff = 100 - pct;
       return (diff === 0) ? "+0%" : (diff > 0 ? `-${diff}%` : `+${Math.abs(diff)}%`);
     };
     addLine(col4, `被Damage`);
@@ -814,13 +848,11 @@ function renderPilotCard(pilotObj, combi){
     const dfp = toDiffFrom100(combi.DFP4);
     const dft = toDiffFrom100(combi.DFT4);
     const dfe = toDiffFrom100(combi.DFE4);
-    // 各行は「・Beam -56%」の形式。パーセント部分を太字で大きくする
     addLine(col4, `・Beam `, false, dfb !== null ? `<strong style="font-size:18px">${dfb}</strong>` : null);
     addLine(col4, `・物理 `, false, dfp !== null ? `<strong style="font-size:18px">${dfp}</strong>` : null);
     addLine(col4, `・特殊 `, false, dft !== null ? `<strong style="font-size:18px">${dft}</strong>` : null);
     addLine(col4, `・EX `, false, dfe !== null ? `<strong style="font-size:18px">${dfe}</strong>` : null);
   } else {
-    // Default: show D0 summary
     addLine(col4, "開始時", true);
     const PT0 = combi.PT0 || combi["PT0"] || "";
     const P0 = (combi.P0 !== undefined && combi.P0 !== null) ? Math.round(Number(combi.P0)) : (combi.P0 || "-");
@@ -904,11 +936,6 @@ function addLine(container, text, escapeFlag, html){
     el.textContent = text;
   }
   container.appendChild(el);
-}
-
-function renderPilotCard_old(pilotObj, combi){
-  // kept for compatibility if needed
-  return renderPilotCard(pilotObj, combi);
 }
 
 function applyFiltersAndRender(){
@@ -1279,11 +1306,9 @@ window.addEventListener("beforeunload", ()=>{
 
 /* Restore state when page is shown (bfcache/back) or history navigation */
 window.addEventListener("pageshow", (e) => {
-  // If page was restored from bfcache or navigation, try to restore UI state
   try {
     const raw = sessionStorage.getItem(DETAIL_STATE_KEY);
     if(raw){
-      // If currentUnit is already set, restore; otherwise init() will attempt restore after data load
       if(currentUnit){
         restoreDetailState();
       }
@@ -1291,7 +1316,6 @@ window.addEventListener("pageshow", (e) => {
   } catch (err) {}
 });
 window.addEventListener("popstate", (e) => {
-  // history navigation: try to restore UI state
   try { restoreDetailState(); } catch(e){}
 });
 
