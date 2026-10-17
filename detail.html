@@ -50,11 +50,6 @@
   .rarity-badge{display:inline-block;padding:6px 10px;border-radius:10px;font-weight:700;font-size:12px;color:#fff}
   .stat-item{font-size:14px;color:#333}
 
-  /* core stats as list */
-  .unit-core-stats{margin-top:6px}
-  .unit-core-stats ul{margin:0;padding-left:18px}
-  .unit-core-stats li{margin-bottom:4px;font-size:14px;color:#333}
-
   .feature-line{color:var(--orange);font-weight:800;font-size:15px}
 
   /* bottom row: weapons and map info */
@@ -95,11 +90,15 @@
     padding:6px;border-radius:6px;border:1px solid #ccc;background:#fff;
   }
 
-  /* toggles */
+  /* toggles and skill icons */
   .toggles{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
   .btn.toggle{background:#fff}
   .btn.toggle.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .skill-icons{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .skill-icon{width:20px;height:20px;border-radius:4px;border:1px solid #ccc;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.6}
+  .skill-icon.selected{outline:2px solid var(--accent);opacity:1}
+
   /* sort emphasized and left aligned */
   .sort-area{display:flex;align-items:center;gap:8px;font-weight:900;color:var(--accent-strong)}
   .sort-area select{padding:6px;border-radius:6px;border:1px solid #ccc;background:#fff}
@@ -110,9 +109,10 @@
   .p-thumb{width:var(--pilot-thumb);height:var(--pilot-thumb);object-fit:cover;border-radius:6px;border:1px solid #ddd}
   .p-info{font-size:13px;flex:1;display:flex;flex-direction:column}
   .p-top{display:flex;gap:8px;align-items:flex-start}
-  /* enforce 3:7 ratio for left/right columns */
-  .p-top > div:first-child{flex:3 1 30%}
-  .p-top > div:last-child{flex:7 1 70%; text-align:right}
+  /* enforce 3:1:6 ratio for left/center/right columns */
+  .p-top > .col-left{flex:3 1 30%}
+  .p-top > .col-center{flex:1 1 10%;display:flex;flex-direction:column;gap:6px;align-items:center}
+  .p-top > .col-right{flex:6 1 60%; text-align:right}
   .p-name{font-weight:700}
   .p-dmg{color:#b33;font-weight:700;font-size:15px}
   .p-hb{color:#111;font-weight:600;font-size:13px;margin-top:4px}
@@ -128,17 +128,21 @@
   .pager{display:flex;gap:8px;align-items:center;margin-top:10px}
   .page-info{font-size:13px;color:var(--muted)}
 
+  /* rarity classes (visuals) */
+  .rarity-ur3 { background: linear-gradient(90deg,#e6d9ff 0%,#ffd9e6 18%,#e9dbff 36%,#e8f7d9 56%,#d9f7fb 76%,#cfeaff 100%); color:#1a1a1a; font-weight:450; border-radius:6px; padding:3px 6px; display:inline-block; font-size:11px; }
+  .rarity-ur0 { background: linear-gradient(90deg,#f3efff 0%,#fff3f6 18%,#f6efff 36%,#f6fbef 56%,#eefbfd 76%,#eef7ff 100%); color:#000000; font-weight:100; border-radius:6px; padding:3px 6px; display:inline-block; font-size:11px; }
+  .rarity-ssr-ssp { background: linear-gradient(90deg,#ff8a33 0%,#ff9f4d 25%,#ffc24f 55%,#ffe27a 85%); color:#1a1a1a; border-radius:6px; padding:3px 6px; font-weight:450; display:inline-block; font-size:11px; }
+  .rarity-ssr-sp { background: linear-gradient(90deg,#ffd8b4 0%,#ffe0c2 25%,#ffecb3 55%,#fff7d5 85%); color:#1a1a1a; border-radius:6px; padding:3px 6px; font-weight:100; display:inline-block; font-size:11px; }
+
   /* ensure unit-top stays side-by-side on small screens */
   @media (max-width:520px){
     .unit-top{flex-wrap:nowrap}
     .unit-top-left{flex:0 0 35%;min-width:140px}
     .unit-top-right{flex:1 1 65%;min-width:200px}
-    /* keep map-row horizontal on mobile */
     .map-row{flex-wrap:nowrap}
-    /* pilot card ratio preserved on mobile */
-    .p-top > div:first-child{flex:3 1 30%}
-    .p-top > div:last-child{flex:7 1 70%}
-    /* weapons-row: make columns stack if too narrow but prefer 3 columns */
+    .p-top > .col-left{flex:3 1 30%}
+    .p-top > .col-center{flex:1 1 10%}
+    .p-top > .col-right{flex:6 1 60%}
     .weapons-row{grid-template-columns: auto auto 1fr}
   }
 </style>
@@ -162,10 +166,6 @@
           <div id="unit-move" class="stat-item"></div>
           <div id="unit-range" class="stat-item"></div>
           <div id="unit-obtain" class="stat-item"></div>
-        </div>
-
-        <div class="unit-core-stats" id="unit-core-stats">
-          <!-- core stats will be rendered as a list -->
         </div>
 
         <div id="unit-shield" class="stat-item"></div>
@@ -199,7 +199,7 @@
         </div>
       </div>
 
-      <div id="map-row" class="map-row"></div>
+      <div id="map-row" class="map-row" style="display:none"></div>
     </div>
   </div>
 
@@ -240,6 +240,11 @@
         <button id="toggle-counterdef" class="btn toggle">反撃支援防御</button>
         <button id="toggle-forcecs" class="btn toggle">強制CS</button>
       </div>
+    </div>
+
+    <div class="filters-row">
+      <div style="font-weight:700">Skill Filters</div>
+      <div id="skill-filter-row" class="skill-icons" aria-hidden="false"></div>
     </div>
   </div>
 
@@ -283,6 +288,32 @@ const FIELD_LABELS = {
   "name": "名前"
 };
 
+/* skill icons map (user provided) */
+const SKILL_ICONS = {
+  "ENセーブ": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/a7/20/p/o0139014415681987764.png?caw=800",
+  "ENチャージ": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/57/e6/p/o0142014615681987771.png?caw=800",
+  "HPリペア": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/46/ad/p/o0139014015681987780.png?caw=800",
+  "MPアップ": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/1b/b8/p/o0140014715681987760.png?caw=800",
+  "MPアップ（範囲)": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/3c/74/p/o0140014115681994624.png?caw=800",
+  "アタックバースト": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/74/c0/p/o0143014315681987747.png?caw=800",
+  "クリブースト （率UP)": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/4e/9b/p/o0139014715681987758.png?caw=800",
+  "スウェー(SP)": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/5d/10/p/o0143014315681987768.png?caw=800",
+  "ハイスピード": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/10/f3/p/o0144014315681994621.png?caw=800",
+  "アタックバースト (範囲)": "https://stat.ameba.jp/user_images/20251112/08/winterstory0820/14/df/j/o0145015715714714034.jpg",
+  "フォースガード": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/f5/63/p/o0146014415681987781.png?caw=800",
+  "レンジブースト": "https://stat.ameba.jp/user_images/20250925/05/winterstory0820/31/50/p/o0146016115682015322.png",
+  "ロックオン": "https://stat.ameba.jp/user_images/20250925/05/winterstory0820/be/c7/p/o0142016115682015816.png",
+  "命中率・回避率上昇": "https://stat.ameba.jp/user_images/20260124/17/winterstory0820/02/58/j/o0127013415744109737.jpg",
+  "CS+1": "https://stat.ameba.jp/user_images/20251016/21/winterstory0820/45/e9/p/o0136013515697655665.png",
+  "支援攻撃+1": "https://stat.ameba.jp/user_images/20251016/21/winterstory0820/75/01/p/o0137013815697655660.png",
+  "支援防御+1": "https://stat.ameba.jp/user_images/20251016/21/winterstory0820/7f/e6/p/o0137013715697655662.png",
+  "覚醒ブースト": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/3a/ed/p/o0139014315681987751.png",
+  "射撃ブースト": "https://stat.ameba.jp/user_images/20251004/13/winterstory0820/66/97/j/o0145014515689195378.jpg?caw=800",
+  "格闘ブースト": "https://stat.ameba.jp/user_images/20251001/19/winterstory0820/54/fd/p/o0149014615687591295.png",
+  "EN弾数フリー": "https://stat.ameba.jp/user_images/20260207/08/winterstory0820/00/80/j/o0131013415748559744.jpg",
+  "フォースガード (範囲)": "https://stat.ameba.jp/user_images/20260207/09/winterstory0820/a6/bf/j/o0127013715748575419.jpg"
+};
+
 /* ===== DOM ===== */
 const unitThumb = document.getElementById("unit-thumb");
 const unitName = document.getElementById("unit-name");
@@ -290,9 +321,6 @@ const unitRarity = document.getElementById("unit-rarity");
 const unitMove = document.getElementById("unit-move");
 const unitRange = document.getElementById("unit-range");
 const unitObtain = document.getElementById("unit-obtain");
-const unitHP = document.getElementById("unit-hp");
-const unitAttack = document.getElementById("unit-attack");
-const unitDefense = document.getElementById("unit-defense");
 const unitFeature = document.getElementById("unit-feature");
 const unitShield = document.getElementById("unit-shield");
 const iconPhysical = document.getElementById("icon-physical");
@@ -311,6 +339,7 @@ const toggleAutoheal = document.getElementById("toggle-autoheal");
 const toggleMoveup = document.getElementById("toggle-moveup");
 const toggleCounterdef = document.getElementById("toggle-counterdef");
 const toggleForcecs = document.getElementById("toggle-forcecs");
+const skillFilterRow = document.getElementById("skill-filter-row");
 
 const pilotSort = document.getElementById("pilot-sort");
 const sortDirBtn = document.getElementById("sort-dir");
@@ -331,6 +360,9 @@ let sortDesc = true;
 let currentPage = 1;
 let totalPages = 1;
 let currentFiltered = [];
+
+/* skill filter state (set of skill names) */
+const selectedSkillFilters = new Set();
 
 /* ===== Helpers ===== */
 async function fetchJson(url, opts){
@@ -512,7 +544,7 @@ async function loadCombiForUnit(uid){
   applyFiltersAndRender();
 }
 
-/* render unit info */
+/* ---------- render unit info ---------- */
 function renderUnitInfo(u){
   unitThumb.src = u["画像リンク"] || "";
   unitName.textContent = u["ユニット"] || ("ID:" + u.uid);
@@ -526,22 +558,6 @@ function renderUnitInfo(u){
   unitRange.textContent = `最大射程: ${u["最大射程"] || "-"}`;
   unitObtain.textContent = `入手: ${u["入手"] || "-"}`;
 
-  // core stats as list
-  const coreContainer = document.getElementById("unit-core-stats");
-  coreContainer.innerHTML = "";
-  const ul = document.createElement("ul");
-  const hp = document.createElement("li");
-  hp.textContent = `HP: ${u["HP"] !== undefined && u["HP"] !== null && u["HP"] !== "" ? new Intl.NumberFormat('ja-JP').format(Number(u["HP"])) : "-"}`;
-  ul.appendChild(hp);
-  const atk = document.createElement("li");
-  atk.textContent = `攻撃力: ${u["(A) 攻撃"] !== undefined && u["(A) 攻撃"] !== null && u["(A) 攻撃"] !== "" ? new Intl.NumberFormat('ja-JP').format(Number(u["(A) 攻撃"])) : "-"}`;
-  ul.appendChild(atk);
-  const def = document.createElement("li");
-  def.textContent = `防御力: ${u["防御力"] !== undefined && u["防御力"] !== null && u["防御力"] !== "" ? new Intl.NumberFormat('ja-JP').format(Number(u["防御力"])) : "-"}`;
-  ul.appendChild(def);
-  coreContainer.appendChild(ul);
-
-  // feature moved to unit-bottom (already in DOM)
   unitFeature.textContent = u["特徴"] || "";
 
   const shield = u["シールド防御"];
@@ -590,14 +606,70 @@ function renderUnitInfo(u){
     }
   }
 
-  // MAP兵器 trio (display inline, navy color)
+  // MAP兵器 trio (display inline, navy color). Hide entire map-row if MAP兵器 is 0 or falsy
   mapRow.innerHTML = "";
   const mapA = u["MAP兵器"] || u["Map兵器"] || u["MAP兵器"];
   const mapPower = u["MAP兵器　Power"] || u["MAP兵器 Power"] || u["MAP兵器Power"] || u["MAP兵器 Power"];
   const mapShape = u["MAP兵器Shape"] || u["MAP兵器 Shape"] || u["MAP兵器Shape"];
-  const m1 = document.createElement("div"); m1.textContent = `MAP兵器: ${mapA || "-"}`; mapRow.appendChild(m1);
-  const m2 = document.createElement("div"); m2.textContent = `Power: ${mapPower || "-"}`; mapRow.appendChild(m2);
-  const m3 = document.createElement("div"); m3.className = "map-shape"; m3.textContent = `${mapShape || "-"}`; mapRow.appendChild(m3);
+  const mapAVal = (mapA === undefined || mapA === null) ? "" : String(mapA).trim();
+  if(mapAVal === "" || mapAVal === "0" || mapAVal === "false"){
+    mapRow.style.display = "none";
+  } else {
+    mapRow.style.display = "flex";
+    const m1 = document.createElement("div"); m1.textContent = `MAP兵器: ${mapA || "-"}`; mapRow.appendChild(m1);
+    const m2 = document.createElement("div"); m2.textContent = `Power: ${mapPower || "-"}`; mapRow.appendChild(m2);
+    const m3 = document.createElement("div"); m3.className = "map-shape"; m3.textContent = `${mapShape || "-"}`; mapRow.appendChild(m3);
+  }
+}
+
+/* ---------- Skill utilities ---------- */
+/* Extract skill keys from a pilot object: keys starting with "Pilot.Sk." */
+function extractPilotSkills(pilotObj){
+  const skills = [];
+  for(const k of Object.keys(pilotObj || {})){
+    if(k.startsWith("Pilot.Sk.")){
+      const val = pilotObj[k];
+      if(val !== undefined && val !== null && String(val).trim() !== "" && Number(val) !== 0){
+        // skill name is the suffix after "Pilot.Sk. "
+        const name = k.replace(/^Pilot\.Sk\.\s*/, "").trim();
+        skills.push(name);
+      }
+    }
+  }
+  return skills;
+}
+
+/* Build global skill icon list from SKILL_ICONS keys (sorted) */
+const ALL_SKILLS = Object.keys(SKILL_ICONS).sort((a,b)=> a.localeCompare(b,'ja'));
+
+/* Render skill filter icons (top of filters) */
+function renderSkillFilterIcons(){
+  skillFilterRow.innerHTML = "";
+  ALL_SKILLS.forEach(skillName=>{
+    const imgUrl = SKILL_ICONS[skillName];
+    const el = document.createElement("img");
+    el.src = imgUrl;
+    el.alt = skillName;
+    el.title = skillName;
+    el.className = "skill-icon";
+    el.style.width = "20px";
+    el.style.height = "20px";
+    el.style.objectFit = "cover";
+    el.dataset.skill = skillName;
+    el.addEventListener("click", ()=>{
+      const s = el.dataset.skill;
+      if(selectedSkillFilters.has(s)){
+        selectedSkillFilters.delete(s);
+        el.classList.remove("selected");
+      } else {
+        selectedSkillFilters.add(s);
+        el.classList.add("selected");
+      }
+      currentPage = 1;
+      applyFiltersAndRender();
+    });
+    skillFilterRow.appendChild(el);
+  });
 }
 
 /* ---------- Pilot card rendering ---------- */
@@ -617,8 +689,9 @@ function renderPilotCard(pilotObj, combi){
   const top = document.createElement("div");
   top.className = "p-top";
 
+  // left column (3)
   const leftCol = document.createElement("div");
-  // leftCol will be sized by CSS (3:7)
+  leftCol.className = "col-left";
   const name = document.createElement("div");
   name.className = "p-name";
   name.textContent = pilotObj["Pilot.キャラ"] || combi.pilot_name || "不明";
@@ -642,28 +715,33 @@ function renderPilotCard(pilotObj, combi){
   dmg.textContent = dmgText;
   leftCol.appendChild(dmg);
 
-  const hbEl = document.createElement("div");
-  hbEl.className = "p-hb";
-  const hbKeyCandidates = ["HB1","HB0","HB2","HB3"];
-  let hbVal = null;
-  for(const k of hbKeyCandidates){
-    if(combi[k] !== undefined && combi[k] !== null){
-      hbVal = combi[k];
-      break;
-    }
-  }
-  hbEl.textContent = hbVal !== null ? `耐久: ${fmtHB(hbVal)}` : `耐久: -`;
-  leftCol.appendChild(hbEl);
-
   top.appendChild(leftCol);
 
-  // right column: show Pilot.特徴のタイプ, Pilot.特徴, Pilot.条件 if non-empty (values only)
+  // center column (1) - skill icons vertical up to 3
+  const centerCol = document.createElement("div");
+  centerCol.className = "col-center";
+  const pilotSkills = extractPilotSkills(pilotObj);
+  // show up to 3 icons (if more, show first 3)
+  const showSkills = pilotSkills.slice(0,3);
+  showSkills.forEach(sname=>{
+    const imgEl = document.createElement("img");
+    imgEl.src = SKILL_ICONS[sname] || "";
+    imgEl.alt = sname;
+    imgEl.title = sname;
+    imgEl.style.width = "20px";
+    imgEl.style.height = "20px";
+    imgEl.style.objectFit = "cover";
+    centerCol.appendChild(imgEl);
+  });
+  top.appendChild(centerCol);
+
+  // right column (6)
   const rightCol = document.createElement("div");
-  rightCol.style.minWidth = "120px";
-  rightCol.style.textAlign = "right";
+  rightCol.className = "col-right";
   rightCol.style.fontSize = "13px";
   rightCol.style.color = "#333";
 
+  // show Pilot.特徴のタイプ, Pilot.特徴, Pilot.条件 if non-empty (values only)
   const ftype = pilotObj["Pilot.特徴のタイプ"];
   const ftext = pilotObj["Pilot.特徴"];
   const fcond = pilotObj["Pilot.条件"];
@@ -761,6 +839,18 @@ function populateSelect(el, values){
     opt.textContent = v;
     el.appendChild(opt);
   });
+  // make click/tap toggle selection (helpful on mobile)
+  el.addEventListener('mousedown', function(e){
+    // prevent default to allow toggling on single tap
+    e.preventDefault();
+    const option = document.elementFromPoint(e.clientX, e.clientY);
+    if(option && option.tagName === 'OPTION'){
+      option.selected = !option.selected;
+      // trigger change
+      const ev = new Event('change', { bubbles: true });
+      el.dispatchEvent(ev);
+    }
+  });
 }
 
 function getMultiSelectValues(selectEl){
@@ -793,6 +883,15 @@ function applyFiltersAndRender(){
     if(toggles.moveup && Number(p["Pilot.移動力UP"]||0) === 0) return false;
     if(toggles.counterdef && Number(p["Pilot.反撃支援防御"]||0) === 0) return false;
     if(toggles.forcecs && Number(p["Pilot.強制CS"]||0) === 0) return false;
+
+    // skill filters: AND condition for all selected skills
+    if(selectedSkillFilters.size > 0){
+      const pilotSkills = extractPilotSkills(p);
+      for(const sk of selectedSkillFilters){
+        if(!pilotSkills.includes(sk)) return false;
+      }
+    }
+
     return true;
   });
 
@@ -866,6 +965,7 @@ async function init(){
 
     populatePilotFilterOptions();
     populateSortOptions();
+    renderSkillFilterIcons();
 
     await loadCombiForUnit(currentUnit.uid);
   }catch(err){
@@ -897,6 +997,7 @@ sortDirBtn.addEventListener("click", ()=>{
   sel.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
 });
 
+/* pagination */
 prevPageBtn.addEventListener("click", ()=>{
   if(currentPage > 1){ currentPage--; renderPage(); window.scrollTo({top:0,behavior:'smooth'}); }
 });
