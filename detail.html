@@ -49,21 +49,26 @@
   .rarity-badge{display:inline-block;padding:6px 10px;border-radius:10px;font-weight:700;font-size:12px;color:#fff}
   .stat-item{font-size:14px;color:#333}
 
-  /* series/tag icons area */
-  .series-tags{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  /* series/tag icons area (moved to unit-bottom top) */
+  .series-tags{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
   .series-tag-icon{
     display:inline-flex;align-items:center;justify-content:center;
     padding:6px 10px;border-radius:12px;color:#fff;font-weight:700;font-size:12px;
     box-shadow:0 1px 2px rgba(0,0,0,0.12);
+    gap:6px;
   }
-  .series-tag-icon img{width:18px;height:18px;object-fit:cover;margin-right:6px;border-radius:4px}
+  .series-tag-icon img{width:18px;height:18px;object-fit:cover;border-radius:4px}
 
-  /* gradient classes */
-  .grad-a{background:linear-gradient(90deg,#f6d365,#fda085)}
-  .grad-b{background:linear-gradient(90deg,#a1c4fd,#c2e9fb)}
-  .grad-c{background:linear-gradient(90deg,#fbc2eb,#a6c1ee)}
-  .grad-d{background:linear-gradient(90deg,#cfd9df,#e2ebf0)}
-  .grad-e{background:linear-gradient(90deg,#ffd8b4,#ffecb3)}
+  /* シリーズは青基調（統一） */
+  .series-tag-icon.series{
+    background: linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #93c5fd 100%);
+    color: #fff;
+  }
+  /* タグは緑基調（統一） */
+  .series-tag-icon.tag{
+    background: linear-gradient(90deg, #059669 0%, #34d399 50%, #86efac 100%);
+    color: #fff;
+  }
 
   .feature-line{color:var(--orange);font-weight:800;font-size:15px}
 
@@ -88,8 +93,9 @@
   .filters-row{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
   .filter-block{display:flex;flex-direction:column;gap:6px}
   .filter-block label{font-size:12px;color:#666;font-weight:700}
+  /* compact dropdowns (single-line) */
   .filter-block select{
-    min-width:40px;
+    min-width:120px;
     max-width:220px;
     padding:6px;border-radius:6px;border:1px solid #ccc;background:#fff;
   }
@@ -147,6 +153,7 @@
 <a class="back" href="index.html">← Unit List</a>
 
 <main>
+  <!-- unit area -->
   <div id="unit-area">
     <div class="unit-top">
       <div class="unit-top-left">
@@ -163,15 +170,17 @@
           <div id="unit-obtain" class="stat-item"></div>
           <div id="unit-shield-inline" class="stat-item"></div>
         </div>
-
-        <!-- series/tag icons -->
-        <div id="series-tags" class="series-tags" aria-hidden="false"></div>
       </div>
     </div>
 
     <div class="unit-bottom">
+      <!-- series/tag icons moved here (top of unit-bottom) -->
+      <div id="series-tags" class="series-tags" aria-hidden="false"></div>
+
+      <!-- feature -->
       <div id="unit-feature" class="feature-line"></div>
 
+      <!-- simplified weapon info -->
       <div class="weapon-line">
         <div id="weapon-power" class="weapon-power"></div>
         <div id="weapon-range" class="weapon-power"></div>
@@ -184,33 +193,34 @@
     </div>
   </div>
 
+  <!-- FILTER area (compact dropdowns) -->
   <div class="filters-area" aria-label="Pilot Filters">
     <div style="font-weight:800">Pilot Filter</div>
 
     <div class="filters-row">
       <div class="filter-block">
         <label for="filter-pilot-rarity">Rarity</label>
-        <select id="filter-pilot-rarity" multiple></select>
+        <select id="filter-pilot-rarity"><option value="">All</option></select>
       </div>
 
       <div class="filter-block">
         <label for="filter-pilot-type">Type</label>
-        <select id="filter-pilot-type" multiple></select>
+        <select id="filter-pilot-type"><option value="">All</option></select>
       </div>
 
       <div class="filter-block">
         <label for="filter-pilot-obtain">Obtain</label>
-        <select id="filter-pilot-obtain" multiple></select>
+        <select id="filter-pilot-obtain"><option value="">All</option></select>
       </div>
 
       <div class="filter-block">
         <label for="filter-pilot-series">Pilot Series</label>
-        <select id="filter-pilot-series" multiple></select>
+        <select id="filter-pilot-series"><option value="">All</option></select>
       </div>
 
       <div class="filter-block">
         <label for="filter-pilot-tag">Pilot Tag</label>
-        <select id="filter-pilot-tag" multiple></select>
+        <select id="filter-pilot-tag"><option value="">All</option></select>
       </div>
     </div>
 
@@ -528,7 +538,7 @@ async function loadCombiForUnit(uid){
   applyFiltersAndRender();
 }
 
-/* ---------- series/tag rendering (robust) ---------- */
+/* ---------- series/tag rendering (robust, exact-match) ---------- */
 function normalizeArrayLike(v){
   if(v === undefined || v === null) return [];
   if(Array.isArray(v)) return v.map(x=>String(x).trim()).filter(Boolean);
@@ -557,7 +567,7 @@ function renderSeriesTagsForUnit(u){
     }
   }
 
-  // fallback: some units may have keys like "シリーズ" in different forms; try scanning all keys for "シリーズ" or "タグ"
+  // fallback: scan keys for "シリーズ" or "タグ"
   if(unitSeries.length === 0){
     Object.keys(u).forEach(k=>{
       if(/シリーズ/i.test(k) && u[k]) unitSeries = normalizeArrayLike(u[k]);
@@ -569,31 +579,26 @@ function renderSeriesTagsForUnit(u){
     });
   }
 
-  // prepare lists from seriesTagOptions (strings arrays)
   const seriesList = Array.isArray(seriesTagOptions.series_unit) ? seriesTagOptions.series_unit : [];
   const tagList = Array.isArray(seriesTagOptions.tag_unit) ? seriesTagOptions.tag_unit : [];
 
-  // helper normalize for exact-match comparison
   const norm = s => String(s || "").trim();
 
-  // gradient classes cycle
-  const grads = ["grad-a","grad-b","grad-c","grad-d","grad-e"];
-
-  // show matching series first
-  seriesList.forEach((label, idx)=>{
+  // show matching series (exact match)
+  seriesList.forEach((label)=>{
     if(unitSeries.some(us => norm(us) === norm(label))){
       const d = document.createElement("div");
-      d.className = "series-tag-icon " + grads[idx % grads.length];
+      d.className = "series-tag-icon series";
       d.textContent = label;
       seriesTagsEl.appendChild(d);
     }
   });
 
-  // then tags
-  tagList.forEach((label, idx)=>{
+  // show matching tags (exact match)
+  tagList.forEach((label)=>{
     if(unitTags.some(ut => norm(ut) === norm(label))){
       const d = document.createElement("div");
-      d.className = "series-tag-icon " + grads[(idx+2) % grads.length];
+      d.className = "series-tag-icon tag";
       d.textContent = label;
       seriesTagsEl.appendChild(d);
     }
@@ -789,11 +794,11 @@ function uniqueValuesFromPilots(key){
 }
 
 function populatePilotFilterOptions(){
+  // clear existing and add "All" option first
   populateSelect(filterPilotRarity, uniqueValuesFromPilots("Pilot.レア"));
   populateSelect(filterPilotType, uniqueValuesFromPilots("Pilot.タイプ"));
   populateSelect(filterPilotObtain, uniqueValuesFromPilots("Pilot.入手"));
 
-  // series_pilot / tag_pilot from seriesTagOptions if available
   const seriesPil = Array.isArray(seriesTagOptions.series_pilot) ? seriesTagOptions.series_pilot : [];
   const tagPil = Array.isArray(seriesTagOptions.tag_pilot) ? seriesTagOptions.tag_pilot : [];
   populateSelect(filterPilotSeries, seriesPil);
@@ -802,36 +807,30 @@ function populatePilotFilterOptions(){
 
 function populateSelect(el, values){
   el.innerHTML = "";
+  const allOpt = document.createElement("option");
+  allOpt.value = "";
+  allOpt.textContent = "All";
+  el.appendChild(allOpt);
   values.forEach(v=>{
     const opt = document.createElement("option");
     opt.value = v;
     opt.textContent = v;
     el.appendChild(opt);
   });
-  // mobile-friendly toggle on mousedown
-  el.addEventListener('mousedown', function(e){
-    e.preventDefault();
-    const option = document.elementFromPoint(e.clientX, e.clientY);
-    if(option && option.tagName === 'OPTION'){
-      option.selected = !option.selected;
-      const ev = new Event('change', { bubbles: true });
-      el.dispatchEvent(ev);
-    }
-  });
 }
 
-function getMultiSelectValues(selectEl){
-  return Array.from(selectEl.selectedOptions).map(o=>o.value).filter(v=>v!=="");
+function getSelectValue(selectEl){
+  return selectEl.value || "";
 }
 
 function applyFiltersAndRender(){
   const pidMap = buildPidMap();
 
-  const rarities = getMultiSelectValues(filterPilotRarity);
-  const types = getMultiSelectValues(filterPilotType);
-  const obtains = getMultiSelectValues(filterPilotObtain);
-  const pSeries = getMultiSelectValues(filterPilotSeries);
-  const pTags = getMultiSelectValues(filterPilotTag);
+  const rarity = getSelectValue(filterPilotRarity);
+  const type = getSelectValue(filterPilotType);
+  const obtain = getSelectValue(filterPilotObtain);
+  const pSeries = getSelectValue(filterPilotSeries);
+  const pTags = getSelectValue(filterPilotTag);
 
   const toggles = {
     autoheal: toggleAutoheal.classList.contains("active"),
@@ -845,17 +844,17 @@ function applyFiltersAndRender(){
   list = list.filter(c => {
     const p = (c.p !== null && pidMap[c.p]) ? pidMap[c.p] : null;
     if(!p) return false;
-    if(rarities.length && !rarities.includes((p["Pilot.レア"]||"").toString())) return false;
-    if(types.length && !types.includes((p["Pilot.タイプ"]||"").toString())) return false;
-    if(obtains.length && !obtains.includes((p["Pilot.入手"]||"").toString())) return false;
+    if(rarity && rarity !== "" && (p["Pilot.レア"]||"").toString() !== rarity) return false;
+    if(type && type !== "" && (p["Pilot.タイプ"]||"").toString() !== type) return false;
+    if(obtain && obtain !== "" && (p["Pilot.入手"]||"").toString() !== obtain) return false;
 
-    if(pSeries.length){
+    if(pSeries && pSeries !== ""){
       const ps = (p["Pilot.シリーズ連結"]||p["Pilot.シリーズ"]||p["Pilot.Series"]||"").toString();
-      if(!pSeries.some(s=> ps.split(",").map(x=>x.trim()).includes(s))) return false;
+      if(!ps.split(",").map(x=>x.trim()).includes(pSeries)) return false;
     }
-    if(pTags.length){
+    if(pTags && pTags !== ""){
       const pt = (p["Pilot.タグ連結"]||p["Pilot.タグ"]||p["Pilot.Tag"]||"").toString();
-      if(!pTags.some(t=> pt.split(",").map(x=>x.trim()).includes(t))) return false;
+      if(!pt.split(",").map(x=>x.trim()).includes(pTags)) return false;
     }
 
     if(toggles.autoheal && Number(p["Pilot.自動回復"]||0) === 0) return false;
