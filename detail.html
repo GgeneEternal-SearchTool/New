@@ -39,7 +39,7 @@
   .series-tag-icon.series{background: linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #93c5fd 100%); color:#fff;}
   .series-tag-icon.tag{
     background: linear-gradient(90deg, #3c5a03 0%, #049b0e 50%, #289b24 100%);
-    color: #f4f4f4;
+    color: #f4f4f4; /* 白ではなく濃い文字色にしてコントラストを確保 */
   }
   .feature-line{color:var(--orange);font-weight:800;font-size:15px}
 
@@ -863,6 +863,7 @@ function applyFiltersAndRender(){
   renderPage();
 }
 
+/* renderPage */
 function renderPage(){
   pilotGrid.innerHTML = "";
   const total = currentFiltered.length;
