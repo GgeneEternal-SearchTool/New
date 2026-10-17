@@ -58,6 +58,36 @@
   .filter-block label{font-size:12px;color:#666;font-weight:700}
   .filter-block select{min-width:120px;max-width:220px;padding:6px;border-radius:6px;border:1px solid #ccc;background:#fff}
 
+  /* Series/Tag pair: keep both selects on one line even on narrow screens */
+  .series-tag-pair{
+    display:flex;
+    gap:8px;
+    align-items:flex-start;
+    flex-wrap:nowrap;
+    width:100%;
+    box-sizing:border-box;
+  }
+  .series-tag-pair .filter-block{
+    flex:1 1 0;
+    min-width:0; /* allow shrinking on small screens */
+  }
+  .series-tag-pair .filter-block label{
+    white-space:nowrap; /* keep label and select compact */
+  }
+  .series-tag-pair .filter-block select{
+    min-width:0;
+    width:100%;
+    max-width:100%;
+  }
+
+  /* Ensure on very narrow viewports the overall filters-row can still wrap other blocks,
+     but the series-tag pair itself will not break into two lines. */
+  @media (max-width:520px){
+    .series-tag-pair{flex-wrap:nowrap}
+  }
+
+
+
   .toggles{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
   .btn.toggle{background:#fff}
@@ -190,15 +220,18 @@
         <select id="filter-pilot-obtain"><option value="">All</option></select>
       </div>
 
-      <div class="filter-block">
-        <label for="filter-pilot-series">Pilot Series</label>
-        <select id="filter-pilot-series"><option value="">All</option></select>
+      <div class="series-tag-pair">
+        <div class="filter-block">
+          <label for="filter-pilot-series">Pilot Series</label>
+          <select id="filter-pilot-series"><option value="">All</option></select>
+        </div>
+
+        <div class="filter-block">
+          <label for="filter-pilot-tag">Pilot Tag</label>
+          <select id="filter-pilot-tag"><option value="">All</option></select>
+        </div>
       </div>
 
-      <div class="filter-block">
-        <label for="filter-pilot-tag">Pilot Tag</label>
-        <select id="filter-pilot-tag"><option value="">All</option></select>
-      </div>
     </div>
 
     <div class="filters-row">
