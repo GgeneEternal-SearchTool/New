@@ -72,8 +72,7 @@
   #pilot-grid{margin-top:10px;display:flex;flex-direction:column;gap:8px}
   .pilot-card{border:1px solid #eee;padding:10px;border-radius:8px;display:flex;gap:12px;align-items:flex-start;background:#fff}
   /* image wrapper: keep image and pill in same column */
-  .p-thumb-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto}
-  .p-thumb{width:var(--pilot-thumb);height:var(--pilot-thumb);object-fit:cover;border-radius:6px;border:1px solid #ddd;display:block}
+
   .p-info{font-size:13px;flex:1;display:flex;flex-direction:column}
   .p-top{display:flex;gap:8px;align-items:flex-start}
   .p-top > .col-left{flex:3 1 30%}
@@ -88,10 +87,44 @@
   .two-action{display:inline-flex;align-items:center;gap:6px;margin-top:6px}
   .two-action .icon{width:18px;height:18px;border-radius:50%;background:orange;display:inline-block}
 
-  /* 2-action pill style (orange) placed under image */
-  .two-action-pill{
-    display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:12px;background:linear-gradient(90deg,#ffb347,#ff7e00);color:#fff;font-weight:800;font-size:12px;
+  /* image wrapper: keep image and pill in same column, set fixed width equal to image */
+  .p-thumb-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    flex:0 0 auto;
+    width: var(--pilot-thumb); /* 画像と同じ幅に固定 */
+    box-sizing: border-box;
   }
+
+  /* image */
+  .p-thumb{
+    width: 100%;
+    height: var(--pilot-thumb);
+    object-fit:cover;
+    border-radius:6px;
+    border:1px solid #ddd;
+    display:block;
+  }
+
+  /* 2-action pill: 横幅をラッパーいっぱいにして中央寄せ、テキストのみ */
+  .two-action-pill{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    padding:6px 4px;
+    border-radius:12px;
+    background: linear-gradient(90deg,#ffb347,#ff7e00);
+    color:#fff;
+    font-weight:800;
+    font-size:12px;
+    box-sizing:border-box;
+  }
+
+
+
   .two-action-pill img{width:16px;height:16px;object-fit:cover}
 
   .diag{font-size:12px;color:#999;margin-top:6px}
@@ -633,24 +666,15 @@ function renderPilotCard(pilotObj, combi){
   img.alt = pilotObj["Pilot.キャラ"] || "";
   imgWrap.appendChild(img);
 
-  // if combi.C14_flag indicates 2-action, show pill under image (text "２回行動")
-  if(combi && combi.C14_flag){
-    const two = document.createElement("div");
-    two.className = "two-action-pill";
-    // optional small icon (use simple circle) and text "２回行動"
-    const ic = document.createElement("span");
-    ic.style.display = "inline-block";
-    ic.style.width = "12px";
-    ic.style.height = "12px";
-    ic.style.borderRadius = "50%";
-    ic.style.background = "#ff7e00";
-    ic.style.boxShadow = "0 1px 2px rgba(0,0,0,0.12)";
-    two.appendChild(ic);
-    const txt = document.createElement("span");
-    txt.textContent = "２回行動";
-    two.appendChild(txt);
-    imgWrap.appendChild(two);
-  }
+// 旧：丸アイコン＋テキスト を作る箇所 を削除して下記に置換
+if(combi && combi.C14_flag){
+  const two = document.createElement("div");
+  two.className = "two-action-pill";
+  two.textContent = "２回行動"; // ここは全角の「２回行動」4文字のみ
+  imgWrap.appendChild(two);
+}
+
+
 
   div.appendChild(imgWrap);
 
