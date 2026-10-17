@@ -343,6 +343,9 @@ let currentFiltered = [];
 
 const selectedSkillFilters = new Set();
 
+/* state storage key */
+const DETAIL_STATE_KEY = "detail_state_v1";
+
 /* ===== Helpers ===== */
 async function fetchJson(url, opts){
   const res = await fetch(url, opts || {});
@@ -661,6 +664,8 @@ function renderPilotCard(pilotObj, combi){
   img.src = pilotObj["Pilot.画像リンク"] || "";
   img.alt = pilotObj["Pilot.キャラ"] || "";
   img.addEventListener("click", ()=>{
+    // save state before navigating so back restores correctly
+    saveDetailState();
     const uid = currentUnit && currentUnit.uid ? currentUnit.uid : uidParam;
     const pid = (combi && combi.p) ? combi.p : (pilotObj.pid || "");
     // navigate to combi.html with uid and pid
@@ -889,6 +894,23 @@ function getSelectValue(selectEl){
   return selectEl.value || "";
 }
 
+function addLine(container, text, escapeFlag, html){
+  const el = document.createElement("div");
+  el.className = "combi-line";
+  if(html){
+    const labelOnly = String(text).replace(/\s*[ー\-–−]?\d+%?$/u, "").trim();
+    el.innerHTML = (labelOnly ? labelOnly + " " : "") + html;
+  } else {
+    el.textContent = text;
+  }
+  container.appendChild(el);
+}
+
+function renderPilotCard_old(pilotObj, combi){
+  // kept for compatibility if needed
+  return renderPilotCard(pilotObj, combi);
+}
+
 function applyFiltersAndRender(){
   const pidMap = buildPidMap();
 
@@ -997,6 +1019,100 @@ function renderPage(){
   nextPageBtn.disabled = (currentPage >= totalPages);
 }
 
+/* ---------- State save/restore for back navigation ---------- */
+function saveDetailState(){
+  try{
+    const state = {
+      uid: currentUnit ? currentUnit.uid : null,
+      currentPage,
+      sortKey,
+      sortDesc,
+      selectedSkills: Array.from(selectedSkillFilters),
+      filters: {
+        rarity: filterPilotRarity.value || "",
+        type: filterPilotType.value || "",
+        obtain: filterPilotObtain.value || "",
+        series: filterPilotSeries.value || "",
+        tag: filterPilotTag.value || ""
+      },
+      toggles: {
+        autoheal: toggleAutoheal.classList.contains("active"),
+        moveup: toggleMoveup.classList.contains("active"),
+        counterdef: toggleCounterdef.classList.contains("active"),
+        forcecs: toggleForcecs.classList.contains("active"),
+        pilotAbility: togglePilotAbility.classList.contains("active")
+      },
+      scrollY: window.scrollY || 0
+    };
+    sessionStorage.setItem(DETAIL_STATE_KEY, JSON.stringify(state));
+  }catch(e){
+    // ignore
+  }
+}
+
+function restoreDetailState(){
+  try{
+    const raw = sessionStorage.getItem(DETAIL_STATE_KEY);
+    if(!raw) return false;
+    const state = JSON.parse(raw);
+    if(!state) return false;
+    // only restore if uid matches (or uid not provided)
+    if(state.uid !== null && currentUnit && String(state.uid) !== String(currentUnit.uid)) return false;
+
+    currentPage = state.currentPage || 1;
+    sortKey = state.sortKey || sortKey;
+    sortDesc = (typeof state.sortDesc === "boolean") ? state.sortDesc : sortDesc;
+
+    // restore selected skills
+    selectedSkillFilters.clear();
+    if(Array.isArray(state.selectedSkills)){
+      state.selectedSkills.forEach(s => selectedSkillFilters.add(s));
+    }
+
+    // restore filters
+    if(state.filters){
+      filterPilotRarity.value = state.filters.rarity || "";
+      filterPilotType.value = state.filters.type || "";
+      filterPilotObtain.value = state.filters.obtain || "";
+      filterPilotSeries.value = state.filters.series || "";
+      filterPilotTag.value = state.filters.tag || "";
+    }
+
+    // restore toggles
+    const setToggle = (btn, val) => {
+      if(val) btn.classList.add("active"); else btn.classList.remove("active");
+    };
+    if(state.toggles){
+      setToggle(toggleAutoheal, !!state.toggles.autoheal);
+      setToggle(toggleMoveup, !!state.toggles.moveup);
+      setToggle(toggleCounterdef, !!state.toggles.counterdef);
+      setToggle(toggleForcecs, !!state.toggles.forcecs);
+      setToggle(togglePilotAbility, !!state.toggles.pilotAbility);
+    }
+
+    // reflect selectedSkillFilters visually
+    Array.from(skillFilterRow.children).forEach(img=>{
+      const s = img.dataset.skill;
+      if(selectedSkillFilters.has(s)) img.classList.add("selected"); else img.classList.remove("selected");
+    });
+
+    // set sort UI
+    pilotSort.value = sortKey;
+    sortDirBtn.textContent = sortDesc ? "降順" : "昇順";
+
+    // apply filters and render
+    applyFiltersAndRender();
+
+    // restore scroll after a short delay to ensure layout is ready
+    const scrollY = state.scrollY || 0;
+    setTimeout(()=>{ window.scrollTo({ top: scrollY, behavior: 'auto' }); }, 50);
+
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
 /* ---------- Initialization ---------- */
 async function init(){
   try{
@@ -1015,6 +1131,20 @@ async function init(){
     const uid = Number(uidParam);
     currentUnit = units.find(u => Number(u.uid) === uid);
     if(!currentUnit){
+      // try to restore from sessionStorage if uidParam missing or unit not found
+      const raw = sessionStorage.getItem(DETAIL_STATE_KEY);
+      if(raw){
+        try{
+          const st = JSON.parse(raw);
+          if(st && st.uid){
+            const restored = units.find(u => Number(u.uid) === Number(st.uid));
+            if(restored) currentUnit = restored;
+          }
+        }catch(e){}
+      }
+    }
+
+    if(!currentUnit){
       unitName.textContent = "ユニットが見つかりません";
       combiSummary.textContent = "";
       return;
@@ -1027,7 +1157,17 @@ async function init(){
     populateSortOptions();
     renderSkillFilterIcons();
 
+    // try to restore UI state (filters, page, toggles, selected skills)
+    const restored = restoreDetailState();
+    // load combi rows and then if not restored earlier, apply default render
     await loadCombiForUnit(currentUnit.uid);
+
+    // if restoreDetailState returned false, ensure UI reflects defaults
+    if(!restored){
+      pilotSort.value = sortKey;
+      sortDirBtn.textContent = sortDesc ? "降順" : "昇順";
+      applyFiltersAndRender();
+    }
   }catch(err){
     console.error(err);
     combiSummary.textContent = "読み込みエラー";
@@ -1130,6 +1270,29 @@ prevPageBtn.addEventListener("click", ()=>{
 });
 nextPageBtn.addEventListener("click", ()=>{
   if(currentPage < totalPages){ currentPage++; renderPage(); window.scrollTo({top:0,behavior:'smooth'}); }
+});
+
+/* Save state before unload/navigation */
+window.addEventListener("beforeunload", ()=>{
+  saveDetailState();
+});
+
+/* Restore state when page is shown (bfcache/back) or history navigation */
+window.addEventListener("pageshow", (e) => {
+  // If page was restored from bfcache or navigation, try to restore UI state
+  try {
+    const raw = sessionStorage.getItem(DETAIL_STATE_KEY);
+    if(raw){
+      // If currentUnit is already set, restore; otherwise init() will attempt restore after data load
+      if(currentUnit){
+        restoreDetailState();
+      }
+    }
+  } catch (err) {}
+});
+window.addEventListener("popstate", (e) => {
+  // history navigation: try to restore UI state
+  try { restoreDetailState(); } catch(e){}
 });
 
 /* ---------- Start ---------- */
