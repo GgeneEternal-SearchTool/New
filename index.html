@@ -757,12 +757,13 @@ async function init(){
 }
 
 /* ---------- Events ---------- */
-[filterRarity, filterType, filterMove, filterRange, filterObtain].forEach(sel=>{
+[filterRarity, filterType, filterMove, filterRange, filterObtain, filterMap].forEach(sel=>{
   sel.addEventListener("change", ()=>{
     currentPage = 1;
     applyFiltersAndRender();
   });
 });
+
 filterSeries.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
 filterTag1.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
 filterTag2.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
