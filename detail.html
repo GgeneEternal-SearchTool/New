@@ -20,66 +20,26 @@
   body{margin:16px;color:#111;background:#fff}
   .back{display:inline-block;margin-bottom:12px;color:var(--accent);text-decoration:none}
 
-  /* unit-area: two-row layout */
+  /* unit-area */
   #unit-area{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
-  .unit-top{
-    display:flex;
-    gap:12px;
-    align-items:flex-start;
-    flex-wrap:nowrap;
-    overflow-x:auto;
-  }
-  .unit-top-left{
-    flex:0 0 35%;
-    min-width:160px;
-  }
-  .unit-top-right{
-    flex:1 1 65%;
-    min-width:220px;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-  }
+  .unit-top{display:flex;gap:12px;align-items:flex-start;flex-wrap:nowrap;overflow-x:auto}
+  .unit-top-left{flex:0 0 35%;min-width:160px}
+  .unit-top-right{flex:1 1 65%;min-width:220px;display:flex;flex-direction:column;gap:8px}
 
   .thumb{width:100%;height:auto;max-width:var(--thumb-large);object-fit:cover;border:1px solid #ddd;border-radius:6px}
 
   .unit-name{font-size:20px;font-weight:700}
-
   .unit-stats-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
   .rarity-badge{display:inline-block;padding:6px 10px;border-radius:10px;font-weight:700;font-size:12px;color:#fff}
   .stat-item{font-size:14px;color:#333}
 
-  /* series/tag icons area (moved to unit-bottom top) */
+  /* series/tag icons (moved to unit-bottom top) */
   .series-tags{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
-  .series-tag-icon{
-    display:inline-flex;align-items:center;justify-content:center;
-    padding:6px 10px;border-radius:12px;color:#fff;font-weight:700;font-size:12px;
-    box-shadow:0 1px 2px rgba(0,0,0,0.12);
-    gap:6px;
-  }
+  .series-tag-icon{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:12px;color:#fff;font-weight:700;font-size:12px;box-shadow:0 1px 2px rgba(0,0,0,0.12);gap:6px}
   .series-tag-icon img{width:18px;height:18px;object-fit:cover;border-radius:4px}
 
-  /* シリーズは青基調（統一） */
-  .series-tag-icon.series{
-    background: linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #93c5fd 100%);
-    color: #fff;
-  }
-  /* タグは緑基調（統一） */
-  /* タグは濃い黄色基調（右側を濃く） */
-  .series-tag-icon.tag{
-    background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 50%, #b45309 100%);
-    color: #fff;
-    border-radius: 12px;
-    padding: 6px 10px;
-    font-weight:700;
-    font-size:12px;
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.12);
-  }
-
-
+  .series-tag-icon.series{background: linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #93c5fd 100%); color:#fff;}
+  .series-tag-icon.tag{background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 50%, #b45309 100%); color:#fff;}
 
   .feature-line{color:var(--orange);font-weight:800;font-size:15px}
 
@@ -89,34 +49,21 @@
   .weapon-list{margin:0;padding-left:18px}
   .weapon-list li{font-size:13px;margin-bottom:4px}
 
-  .map-row{
-    display:flex;
-    gap:12px;
-    align-items:center;
-    color:var(--navy);
-    font-weight:700;
-    white-space:nowrap;
-    overflow-x:auto;
-  }
+  .map-row{display:flex;gap:12px;align-items:center;color:var(--navy);font-weight:700;white-space:nowrap;overflow-x:auto}
   .map-row .map-shape{font-size:18px;font-weight:800}
 
   .filters-area{margin-top:8px;border:1px solid #f0f0f0;padding:10px;border-radius:8px;display:flex;flex-direction:column;gap:10px}
   .filters-row{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
   .filter-block{display:flex;flex-direction:column;gap:6px}
   .filter-block label{font-size:12px;color:#666;font-weight:700}
-  /* compact dropdowns (single-line) */
-  .filter-block select{
-    min-width:120px;
-    max-width:220px;
-    padding:6px;border-radius:6px;border:1px solid #ccc;background:#fff;
-  }
+  .filter-block select{min-width:120px;max-width:220px;padding:6px;border-radius:6px;border:1px solid #ccc;background:#fff}
 
   .toggles{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
   .btn.toggle{background:#fff}
   .btn.toggle.active{background:var(--accent);color:#fff;border-color:var(--accent)}
   .skill-icons{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-  .skill-icon{width:25px;height:25px;border-radius:4px;border:1px solid #ccc;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.7;object-fit:cover}
+  .skill-icon{width:30px;height:30px;border-radius:4px;border:1px solid #ccc;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.8;object-fit:cover}
   .skill-icon.selected{outline:2px solid var(--accent);opacity:1}
 
   .sort-area{display:flex;align-items:center;gap:8px;font-weight:900;color:var(--accent-strong)}
@@ -137,7 +84,13 @@
   .badge{background:#eee;padding:3px 6px;border-radius:8px;font-size:12px;color:#222;font-weight:700}
   .badge.pa{background:#2b6cb0;color:#fff}
   .two-action{display:inline-flex;align-items:center;gap:6px;margin-top:6px}
-  .two-action .icon{width:18px;height:18px;border-radius:50%;background:green;display:inline-block}
+  .two-action .icon{width:18px;height:18px;border-radius:50%;background:orange;display:inline-block}
+
+  /* 2-action icon style (orange pill) */
+  .two-action-pill{
+    display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:12px;background:linear-gradient(90deg,#ffb347,#ff7e00);color:#fff;font-weight:800;font-size:12px;
+  }
+  .two-action-pill img{width:16px;height:16px;object-fit:cover}
 
   .diag{font-size:12px;color:#999;margin-top:6px}
 
@@ -164,7 +117,6 @@
 <a class="back" href="index.html">← Unit List</a>
 
 <main>
-  <!-- unit area -->
   <div id="unit-area">
     <div class="unit-top">
       <div class="unit-top-left">
@@ -185,13 +137,10 @@
     </div>
 
     <div class="unit-bottom">
-      <!-- series/tag icons moved here (top of unit-bottom) -->
       <div id="series-tags" class="series-tags" aria-hidden="false"></div>
 
-      <!-- feature -->
       <div id="unit-feature" class="feature-line"></div>
 
-      <!-- simplified weapon info -->
       <div class="weapon-line">
         <div id="weapon-power" class="weapon-power"></div>
         <div id="weapon-range" class="weapon-power"></div>
@@ -204,7 +153,6 @@
     </div>
   </div>
 
-  <!-- FILTER area (compact dropdowns) -->
   <div class="filters-area" aria-label="Pilot Filters">
     <div style="font-weight:800">Pilot Filter</div>
 
@@ -242,6 +190,7 @@
         <button id="toggle-moveup" class="btn toggle">移動力UP</button>
         <button id="toggle-counterdef" class="btn toggle">反撃支援防御</button>
         <button id="toggle-forcecs" class="btn toggle">強制CS</button>
+        <button id="toggle-pilot-ability" class="btn toggle">Pilot Ability Active</button>
       </div>
     </div>
 
@@ -351,6 +300,7 @@ const toggleAutoheal = document.getElementById("toggle-autoheal");
 const toggleMoveup = document.getElementById("toggle-moveup");
 const toggleCounterdef = document.getElementById("toggle-counterdef");
 const toggleForcecs = document.getElementById("toggle-forcecs");
+const togglePilotAbility = document.getElementById("toggle-pilot-ability");
 const skillFilterRow = document.getElementById("skill-filter-row");
 
 const pilotSort = document.getElementById("pilot-sort");
@@ -472,7 +422,7 @@ async function getPartsForUnit(uid){
   return [];
 }
 
-/* normalize combi row */
+/* normalize combi row (C14 included) */
 function normalizeCombiRow(r){
   const nr = Object.assign({}, r);
   nr.p = (nr.p !== undefined && nr.p !== null && nr.p !== "") ? Number(nr.p) : null;
@@ -495,6 +445,8 @@ function normalizeCombiRow(r){
       nr[ck] = 0;
     }
   }
+  // include C14 as-is (some parts use "Y")
+  nr.C14 = (r["C14"] !== undefined && r["C14"] !== null) ? r["C14"] : (r.C14 !== undefined ? r.C14 : "");
   nr.t2 = (nr.t2 !== undefined && nr.t2 !== null) ? Number(nr.t2) : 0;
   return nr;
 }
@@ -549,7 +501,7 @@ async function loadCombiForUnit(uid){
   applyFiltersAndRender();
 }
 
-/* ---------- series/tag rendering (robust, exact-match) ---------- */
+/* ---------- series/tag rendering ---------- */
 function normalizeArrayLike(v){
   if(v === undefined || v === null) return [];
   if(Array.isArray(v)) return v.map(x=>String(x).trim()).filter(Boolean);
@@ -559,7 +511,6 @@ function renderSeriesTagsForUnit(u){
   seriesTagsEl.innerHTML = "";
   if(!seriesTagOptions) return;
 
-  // collect unit series/tag from many possible keys
   const unitSeriesCandidates = ["シリーズ連結","シリーズ","Series","SeriesName","series","SeriesName"];
   const unitTagCandidates = ["タグ連結","タグ","Tag","TagName","tag","TagName"];
 
@@ -577,8 +528,6 @@ function renderSeriesTagsForUnit(u){
       break;
     }
   }
-
-  // fallback: scan keys for "シリーズ" or "タグ"
   if(unitSeries.length === 0){
     Object.keys(u).forEach(k=>{
       if(/シリーズ/i.test(k) && u[k]) unitSeries = normalizeArrayLike(u[k]);
@@ -595,7 +544,6 @@ function renderSeriesTagsForUnit(u){
 
   const norm = s => String(s || "").trim();
 
-  // show matching series (exact match)
   seriesList.forEach((label)=>{
     if(unitSeries.some(us => norm(us) === norm(label))){
       const d = document.createElement("div");
@@ -605,7 +553,6 @@ function renderSeriesTagsForUnit(u){
     }
   });
 
-  // show matching tags (exact match)
   tagList.forEach((label)=>{
     if(unitTags.some(ut => norm(ut) === norm(label))){
       const d = document.createElement("div");
@@ -640,8 +587,8 @@ function renderSkillFilterIcons(){
     el.alt = skillName;
     el.title = skillName;
     el.className = "skill-icon";
-    el.style.width = "25px";
-    el.style.height = "25px";
+    el.style.width = "30px";
+    el.style.height = "30px";
     el.style.objectFit = "cover";
     el.dataset.skill = skillName;
     el.addEventListener("click", ()=>{
@@ -660,7 +607,7 @@ function renderSkillFilterIcons(){
   });
 }
 
-/* ---------- Pilot card rendering ---------- */
+/* ---------- Pilot card rendering (2-action icon) ---------- */
 function renderPilotCard(pilotObj, combi){
   const div = document.createElement("div");
   div.className = "pilot-card";
@@ -670,6 +617,23 @@ function renderPilotCard(pilotObj, combi){
   img.src = pilotObj["Pilot.画像リンク"] || "";
   img.alt = pilotObj["Pilot.キャラ"] || "";
   div.appendChild(img);
+
+  // if combi.C14 indicates 2-action (Y), show pill under image
+  if(combi && (String(combi.C14).toUpperCase() === "Y" || Number(combi.C14) === 1)){
+    const two = document.createElement("div");
+    two.className = "two-action-pill";
+    // small icon (emoji fallback) + text
+    const ic = document.createElement("span");
+    ic.innerHTML = "⤴"; // simple icon; replace with img if available
+    ic.style.fontWeight = "900";
+    ic.style.fontSize = "14px";
+    two.appendChild(ic);
+    const txt = document.createElement("span");
+    txt.textContent = "2回行動";
+    two.appendChild(txt);
+    // place pill below image by inserting before info
+    div.appendChild(two);
+  }
 
   const info = document.createElement("div");
   info.className = "p-info";
@@ -709,8 +673,8 @@ function renderPilotCard(pilotObj, combi){
     imgEl.src = SKILL_ICONS[sname] || "";
     imgEl.alt = sname;
     imgEl.title = sname;
-    imgEl.style.width = "25px";
-    imgEl.style.height = "25px";
+    imgEl.style.width = "30px";
+    imgEl.style.height = "30px";
     imgEl.style.objectFit = "cover";
     imgEl.style.margin = "0";
     centerCol.appendChild(imgEl);
@@ -805,7 +769,6 @@ function uniqueValuesFromPilots(key){
 }
 
 function populatePilotFilterOptions(){
-  // clear existing and add "All" option first
   populateSelect(filterPilotRarity, uniqueValuesFromPilots("Pilot.レア"));
   populateSelect(filterPilotType, uniqueValuesFromPilots("Pilot.タイプ"));
   populateSelect(filterPilotObtain, uniqueValuesFromPilots("Pilot.入手"));
@@ -847,7 +810,8 @@ function applyFiltersAndRender(){
     autoheal: toggleAutoheal.classList.contains("active"),
     moveup: toggleMoveup.classList.contains("active"),
     counterdef: toggleCounterdef.classList.contains("active"),
-    forcecs: toggleForcecs.classList.contains("active")
+    forcecs: toggleForcecs.classList.contains("active"),
+    pilotAbility: togglePilotAbility.classList.contains("active")
   };
 
   let list = combiRows.slice();
@@ -872,6 +836,13 @@ function applyFiltersAndRender(){
     if(toggles.moveup && Number(p["Pilot.移動力UP"]||0) === 0) return false;
     if(toggles.counterdef && Number(p["Pilot.反撃支援防御"]||0) === 0) return false;
     if(toggles.forcecs && Number(p["Pilot.強制CS"]||0) === 0) return false;
+
+    // Pilot Ability Active filtering: require combi conditions
+    if(toggles.pilotAbility){
+      const case1 = (c.C01 === 1 || c.C02 === 1 || c.C03 === 1 || c.C08 === 1);
+      const case2 = (c.C06 === 1 && c.C07 === 1);
+      if(!(case1 || case2)) return false;
+    }
 
     if(selectedSkillFilters.size > 0){
       const pilotSkills = extractPilotSkills(p);
@@ -941,7 +912,6 @@ async function init(){
     const pilotsData = await fetchJson(PILOTS_JSON);
     pilots = pilotsData || [];
 
-    // load series/tag options
     try{
       const sto = await fetchJson(SERIES_TAG_JSON);
       seriesTagOptions = sto || {};
@@ -1050,7 +1020,7 @@ sortDirBtn.addEventListener("click", ()=>{
   applyFiltersAndRender();
 });
 
-[ toggleAutoheal, toggleMoveup, toggleCounterdef, toggleForcecs ].forEach(btn=>{
+[ toggleAutoheal, toggleMoveup, toggleCounterdef, toggleForcecs, togglePilotAbility ].forEach(btn=>{
   btn.addEventListener("click", ()=>{
     btn.classList.toggle("active");
     currentPage = 1;
