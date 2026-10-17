@@ -7,139 +7,183 @@
 <style>
   :root{
     --thumb-large:120px;
-    --pilot-thumb:80px;
+    --pilot-thumb:120px; /* パイロットとユニットを同じサイズに統一 */
     --muted:#666;
     --accent:#2b6cb0;
+    --navy:#0b3b66; /* ハイライト用の紺色 */
     --orange:#d97706;
     font-family: system-ui, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Segoe UI", Arial;
   }
   body{margin:16px;color:#111;background:#fff}
   .back{display:inline-block;margin-bottom:12px;color:var(--accent);text-decoration:none}
   .container{display:flex;flex-direction:column;gap:12px}
-  .unit-top{display:flex;gap:12px;align-items:flex-start}
-  .unit-top-left{flex:0 0 35%}
-  .thumb{width:100%;height:auto;max-width:var(--thumb-large);object-fit:cover;border:1px solid #ddd;border-radius:6px}
-  .unit-name{font-size:20px;font-weight:700}
-  .unit-stats-row{display:flex;gap:12px;align-items:center}
-  .series-tags{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
+  .block{display:flex;gap:12px;align-items:flex-start;border:1px solid #eee;padding:10px;border-radius:8px}
+  .thumb-wrap{flex:0 0 auto;width:var(--pilot-thumb);box-sizing:border-box;display:flex;align-items:center;justify-content:center}
+  .p-thumb{width:var(--pilot-thumb);height:var(--pilot-thumb);object-fit:cover;border-radius:6px;border:1px solid #ddd;display:block}
+  .info{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
+  .unit-name, .p-name{font-size:20px;font-weight:700;line-height:1.1}
+  .p-name{font-weight:800}
+  .p-params{display:flex;gap:12px;flex-wrap:wrap}
+  .param{background:#fff3e0;padding:6px 8px;border-radius:6px;font-weight:800;color:#d97706}
+  .skills{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .skill-icon{width:30px;height:30px;border-radius:4px;border:1px solid #ccc;object-fit:cover}
+  .series-tags{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
   .series-tag-icon{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:12px;color:#fff;font-weight:700;font-size:12px;box-shadow:0 1px 2px rgba(0,0,0,0.12);gap:6px}
   .series-tag-icon.series{background: linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #93c5fd 100%); color:#fff;}
   .series-tag-icon.tag{background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 50%, #b45309 100%); color:#fff;}
-  .pilot-block{display:flex;gap:12px;align-items:flex-start;border:1px solid #eee;padding:10px;border-radius:8px}
-  .p-thumb{width:var(--pilot-thumb);height:var(--pilot-thumb);object-fit:cover;border-radius:6px;border:1px solid #ddd}
-  .p-info{display:flex;flex-direction:column;gap:6px}
-  .p-name{font-weight:800;font-size:18px}
-  .p-params{display:flex;gap:12px;flex-wrap:wrap}
-  .param{background:#fff3e0;padding:6px 8px;border-radius:6px;font-weight:800;color:#d97706}
-  .skills{display:flex;gap:6px;align-items:center}
-  .skill-icon{width:30px;height:30px;border-radius:4px;border:1px solid #ccc;object-fit:cover}
-  .series-tags-small{display:flex;gap:6px;flex-wrap:wrap}
-  .pilot-extra{margin-top:8px}
-  .highlight{color:#d97706;font-weight:800}
+  .highlight{color:var(--navy);font-weight:800;margin-top:4px}
+  .meta-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;color:var(--muted);font-weight:700}
+  .unit-stats-row{display:flex;gap:12px;align-items:center}
+  .feature-line{color:var(--orange);font-weight:800;font-size:15px}
+  .diag{font-size:12px;color:#999;margin-top:6px}
+  @media (max-width:520px){
+    .block{flex-direction:row}
+    .info{min-width:0}
+    .series-tags{gap:6px}
+  }
 </style>
 </head>
 <body>
 <a class="back" href="detail.html">← Back</a>
 <main class="container">
-  <div id="unit-area">
-    <!-- unit-top and unit-bottom will be rendered here (copied from detail) -->
-    <div class="unit-top">
-      <div class="unit-top-left">
-        <img id="unit-thumb" class="thumb" src="" alt="" />
-      </div>
-      <div class="unit-top-right">
-        <div class="unit-name" id="unit-name"></div>
-        <div class="unit-stats-row">
-          <div id="unit-rarity" class="rarity-badge"></div>
-          <div id="unit-move" class="stat-item"></div>
-          <div id="unit-range" class="stat-item"></div>
-          <div id="unit-obtain" class="stat-item"></div>
-        </div>
-      </div>
-    </div>
-    <div class="unit-bottom" style="margin-top:8px">
-      <div id="series-tags" class="series-tags"></div>
-      <div id="unit-feature" class="feature-line"></div>
-    </div>
-  </div>
 
-  <div id="pilot-area">
-    <div class="pilot-block">
-      <img id="pilot-thumb" class="p-thumb" src="" alt="" />
-      <div class="p-info">
+  <!-- 上段: パイロット（画像・名前・highlight・シリーズ/タグ） -->
+  <section id="pilot-area">
+    <div class="block pilot-block">
+      <div class="thumb-wrap">
+        <img id="pilot-thumb" class="p-thumb" src="" alt="pilot" />
+      </div>
+      <div class="info">
         <div class="p-name" id="pilot-name"></div>
-        <div class="p-params" id="pilot-params"></div>
+        <div id="pilot-highlight" class="highlight" aria-live="polite"></div>
         <div class="skills" id="pilot-skills"></div>
-        <div class="series-tags-small" id="pilot-series-tags"></div>
-        <div class="pilot-extra" id="pilot-extra"></div>
+        <div class="series-tags" id="pilot-series-tags" aria-hidden="false"></div>
+        <div id="pilot-extra" class="diag"></div>
       </div>
     </div>
-  </div>
+  </section>
+
+  <!-- 下段: ユニット（画像・名前・シリーズ/タグ） -->
+  <section id="unit-area">
+    <div class="block unit-block">
+      <div class="thumb-wrap">
+        <img id="unit-thumb" class="p-thumb" src="" alt="unit" />
+      </div>
+      <div class="info">
+        <div class="unit-name" id="unit-name"></div>
+        <div id="unit-highlight" class="highlight" aria-live="polite"></div>
+        <div class="unit-stats-row" id="unit-stats-row"></div>
+        <div class="series-tags" id="unit-series-tags" aria-hidden="false"></div>
+        <div id="unit-feature" class="feature-line"></div>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <script>
+/* params */
 const params = new URLSearchParams(location.search);
 const uidParam = params.get("uid");
 const pidParam = params.get("pid");
 
+/* json paths */
 const JSON_BASE_URL = "./json-file";
 const UNITS_JSON = JSON_BASE_URL + "/units.json";
 const PILOTS_JSON = JSON_BASE_URL + "/pilots.json";
 const SERIES_TAG_JSON = JSON_BASE_URL + "/series_tag_options.json";
 
+/* DOM */
 const unitThumb = document.getElementById("unit-thumb");
 const unitName = document.getElementById("unit-name");
-const unitRarity = document.getElementById("unit-rarity");
-const unitMove = document.getElementById("unit-move");
-const unitRange = document.getElementById("unit-range");
-const unitObtain = document.getElementById("unit-obtain");
-const seriesTagsEl = document.getElementById("series-tags");
+const unitStatsRow = document.getElementById("unit-stats-row");
+const unitSeriesTagsEl = document.getElementById("unit-series-tags");
 const unitFeature = document.getElementById("unit-feature");
+const unitHighlight = document.getElementById("unit-highlight");
 
 const pilotThumb = document.getElementById("pilot-thumb");
 const pilotName = document.getElementById("pilot-name");
-const pilotParams = document.getElementById("pilot-params");
 const pilotSkills = document.getElementById("pilot-skills");
-const pilotSeriesTags = document.getElementById("pilot-series-tags");
+const pilotSeriesTagsEl = document.getElementById("pilot-series-tags");
 const pilotExtra = document.getElementById("pilot-extra");
+const pilotHighlight = document.getElementById("pilot-highlight");
 
-async function fetchJson(url){ const r = await fetch(url); if(!r.ok) throw new Error(url+" fetch failed"); return r.json(); }
+/* helper fetch */
+async function fetchJson(url){
+  const r = await fetch(url);
+  if(!r.ok) throw new Error(url + " fetch failed: " + r.status);
+  return r.json();
+}
 
+/* normalize array-like fields */
 function normalizeArrayLike(v){
   if(v === undefined || v === null) return [];
   if(Array.isArray(v)) return v.map(x=>String(x).trim()).filter(Boolean);
   return String(v).split(",").map(s=>s.trim()).filter(Boolean);
 }
 
-function renderSeriesTagsForUnit(u, sto){
-  seriesTagsEl.innerHTML = "";
+/* render series/tag into a target element for a given object and series/tag options */
+function renderSeriesTags(targetEl, obj, sto){
+  if(!targetEl) return;
+  targetEl.innerHTML = "";
   if(!sto) return;
   const seriesList = Array.isArray(sto.series_unit) ? sto.series_unit : [];
   const tagList = Array.isArray(sto.tag_unit) ? sto.tag_unit : [];
   const unitSeriesCandidates = ["シリーズ連結","シリーズ","Series","SeriesName","series","SeriesName"];
   const unitTagCandidates = ["タグ連結","タグ","Tag","TagName","tag","TagName"];
   let unitSeries = [], unitTags = [];
-  for(const k of unitSeriesCandidates){ if(u[k]){ unitSeries = normalizeArrayLike(u[k]); break; } }
-  for(const k of unitTagCandidates){ if(u[k]){ unitTags = normalizeArrayLike(u[k]); break; } }
-  seriesList.forEach(label=>{ if(unitSeries.some(us=>String(us).trim()===String(label).trim())){ const d=document.createElement("div"); d.className="series-tag-icon series"; d.textContent=label; seriesTagsEl.appendChild(d); }});
-  tagList.forEach(label=>{ if(unitTags.some(ut=>String(ut).trim()===String(label).trim())){ const d=document.createElement("div"); d.className="series-tag-icon tag"; d.textContent=label; seriesTagsEl.appendChild(d); }});
+  for(const k of unitSeriesCandidates){ if(obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== ""){ unitSeries = normalizeArrayLike(obj[k]); break; } }
+  for(const k of unitTagCandidates){ if(obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== ""){ unitTags = normalizeArrayLike(obj[k]); break; } }
+  // simple matching by trimmed equality
+  seriesList.forEach(label=>{
+    if(unitSeries.some(us => String(us).trim() === String(label).trim())){
+      const d = document.createElement("div");
+      d.className = "series-tag-icon series";
+      d.textContent = label;
+      targetEl.appendChild(d);
+    }
+  });
+  tagList.forEach(label=>{
+    if(unitTags.some(ut => String(ut).trim() === String(label).trim())){
+      const d = document.createElement("div");
+      d.className = "series-tag-icon tag";
+      d.textContent = label;
+      targetEl.appendChild(d);
+    }
+  });
 }
 
+/* skill icon map (reuse) */
+const SKILL_ICON_MAP = {
+  "ENセーブ":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/a7/20/p/o0139014415681987764.png?caw=800",
+  "ENチャージ":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/57/e6/p/o0142014615681987771.png?caw=800",
+  "HPリペア":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/46/ad/p/o0139014015681987780.png?caw=800",
+  "MPアップ":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/1b/b8/p/o0140014715681987760.png?caw=800",
+  "アタックバースト":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/74/c0/p/o0143014315681987747.png?caw=800",
+  "クリブースト （率UP)":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/4e/9b/p/o0139014715681987758.png?caw=800"
+};
+
+/* render pilot details */
 function renderPilotDetails(p){
   pilotThumb.src = p["Pilot.画像リンク"] || "";
   pilotName.textContent = p["Pilot.キャラ"] || "";
-  pilotParams.innerHTML = "";
-  const addParam = (label, val) => {
-    const d = document.createElement("div");
-    d.className = "param";
-    d.textContent = `${label}: ${val}`;
-    pilotParams.appendChild(d);
-  };
-  addParam("射撃値", p["Pilot.射撃値"] || "-");
-  addParam("格闘値", p["Pilot.格闘値"] || "-");
-  addParam("覚醒値", p["Pilot.覚醒値"] || "-");
-  addParam("守備値", p["Pilot.守備値"] || "-");
 
+  // highlight (Pilot.特徴 / Pilot.条件) shown directly under name in navy
+  const feat = p["Pilot.特徴"] || p["Pilot.特徴のタイプ"] || "";
+  const cond = p["Pilot.条件"] || "";
+  pilotHighlight.innerHTML = "";
+  if(feat && String(feat).trim() !== "0"){
+    const el = document.createElement("div");
+    el.textContent = String(feat);
+    pilotHighlight.appendChild(el);
+  }
+  if(cond && String(cond).trim() !== "0"){
+    const el = document.createElement("div");
+    el.textContent = String(cond);
+    pilotHighlight.appendChild(el);
+  }
+
+  // skills
   pilotSkills.innerHTML = "";
   const skills = [];
   for(const k of Object.keys(p || {})){
@@ -156,34 +200,36 @@ function renderPilotDetails(p){
     pilotSkills.appendChild(img);
   });
 
-  // series/tag for pilot (Pilot.シリーズ連結 / Pilot.タグ連結)
-  pilotSeriesTags.innerHTML = "";
-  const sers = normalizeArrayLike(p["Pilot.シリーズ連結"] || p["Pilot.シリーズ"] || p["Pilot.Series"] || "");
-  const tags = normalizeArrayLike(p["Pilot.タグ連結"] || p["Pilot.タグ"] || p["Pilot.Tag"] || "");
-  sers.forEach(s=>{ const d=document.createElement("div"); d.className="series-tag-icon series"; d.textContent=s; pilotSeriesTags.appendChild(d); });
-  tags.forEach(t=>{ const d=document.createElement("div"); d.className="series-tag-icon tag"; d.textContent=t; pilotSeriesTags.appendChild(d); });
-
-  // Pilot.特徴 and Pilot.条件 (if not "0")
+  // series/tag for pilot (render into pilot-series-tags)
+  pilotSeriesTagsEl.innerHTML = "";
+  // Use renderSeriesTags with pilot object and sto (set by init)
+  // pilotExtra can show additional debug/info if needed
   pilotExtra.innerHTML = "";
-  const feat = p["Pilot.特徴"] || p["Pilot.特徴のタイプ"] || "";
-  const cond = p["Pilot.条件"] || "";
-  if(feat && String(feat).trim() !== "0") {
-    const el = document.createElement("div"); el.className="highlight"; el.textContent = `Pilot.特徴: ${feat}`; pilotExtra.appendChild(el);
-  }
-  if(cond && String(cond).trim() !== "0") {
-    const el = document.createElement("div"); el.className="highlight"; el.textContent = `Pilot.条件: ${cond}`; pilotExtra.appendChild(el);
-  }
 }
 
-/* skill icon map for combi page: reuse same icons as detail */
-const SKILL_ICON_MAP = {
-  "ENセーブ":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/a7/20/p/o0139014415681987764.png?caw=800",
-  "ENチャージ":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/57/e6/p/o0142014615681987771.png?caw=800",
-  "HPリペア":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/46/ad/p/o0139014015681987780.png?caw=800",
-  "MPアップ":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/1b/b8/p/o0140014715681987760.png?caw=800",
-  "アタックバースト":"https://stat.ameba.jp/user_images/20250925/04/winterstory0820/74/c0/p/o0143014315681987747.png?caw=800"
-};
+/* render unit details */
+function renderUnitDetails(u){
+  unitThumb.src = u["画像リンク"] || "";
+  unitName.textContent = u["ユニット"] || ("ID:" + (u.uid || ""));
+  unitStatsRow.innerHTML = "";
+  const move = u["移動力"] || "-";
+  const range = u["最大射程"] || "-";
+  const obtain = u["入手"] || "-";
+  const r1 = document.createElement("div"); r1.textContent = `移動: ${move}`; unitStatsRow.appendChild(r1);
+  const r2 = document.createElement("div"); r2.textContent = `最大射程: ${range}`; unitStatsRow.appendChild(r2);
+  const r3 = document.createElement("div"); r3.textContent = `入手: ${obtain}`; unitStatsRow.appendChild(r3);
 
+  // unit highlight (use unit["特徴"] if present)
+  unitHighlight.innerHTML = "";
+  const feat = u["特徴"] || u["Feature"] || "";
+  if(feat && String(feat).trim() !== ""){
+    unitHighlight.textContent = String(feat);
+  }
+
+  unitFeature.textContent = u["武装 Power"] !== undefined && u["武装 Power"] !== null && u["武装 Power"] !== "" ? `武装 Power: ${u["武装 Power"]}` : "";
+}
+
+/* init */
 async function init(){
   try{
     const units = await fetchJson(UNITS_JSON);
@@ -199,22 +245,22 @@ async function init(){
       return candidates.some(c=> Number(c) === pid);
     });
 
-    if(unit){
-      unitThumb.src = unit["画像リンク"] || "";
-      unitName.textContent = unit["ユニット"] || "";
-      unitRarity.textContent = unit["レア"] || "";
-      unitMove.textContent = `移動: ${unit["移動力"] || "-"}`;
-      unitRange.textContent = `最大射程: ${unit["最大射程"] || "-"}`;
-      unitObtain.textContent = `入手: ${unit["入手"] || "-"}`;
-      unitFeature.textContent = unit["特徴"] || "";
-      renderSeriesTagsForUnit(unit, sto);
-    }
-
     if(pilot){
       renderPilotDetails(pilot);
+      // render pilot series/tags using sto
+      renderSeriesTags(pilotSeriesTagsEl, pilot, sto);
     } else {
       pilotName.textContent = "パイロットが見つかりません";
     }
+
+    if(unit){
+      renderUnitDetails(unit);
+      // render unit series/tags using sto
+      renderSeriesTags(unitSeriesTagsEl, unit, sto);
+    } else {
+      unitName.textContent = "ユニットが見つかりません";
+    }
+
   }catch(e){
     console.error(e);
   }
