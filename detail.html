@@ -39,7 +39,7 @@
   .series-tag-icon.series{background: linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #93c5fd 100%); color:#fff;}
   .series-tag-icon.tag{
     background: linear-gradient(90deg, #3c5a03 0%, #049b0e 50%, #289b24 100%);
-    color: #f4f4f4; /* 白ではなく濃い文字色にしてコントラストを確保 */
+    color: #f4f4f4;
   }
   .feature-line{color:var(--orange);font-weight:800;font-size:15px}
 
@@ -79,7 +79,6 @@
   .p-thumb{width:100%;height:var(--pilot-thumb);object-fit:cover;border-radius:6px;border:1px solid #ddd;display:block;cursor:pointer}
 
   .p-info{font-size:13px;flex:1;display:flex;flex-direction:column}
-  /* p-top now 4 columns: 3:1:3:3 */
   .p-top{display:grid;grid-template-columns:3fr 0.7fr 2.5fr 3.8fr;gap:8px;align-items:start}
   .col-1{min-width:0}
   .col-2{min-width:0;display:flex;flex-direction:column;align-items:center}
@@ -87,16 +86,13 @@
   .col-4{min-width:0;display:flex;flex-direction:column;align-items:flex-end;text-align:right}
 
   .p-name{font-weight:700;margin-bottom:6px}
-  /* Damage larger and red */
   .p-dmg{color:#b33;font-weight:900;font-size:30px}
-  /* HB /耐久回数 style: larger and blue */
   .p-hb{color:#1e40af;font-weight:900;font-size:30px}
 
   .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
   .badge{background:#eee;padding:3px 6px;border-radius:8px;font-size:12px;color:#222;font-weight:700}
   .badge.pa{background:#2b6cb0;color:#fff}
 
-  /* 2-action pill style (orange) - placed in col-3 */
   .two-action-pill{
     display:inline-flex;
     align-items:center;
@@ -111,7 +107,6 @@
     box-sizing:border-box;
   }
 
-  /* combi info styling in col-4 */
   .combi-title{font-weight:800;margin-bottom:6px}
   .combi-line{margin:2px 0}
   .combi-percent{font-weight:900;font-size:18px;color:#111;margin-left:6px}
@@ -205,7 +200,7 @@
       <div style="font-weight:700">Ability</div>
 
       <div class="toggles">
-        <!-- 新規: ２回行動ボタンを先頭に追加 -->
+        <!-- 追加: ２回行動ボタンを先頭に配置 -->
         <button id="toggle-twoaction" class="btn toggle">２回行動</button>
         <button id="toggle-pilot-ability" class="btn toggle">Pilot Ability Active</button>
         <button id="toggle-autoheal" class="btn toggle">自動回復</button>
@@ -346,6 +341,9 @@ let totalPages = 1;
 let currentFiltered = [];
 
 const selectedSkillFilters = new Set();
+
+/* state storage key */
+const DETAIL_STATE_KEY = "detail_state_v1";
 
 /* ===== Helpers ===== */
 async function fetchJson(url, opts){
@@ -524,7 +522,6 @@ async function loadCombiForUnit(uid){
       }
     }
     combiSummary.textContent = `該当 ${combiRows.length} 件 (fallback scan)`;
-    applyFiltersAndRender();
     return;
   }
 
@@ -543,10 +540,28 @@ async function loadCombiForUnit(uid){
   }
 
   combiSummary.textContent = `該当 ${combiRows.length} 件`;
-  applyFiltersAndRender();
 }
 
 /* ---------- series/tag rendering ---------- */
+/* Normalize strings for comparison regardless of full-width/half-width differences.
+   Uses Unicode NFKC to convert full-width ASCII and punctuation to compatibility form,
+   trims and collapses spaces, and lowercases for case-insensitive compare.
+*/
+function normalizeForCompare(s){
+  if(s === undefined || s === null) return "";
+  try{
+    let t = String(s).normalize('NFKC');
+    t = t.replace(/・|･|·/g, ',');
+    t = t.replace(/[：：]/g, ':');
+    t = t.replace(/[、，]/g, ',');
+    t = t.replace(/[（]/g, '(').replace(/[）]/g, ')');
+    t = t.replace(/\s+/g, ' ').trim();
+    return t.toLowerCase();
+  }catch(e){
+    return String(s).trim().toLowerCase();
+  }
+}
+
 function normalizeArrayLike(v){
   if(v === undefined || v === null) return [];
   if(Array.isArray(v)) return v.map(x=>String(x).trim()).filter(Boolean);
@@ -587,23 +602,42 @@ function renderSeriesTagsForUnit(u){
   const seriesList = Array.isArray(seriesTagOptions.series_unit) ? seriesTagOptions.series_unit : [];
   const tagList = Array.isArray(seriesTagOptions.tag_unit) ? seriesTagOptions.tag_unit : [];
 
-  const norm = s => String(s || "").trim();
+  const normalizedUnitSeries = unitSeries.map(x => normalizeForCompare(x));
+  const normalizedUnitTags = unitTags.map(x => normalizeForCompare(x));
 
   seriesList.forEach((label)=>{
-    if(unitSeries.some(us => norm(us) === norm(label))){
+    const nl = normalizeForCompare(label);
+    if(normalizedUnitSeries.some(us => us === nl)){
       const d = document.createElement("div");
       d.className = "series-tag-icon series";
       d.textContent = label;
       seriesTagsEl.appendChild(d);
+    } else {
+      const parts = nl.split(',').map(p=>p.trim()).filter(Boolean);
+      if(parts.length > 1 && parts.some(p => normalizedUnitSeries.includes(p))){
+        const d = document.createElement("div");
+        d.className = "series-tag-icon series";
+        d.textContent = label;
+        seriesTagsEl.appendChild(d);
+      }
     }
   });
 
   tagList.forEach((label)=>{
-    if(unitTags.some(ut => norm(ut) === norm(label))){
+    const nl = normalizeForCompare(label);
+    if(normalizedUnitTags.some(ut => ut === nl)){
       const d = document.createElement("div");
       d.className = "series-tag-icon tag";
       d.textContent = label;
       seriesTagsEl.appendChild(d);
+    } else {
+      const parts = nl.split(',').map(p=>p.trim()).filter(Boolean);
+      if(parts.length > 1 && parts.some(p => normalizedUnitTags.includes(p))){
+        const d = document.createElement("div");
+        d.className = "series-tag-icon tag";
+        d.textContent = label;
+        seriesTagsEl.appendChild(d);
+      }
     }
   });
 }
@@ -658,7 +692,6 @@ function renderPilotCard(pilotObj, combi){
   const div = document.createElement("div");
   div.className = "pilot-card";
 
-  // image wrapper: contains image only (click navigates to combi.html)
   const imgWrap = document.createElement("div");
   imgWrap.className = "p-thumb-wrap";
 
@@ -667,11 +700,9 @@ function renderPilotCard(pilotObj, combi){
   img.src = pilotObj["Pilot.画像リンク"] || "";
   img.alt = pilotObj["Pilot.キャラ"] || "";
   img.addEventListener("click", ()=>{
-    // save state before navigating so back restores correctly
     saveDetailState();
     const uid = currentUnit && currentUnit.uid ? currentUnit.uid : uidParam;
     const pid = (combi && combi.p) ? combi.p : (pilotObj.pid || "");
-    // navigate to combi.html with uid and pid
     location.href = `combi.html?uid=${encodeURIComponent(uid)}&pid=${encodeURIComponent(pid)}`;
   });
   imgWrap.appendChild(img);
@@ -684,7 +715,6 @@ function renderPilotCard(pilotObj, combi){
   const top = document.createElement("div");
   top.className = "p-top";
 
-  // 1st column (col-1) - name + damage/hb (no two-action)
   const col1 = document.createElement("div");
   col1.className = "col-1";
   const name = document.createElement("div");
@@ -692,7 +722,6 @@ function renderPilotCard(pilotObj, combi){
   name.textContent = pilotObj["Pilot.キャラ"] || combi.pilot_name || "不明";
   col1.appendChild(name);
 
-  // damage or HB display
   const isHB = String(sortKey || "").toUpperCase().startsWith("HB");
   const statEl = document.createElement("div");
   if(isHB){
@@ -708,7 +737,6 @@ function renderPilotCard(pilotObj, combi){
 
   top.appendChild(col1);
 
-  // 2nd column (col-2) - skill icons (centered), badges removed here
   const col2 = document.createElement("div");
   col2.className = "col-2";
   const pilotSkills = extractPilotSkills(pilotObj);
@@ -726,11 +754,9 @@ function renderPilotCard(pilotObj, combi){
   });
   top.appendChild(col2);
 
-  // 3rd column (col-3) - two-action pill + badges
   const col3 = document.createElement("div");
   col3.className = "col-3";
 
-  // two-action pill (use combi.C14_flag)
   if(combi && combi.C14_flag){
     const two = document.createElement("div");
     two.className = "two-action-pill";
@@ -738,7 +764,6 @@ function renderPilotCard(pilotObj, combi){
     col3.appendChild(two);
   }
 
-  // badges
   const badges = document.createElement("div");
   badges.className = "badges";
   if((combi.C06 === 1) && (combi.C07 === 1)){
@@ -755,7 +780,6 @@ function renderPilotCard(pilotObj, combi){
 
   top.appendChild(col3);
 
-  // 4th column (col-4) - dynamic combi info depending on sortKey
   const col4 = document.createElement("div");
   col4.className = "col-4";
 
@@ -764,7 +788,6 @@ function renderPilotCard(pilotObj, combi){
     el.className = "combi-line";
     if(isTitle) el.className = "combi-title";
     if(percentHtml){
-      // percentHtml is HTML string for bold percent
       el.innerHTML = text + ' <span class="combi-percent">' + percentHtml + '</span>';
     } else {
       el.textContent = text;
@@ -775,21 +798,16 @@ function renderPilotCard(pilotObj, combi){
   const sk = String(sortKey || "").toUpperCase();
 
   if(sk === "D0"){
-    // Case1: Damage (D0)
     addLine(col4, "開始時", true);
     const PT0 = combi.PT0 || combi["PT0"] || "";
     const P0 = (combi.P0 !== undefined && combi.P0 !== null) ? Math.round(Number(combi.P0)) : (combi.P0 || "-");
-    // 表示は一回だけ：例 "格闘 838"
     addLine(col4, `${PT0 || "格闘"} ${P0}`);
-    // DR0 が 1.15 のとき → +15%
     const DR0 = (combi.DR0 !== undefined && combi.DR0 !== null) ? Number(combi.DR0) : 1.0;
     const diff = Math.round((DR0 - 1.0) * 100);
     const sign = (diff >= 0) ? "+" : "";
-    // 大きく太字で差分を表示（例: Damage +15%）
     const percentHtml = `<strong style="font-size:20px">${sign}${diff}%</strong>`;
     addLine(col4, `Damage `, false, percentHtml);
   } else if(sk === "D4"){
-    // Case2: Damage full (D4)
     addLine(col4, "全発動", true);
     const PT4 = combi.PT4 || combi["PT4"] || "";
     const P4 = (combi.P4 !== undefined && combi.P4 !== null) ? Math.round(Number(combi.P4)) : (combi.P4 || "-");
@@ -799,17 +817,12 @@ function renderPilotCard(pilotObj, combi){
     const sign4 = (diff4 >= 0) ? "+" : "";
     const percentHtml4 = `<strong style="font-size:20px">${sign4}${diff4}%</strong>`;
     addLine(col4, `Damage `, false, percentHtml4);
-
-
   } else if(sk.includes("HB") && sk.includes("_F")){
-    // Case3: HB full (HB*_F)
     addLine(col4, "全発動", true);
-    // 被Damage の各値は combi.DFB4 等が 0.44 のように入っている想定
     const toDiffFrom100 = (v) => {
       if(v === null || v === undefined || isNaN(Number(v))) return null;
-      const pct = Math.round(Number(v) * 100); // 例 44
-      const diff = 100 - pct; // 56
-      // 表示は符号付きでマイナス（被ダメ減少なら -56%）
+      const pct = Math.round(Number(v) * 100);
+      const diff = 100 - pct;
       return (diff === 0) ? "+0%" : (diff > 0 ? `-${diff}%` : `+${Math.abs(diff)}%`);
     };
     addLine(col4, `被Damage`);
@@ -817,13 +830,11 @@ function renderPilotCard(pilotObj, combi){
     const dfp = toDiffFrom100(combi.DFP4);
     const dft = toDiffFrom100(combi.DFT4);
     const dfe = toDiffFrom100(combi.DFE4);
-    // 各行は「・Beam -56%」の形式。パーセント部分を太字で大きくする
     addLine(col4, `・Beam `, false, dfb !== null ? `<strong style="font-size:18px">${dfb}</strong>` : null);
     addLine(col4, `・物理 `, false, dfp !== null ? `<strong style="font-size:18px">${dfp}</strong>` : null);
     addLine(col4, `・特殊 `, false, dft !== null ? `<strong style="font-size:18px">${dft}</strong>` : null);
     addLine(col4, `・EX `, false, dfe !== null ? `<strong style="font-size:18px">${dfe}</strong>` : null);
   } else {
-    // Default: show D0 summary
     addLine(col4, "開始時", true);
     const PT0 = combi.PT0 || combi["PT0"] || "";
     const P0 = (combi.P0 !== undefined && combi.P0 !== null) ? Math.round(Number(combi.P0)) : (combi.P0 || "-");
@@ -938,7 +949,6 @@ function applyFiltersAndRender(){
     if(toggles.counterdef && Number(p["Pilot.反撃支援防御"]||0) === 0) return false;
     if(toggles.forcecs && Number(p["Pilot.強制CS"]||0) === 0) return false;
 
-    // Pilot Ability Active filtering: require combi conditions
     if(toggles.pilotAbility){
       const case1 = (c.C01 === 1 || c.C02 === 1 || c.C03 === 1 || c.C08 === 1);
       const case2 = (c.C06 === 1 && c.C07 === 1);
@@ -984,33 +994,6 @@ function applyFiltersAndRender(){
   renderPage();
 }
 
-function renderPage(){
-  pilotGrid.innerHTML = "";
-  const total = currentFiltered.length;
-  if(total === 0){
-    combiSummary.textContent = "該当 0 件";
-    pageInfo.textContent = `Page 0 / 0`;
-    prevPageBtn.disabled = true;
-    nextPageBtn.disabled = true;
-    return;
-  }
-  combiSummary.textContent = `該当 ${total} 件`;
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const end = Math.min(start + PAGE_SIZE, total);
-  const pageItems = currentFiltered.slice(start, end);
-
-  const pidMap = buildPidMap();
-  for(const combi of pageItems){
-    const p = (combi.p !== null && pidMap[combi.p]) ? pidMap[combi.p] : null;
-    const pilotObj = p || { "Pilot.キャラ": combi.pilot_name || "不明", "Pilot.画像リンク": "" };
-    pilotGrid.appendChild(renderPilotCard(pilotObj, combi));
-  }
-
-  pageInfo.textContent = `Page ${currentPage} / ${totalPages}`;
-  prevPageBtn.disabled = (currentPage <= 1);
-  nextPageBtn.disabled = (currentPage >= totalPages);
-}
-
 /* ---------- State save/restore for back navigation ---------- */
 function saveDetailState(){
   try{
@@ -1049,20 +1032,17 @@ function restoreDetailState(){
     if(!raw) return false;
     const state = JSON.parse(raw);
     if(!state) return false;
-    // only restore if uid matches (or uid not provided)
     if(state.uid !== null && currentUnit && String(state.uid) !== String(currentUnit.uid)) return false;
 
     currentPage = state.currentPage || 1;
     sortKey = state.sortKey || sortKey;
     sortDesc = (typeof state.sortDesc === "boolean") ? state.sortDesc : sortDesc;
 
-    // restore selected skills
     selectedSkillFilters.clear();
     if(Array.isArray(state.selectedSkills)){
       state.selectedSkills.forEach(s => selectedSkillFilters.add(s));
     }
 
-    // restore filters
     if(state.filters){
       filterPilotRarity.value = state.filters.rarity || "";
       filterPilotType.value = state.filters.type || "";
@@ -1071,7 +1051,6 @@ function restoreDetailState(){
       filterPilotTag.value = state.filters.tag || "";
     }
 
-    // restore toggles
     const setToggle = (btn, val) => {
       if(val) btn.classList.add("active"); else btn.classList.remove("active");
     };
@@ -1084,20 +1063,17 @@ function restoreDetailState(){
       setToggle(togglePilotAbility, !!state.toggles.pilotAbility);
     }
 
-    // reflect selectedSkillFilters visually
     Array.from(skillFilterRow.children).forEach(img=>{
       const s = img.dataset.skill;
       if(selectedSkillFilters.has(s)) img.classList.add("selected"); else img.classList.remove("selected");
     });
 
-    // set sort UI
     pilotSort.value = sortKey;
     sortDirBtn.textContent = sortDesc ? "降順" : "昇順";
 
-    // apply filters and render
+    // apply filters and render (combiRows must be loaded before calling this)
     applyFiltersAndRender();
 
-    // restore scroll after a short delay to ensure layout is ready
     const scrollY = state.scrollY || 0;
     setTimeout(()=>{ window.scrollTo({ top: scrollY, behavior: 'auto' }); }, 50);
 
@@ -1125,6 +1101,20 @@ async function init(){
     const uid = Number(uidParam);
     currentUnit = units.find(u => Number(u.uid) === uid);
     if(!currentUnit){
+      // try to restore from sessionStorage if uidParam missing or unit not found
+      const raw = sessionStorage.getItem(DETAIL_STATE_KEY);
+      if(raw){
+        try{
+          const st = JSON.parse(raw);
+          if(st && st.uid){
+            const restored = units.find(u => Number(u.uid) === Number(st.uid));
+            if(restored) currentUnit = restored;
+          }
+        }catch(e){}
+      }
+    }
+
+    if(!currentUnit){
       unitName.textContent = "ユニットが見つかりません";
       combiSummary.textContent = "";
       return;
@@ -1137,7 +1127,17 @@ async function init(){
     populateSortOptions();
     renderSkillFilterIcons();
 
+    // load combi rows first, then restore UI state (so filters have data to operate on)
     await loadCombiForUnit(currentUnit.uid);
+
+    const restored = restoreDetailState();
+    if(!restored){
+      // defaults
+      pilotSort.value = sortKey;
+      sortDirBtn.textContent = sortDesc ? "降順" : "昇順";
+      currentPage = 1;
+      applyFiltersAndRender();
+    }
   }catch(err){
     console.error(err);
     combiSummary.textContent = "読み込みエラー";
@@ -1251,10 +1251,8 @@ window.addEventListener("beforeunload", ()=>{
 window.addEventListener("pageshow", (e) => {
   try {
     const raw = sessionStorage.getItem(DETAIL_STATE_KEY);
-    if(raw){
-      if(currentUnit){
-        restoreDetailState();
-      }
+    if(raw && currentUnit){
+      restoreDetailState();
     }
   } catch (err) {}
 });
@@ -1262,7 +1260,27 @@ window.addEventListener("popstate", (e) => {
   try { restoreDetailState(); } catch(e){}
 });
 
-/* ---------- Start ---------- */
+/* keyboard shortcut: toggle sort direction (S) */
+window.addEventListener("keydown", (ev)=>{
+  if(ev.key === "s" || ev.key === "S"){
+    sortDesc = !sortDesc;
+    applyFiltersAndRender();
+  }
+});
+
+/* Save state before navigating away via pilot image click */
+pilotGrid.addEventListener("click", function(e){
+  let el = e.target;
+  while(el && el !== pilotGrid) {
+    if(el.tagName && el.tagName.toLowerCase() === "img" && el.classList.contains("p-thumb")) {
+      saveDetailState();
+      return;
+    }
+    el = el.parentElement;
+  }
+});
+
+/* initial load */
 init();
 </script>
 </body>
