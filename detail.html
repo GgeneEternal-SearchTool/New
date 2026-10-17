@@ -782,7 +782,7 @@ function renderPilotCard(pilotObj, combi){
     addLine(col4, `Damage ${sign}${diff}%`, false, percentHtml);
   } else if(sk === "D4"){
     // Case2: Damage full (D4)
-    addLine(col4, "Full Active（全発動）", true);
+    addLine(col4, "全発動", true);
     const PT4 = combi.PT4 || combi["PT4"] || "";
     const P4 = (combi.P4 !== undefined && combi.P4 !== null) ? Math.round(Number(combi.P4)) : (combi.P4 || "-");
     addLine(col4, `${PT4 || "格闘"} ${P4}`);
@@ -795,7 +795,7 @@ function renderPilotCard(pilotObj, combi){
 
   } else if(sk.includes("HB") && sk.includes("_F")){
     // Case3: HB full (HB*_F)
-    addLine(col4, "Full Active（全発動）", true);
+    addLine(col4, "全発動", true);
     // 被Damage の各値は combi.DFB4 等が 0.44 のように入っている想定
     const toDiffFrom100 = (v) => {
       if(v === null || v === undefined || isNaN(Number(v))) return null;
@@ -823,7 +823,7 @@ function renderPilotCard(pilotObj, combi){
     const DR0 = (combi.DR0 !== undefined && combi.DR0 !== null) ? Number(combi.DR0) : 1.0;
     const diff = Math.round((DR0 - 1.0) * 100);
     const sign = (diff >= 0) ? "+" : "";
-    addLine(col4, `Damage ${sign}${diff}%`, false, `<strong style="font-size:20px">${sign}${diff}%</strong>`);
+    addLine(col4, `Damage `, false, `<strong style="font-size:20px">${sign}${diff}%</strong>`);
   }
 
   top.appendChild(col4);
