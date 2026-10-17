@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>ユニット詳細</title>
+<title>Detail</title>
 <style>
   :root{
     --gap:10px;
@@ -33,11 +33,9 @@
   .rarity-badge{display:inline-block;padding:6px 10px;border-radius:10px;font-weight:700;font-size:12px;color:#fff}
   .stat-item{font-size:14px;color:#333}
 
-  /* series/tag icons (moved to unit-bottom top) */
+  /* series/tag icons (unit-bottom top) */
   .series-tags{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
   .series-tag-icon{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:12px;color:#fff;font-weight:700;font-size:12px;box-shadow:0 1px 2px rgba(0,0,0,0.12);gap:6px}
-  .series-tag-icon img{width:18px;height:18px;object-fit:cover;border-radius:4px}
-
   .series-tag-icon.series{background: linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #93c5fd 100%); color:#fff;}
   .series-tag-icon.tag{background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 50%, #b45309 100%); color:#fff;}
 
@@ -63,9 +61,9 @@
   .btn.toggle{background:#fff}
   .btn.toggle.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 
-  /* Skill filter icons: 40x40 as requested */
+  /* Skill filter icons: 40x40 */
   .skill-icons{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-  .skill-icon{width:40px;height:40px;border-radius:6px;border:1px solid #ccc;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.8;object-fit:cover}
+  .skill-icon{width:40px;height:40px;border-radius:6px;border:1px solid #ccc;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.9;object-fit:cover}
   .skill-icon.selected{outline:2px solid var(--accent);opacity:1}
 
   .sort-area{display:flex;align-items:center;gap:8px;font-weight:900;color:var(--accent-strong)}
@@ -74,9 +72,9 @@
   #pilot-grid{margin-top:10px;display:flex;flex-direction:column;gap:8px}
   .pilot-card{border:1px solid #eee;padding:10px;border-radius:8px;display:flex;gap:12px;align-items:flex-start;background:#fff}
 
-  /* image wrapper: keep image in its own column */
+  /* image wrapper */
   .p-thumb-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;width:var(--pilot-thumb);box-sizing:border-box}
-  .p-thumb{width:100%;height:var(--pilot-thumb);object-fit:cover;border-radius:6px;border:1px solid #ddd;display:block}
+  .p-thumb{width:100%;height:var(--pilot-thumb);object-fit:cover;border-radius:6px;border:1px solid #ddd;display:block;cursor:pointer}
 
   .p-info{font-size:13px;flex:1;display:flex;flex-direction:column}
   /* p-top now 4 columns: 3:1:3:3 */
@@ -86,7 +84,7 @@
   .col-3{min-width:0;display:flex;flex-direction:column;align-items:flex-start}
   .col-4{min-width:0;display:flex;flex-direction:column;align-items:flex-end;text-align:right}
 
-  .p-name{font-weight:700}
+  .p-name{font-weight:700;margin-bottom:6px}
   /* Damage larger and red */
   .p-dmg{color:#b33;font-weight:900;font-size:20px}
   /* HB /耐久回数 style: larger and blue */
@@ -96,7 +94,7 @@
   .badge{background:#eee;padding:3px 6px;border-radius:8px;font-size:12px;color:#222;font-weight:700}
   .badge.pa{background:#2b6cb0;color:#fff}
 
-  /* 2-action pill style (orange) - will be placed in col-3 */
+  /* 2-action pill style (orange) - placed in col-3 */
   .two-action-pill{
     display:inline-flex;
     align-items:center;
@@ -111,25 +109,21 @@
     box-sizing:border-box;
   }
 
+  /* combi info styling in col-4 */
+  .combi-title{font-weight:800;margin-bottom:6px}
+  .combi-line{margin:2px 0}
+  .combi-percent{font-weight:900;font-size:18px;color:#111;margin-left:6px}
+
   .diag{font-size:12px;color:#999;margin-top:6px}
 
   .pager{display:flex;gap:8px;align-items:center;margin-top:10px}
   .page-info{font-size:13px;color:var(--muted)}
-
-  .rarity-ur3 { background: linear-gradient(90deg,#e6d9ff 0%,#ffd9e6 18%,#e9dbff 36%,#e8f7d9 56%,#d9f7fb 76%,#cfeaff 100%); color:#1a1a1a; font-weight:450; border-radius:6px; padding:3px 6px; display:inline-block; font-size:11px; }
-  .rarity-ur0 { background: linear-gradient(90deg,#f3efff 0%,#fff3f6 18%,#f6efff 36%,#f6fbef 56%,#eefbfd 76%,#eef7ff 100%); color:#000000; font-weight:100; border-radius:6px; padding:3px 6px; display:inline-block; font-size:11px; }
-  .rarity-ssr-ssp { background: linear-gradient(90deg,#ff8a33 0%,#ff9f4d 25%,#ffc24f 55%,#ffe27a 85%); color:#1a1a1a; border-radius:6px; padding:3px 6px; font-weight:450; display:inline-block; font-size:11px; }
-  .rarity-ssr-sp { background: linear-gradient(90deg,#ffd8b4 0%,#ffe0c2 25%,#ffecb3 55%,#fff7d5 85%); color:#1a1a1a; border-radius:6px; padding:3px 6px; font-weight:100; display:inline-block; font-size:11px; }
 
   @media (max-width:720px){
     .p-top{grid-template-columns:2fr 1fr 2fr 2fr}
     .p-dmg,.p-hb{font-size:18px}
   }
   @media (max-width:520px){
-    .unit-top{flex-wrap:nowrap}
-    .unit-top-left{flex:0 0 35%;min-width:140px}
-    .unit-top-right{flex:1 1 65%;min-width:200px}
-    .map-row{flex-wrap:nowrap}
     .p-top{grid-template-columns:1fr 1fr 1fr 1fr}
     .p-dmg,.p-hb{font-size:16px}
   }
@@ -656,7 +650,7 @@ function renderPilotCard(pilotObj, combi){
   const div = document.createElement("div");
   div.className = "pilot-card";
 
-  // image wrapper: contains image only (no two-action here)
+  // image wrapper: contains image only (click navigates to combi.html)
   const imgWrap = document.createElement("div");
   imgWrap.className = "p-thumb-wrap";
 
@@ -664,6 +658,12 @@ function renderPilotCard(pilotObj, combi){
   img.className = "p-thumb";
   img.src = pilotObj["Pilot.画像リンク"] || "";
   img.alt = pilotObj["Pilot.キャラ"] || "";
+  img.addEventListener("click", ()=>{
+    const uid = currentUnit && currentUnit.uid ? currentUnit.uid : uidParam;
+    const pid = (combi && combi.p) ? combi.p : (pilotObj.pid || "");
+    // navigate to combi.html with uid and pid
+    location.href = `combi.html?uid=${encodeURIComponent(uid)}&pid=${encodeURIComponent(pid)}`;
+  });
   imgWrap.appendChild(img);
 
   div.appendChild(imgWrap);
@@ -686,8 +686,7 @@ function renderPilotCard(pilotObj, combi){
   const isHB = String(sortKey || "").toUpperCase().startsWith("HB");
   const statEl = document.createElement("div");
   if(isHB){
-    // show HB value (use combi[sortKey] or fallback)
-    const hbVal = (combi && combi[sortKey] !== undefined && combi[sortKey] !== null) ? combi[sortKey] : (combi && combi.D0 ? combi.D0 : "-");
+    const hbVal = (combi && combi[sortKey] !== undefined && combi[sortKey] !== null) ? combi[sortKey] : "-";
     statEl.className = "p-hb";
     statEl.textContent = (hbVal === null || hbVal === undefined || hbVal === "") ? "-" : Number(hbVal).toFixed(2);
   } else {
@@ -750,86 +749,74 @@ function renderPilotCard(pilotObj, combi){
   const col4 = document.createElement("div");
   col4.className = "col-4";
 
-  // helper to create lines
-  function addLine(parent, text, bold=false){
+  function addLine(parent, text, isTitle=false, percentHtml=null){
     const el = document.createElement("div");
-    el.textContent = text;
-    if(bold) el.style.fontWeight = "800";
+    el.className = "combi-line";
+    if(isTitle) el.className = "combi-title";
+    if(percentHtml){
+      // percentHtml is HTML string for bold percent
+      el.innerHTML = text + ' <span class="combi-percent">' + percentHtml + '</span>';
+    } else {
+      el.textContent = text;
+    }
     parent.appendChild(el);
   }
 
-  // Determine which case to show
   const sk = String(sortKey || "").toUpperCase();
+
   if(sk === "D0"){
     // Case1: Damage (D0)
     addLine(col4, "初期状態（発動無し）", true);
-    // PT0 P0 （格闘 838)　整数にする
     const PT0 = combi.PT0 || combi["PT0"] || "";
     const P0 = (combi.P0 !== undefined && combi.P0 !== null) ? Math.round(Number(combi.P0)) : (combi.P0 || "-");
-    addLine(col4, `${PT0 || "PT0"} ${P0}　（${PT0 || "格闘"} ${P0})`);
-    // Damage増幅率 DR0 (115%)
-    const DR0 = (combi.DR0 !== undefined && combi.DR0 !== null) ? combi.DR0 : null;
-    if(DR0 !== null){
-      addLine(col4, `Damage増幅率 ${DR0} （Damage増幅率 ${Math.round(Number(DR0)*100)}%）`);
-    } else {
-      addLine(col4, `Damage増幅率 -`);
-    }
+    // show single stat: use P0 once
+    addLine(col4, `${PT0 || "格闘"} ${P0}`);
+    const DR0 = (combi.DR0 !== undefined && combi.DR0 !== null) ? Number(combi.DR0) : 1.0;
+    const diff = Math.round((DR0 - 1.0) * 100);
+    const sign = (diff >= 0) ? "+" : "";
+    addLine(col4, `Damage ${sign}${diff}%`, false, `<strong style="font-size:20px">${sign}${diff}%</strong>`);
   } else if(sk === "D4"){
     // Case2: Damage full (D4)
     addLine(col4, "Full Active（全発動）", true);
     const PT4 = combi.PT4 || combi["PT4"] || "";
     const P4 = (combi.P4 !== undefined && combi.P4 !== null) ? Math.round(Number(combi.P4)) : (combi.P4 || "-");
-    addLine(col4, `${PT4 || "PT4"} ${P4}　（${PT4 || "格闘"} ${P4})`);
-    const DR4 = (combi.DR4 !== undefined && combi.DR4 !== null) ? combi.DR4 : null;
-    if(DR4 !== null){
-      addLine(col4, `Damage増幅率 ${DR4} （Damage増幅率 ${Math.round(Number(DR4)*100)}%）`);
-    } else {
-      addLine(col4, `Damage増幅率 -`);
-    }
+    addLine(col4, `${PT4 || "格闘"} ${P4}`);
+    const DR4 = (combi.DR4 !== undefined && combi.DR4 !== null) ? Number(combi.DR4) : 1.0;
+    const diff4 = Math.round((DR4 - 1.0) * 100);
+    const sign4 = (diff4 >= 0) ? "+" : "";
+    addLine(col4, `Damage ${sign4}${diff4}%`, false, `<strong style="font-size:20px">${sign4}${diff4}%</strong>`);
   } else if(sk.includes("HB") && sk.includes("_F")){
     // Case3: HB full (HB*_F)
     addLine(col4, "Full Active（全発動）", true);
-    const DFB4 = (combi.DFB4 !== undefined && combi.DFB4 !== null) ? combi.DFB4 : combi.DFB4;
-    const DFP4 = (combi.DFP4 !== undefined && combi.DFP4 !== null) ? combi.DFP4 : combi.DFP4;
-    const DFT4 = (combi.DFT4 !== undefined && combi.DFT4 !== null) ? combi.DFT4 : combi.DFT4;
-    const DFE4 = (combi.DFE4 !== undefined && combi.DFE4 !== null) ? combi.DFE4 : combi.DFE4;
-    addLine(col4, `被Damage減少率 Beam ${DFB4 !== null && DFB4 !== undefined ? Math.round(Number(DFB4)*100) + "%" : "-"}`);
-    addLine(col4, `被Damage減少率 物理 ${DFP4 !== null && DFP4 !== undefined ? Math.round(Number(DFP4)*100) + "%" : "-"}`);
-    addLine(col4, `被Damage減少率 特殊 ${DFT4 !== null && DFT4 !== undefined ? Math.round(Number(DFT4)*100) + "%" : "-"}`);
-    addLine(col4, `被Damage減少率 EX ${DFE4 !== null && DFE4 !== undefined ? Math.round(Number(DFE4)*100) + "%" : "-"}`);
+    // For each type show difference from 100%
+    const showPercent = (v) => {
+      if(v === null || v === undefined || isNaN(Number(v))) return "-";
+      const pct = Math.round(Number(v) * 100);
+      const diff = 100 - pct;
+      const sign = (diff > 0) ? "-" : (diff < 0 ? "+" : "+");
+      // If diff is 0 show +0%
+      return `${sign}${Math.abs(diff)}%`;
+    };
+    addLine(col4, `被Damage`);
+    addLine(col4, `・Beam ${showPercent(combi.DFB4)}`, false, `<strong style="font-size:18px">${showPercent(combi.DFB4)}</strong>`);
+    addLine(col4, `・物理 ${showPercent(combi.DFP4)}`, false, `<strong style="font-size:18px">${showPercent(combi.DFP4)}</strong>`);
+    addLine(col4, `・特殊 ${showPercent(combi.DFT4)}`, false, `<strong style="font-size:18px">${showPercent(combi.DFT4)}</strong>`);
+    addLine(col4, `・EX ${showPercent(combi.DFE4)}`, false, `<strong style="font-size:18px">${showPercent(combi.DFE4)}</strong>`);
   } else {
     // Default: show D0 summary
     addLine(col4, "初期状態（発動無し）", true);
     const PT0 = combi.PT0 || combi["PT0"] || "";
     const P0 = (combi.P0 !== undefined && combi.P0 !== null) ? Math.round(Number(combi.P0)) : (combi.P0 || "-");
-    addLine(col4, `${PT0 || "PT0"} ${P0}　（${PT0 || "格闘"} ${P0})`);
-    const DR0 = (combi.DR0 !== undefined && combi.DR0 !== null) ? combi.DR0 : null;
-    if(DR0 !== null){
-      addLine(col4, `Damage増幅率 ${DR0} （Damage増幅率 ${Math.round(Number(DR0)*100)}%）`);
-    } else {
-      addLine(col4, `Damage増幅率 -`);
-    }
+    addLine(col4, `${PT0 || "格闘"} ${P0}`);
+    const DR0 = (combi.DR0 !== undefined && combi.DR0 !== null) ? Number(combi.DR0) : 1.0;
+    const diff = Math.round((DR0 - 1.0) * 100);
+    const sign = (diff >= 0) ? "+" : "";
+    addLine(col4, `Damage ${sign}${diff}%`, false, `<strong style="font-size:20px">${sign}${diff}%</strong>`);
   }
 
   top.appendChild(col4);
 
   info.appendChild(top);
-
-  // keep other info (t2 summary if needed)
-  if(combi.t2 === 1){
-    const two = document.createElement("div");
-    two.className = "two-action";
-    const icon = document.createElement("span");
-    icon.className = "icon";
-    icon.title = "2回行動";
-    two.appendChild(icon);
-    const txt = document.createElement("span");
-    txt.textContent = "2回行動";
-    txt.style.fontSize = "13px";
-    txt.style.fontWeight = "700";
-    two.appendChild(txt);
-    info.appendChild(two);
-  }
 
   div.appendChild(info);
   return div;
