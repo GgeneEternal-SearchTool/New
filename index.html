@@ -12,6 +12,8 @@
     --accent:#2b6cb0;
     --muted:#666;
     --meta-red:#b22222;
+    --ability-icon-bg: #ffd966; /* Icon ボタンと同じ黄色 */
+    --ability-icon-border: #e6b800;
     font-family: system-ui, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Arial;
   }
 
@@ -150,6 +152,13 @@
   .ability-icons-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;justify-content:center}
   .ability-badge{background:#eee;padding:3px 6px;border-radius:6px;font-size:11px;color:#111;border:1px solid #ddd}
 
+  /* body にクラスが付いているときはバッジ色を Icon ボタンと同じ黄色にする */
+  body.ability-icons-on .ability-badge{
+    background: var(--ability-icon-bg);
+    border-color: var(--ability-icon-border);
+    color: #000;
+  }
+
   @media (max-width:520px){
     header{flex-direction:column;align-items:stretch}
     .controls{margin-left:0}
@@ -158,6 +167,26 @@
     /* 重要: 小画面でも Tag1/Tag2 を同一行に保つため、折り返し禁止を維持します */
     .filters-inline { flex-wrap: nowrap; overflow-x: auto; }
     .filters-inline-item { flex: 0 0 auto; min-width: 140px; }
+  }
+
+  /* 追加: ability-area を縦並びにする */
+  #ability-area{
+    width:100%;
+    margin-top:8px;
+    display:flex;
+    flex-direction:column; /* 縦並び */
+    align-items:flex-start;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  /* ability-buttons は折り返して全ボタンを表示（スクロールなし） */
+  #ability-buttons{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap; /* 改行して表示 */
+    overflow:visible; /* スクロールさせない */
+    max-height:none;
+    align-items:flex-start;
   }
 </style>
 </head>
@@ -225,13 +254,13 @@
       </label>
     </div>
 
-    <!-- 変更: Ability は filters-inline の中ではなく filters の直下に別枠で配置 -->
-    <div id="ability-area" style="width:100%;margin-top:8px;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+    <!-- 変更: Ability は filters-inline の中ではなく filters の直下に別枠で配置（縦並び） -->
+    <div id="ability-area">
       <div style="display:flex;align-items:center;gap:8px;">
         <span class="small">Ability</span>
-        <button id="ability-icon-toggle" class="btn" title="Toggle ability icons" aria-pressed="false" style="background:#ffd966;border-color:#e6b800;color:#000;padding:4px 8px;font-size:12px;">Icon</button>
+        <button id="ability-icon-toggle" class="btn" title="Toggle ability icons" aria-pressed="false" style="background:var(--ability-icon-bg);border-color:var(--ability-icon-border);color:#000;padding:4px 8px;font-size:12px;">Icon</button>
       </div>
-      <div id="ability-buttons" style="display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;flex:1;"></div>
+      <div id="ability-buttons"></div>
     </div>
 
   </div>
@@ -635,6 +664,10 @@ function applyUIState(state) {
     selectedAbilities = new Set();
   }
   abilityIconActive = !!state.abilityIconActive;
+  // reflect body class for icon color
+  if(abilityIconActive) document.body.classList.add("ability-icons-on");
+  else document.body.classList.remove("ability-icons-on");
+
   if(abilityIconToggleBtn){
     abilityIconToggleBtn.setAttribute("aria-pressed", abilityIconActive ? "true" : "false");
     abilityIconToggleBtn.classList.toggle("primary", abilityIconActive);
@@ -810,6 +843,9 @@ function extractAndRenderAbilitiesFromUnits(){
       abilityIconActive = !abilityIconActive;
       abilityIconToggleBtn.classList.toggle("primary", abilityIconActive);
       abilityIconToggleBtn.setAttribute("aria-pressed", abilityIconActive ? "true" : "false");
+      // toggle body class so CSS can change badge color
+      if(abilityIconActive) document.body.classList.add("ability-icons-on");
+      else document.body.classList.remove("ability-icons-on");
       renderPage();
       saveUIState();
     });
@@ -898,6 +934,8 @@ resetBtn.addEventListener("click", ()=>{
     abilityIconToggleBtn.classList.remove("primary");
     abilityIconToggleBtn.setAttribute("aria-pressed","false");
   }
+  // remove body class for icon color
+  document.body.classList.remove("ability-icons-on");
   // update ability buttons visuals
   if(abilityButtonsWrap){
     Array.from(abilityButtonsWrap.querySelectorAll(".ability-btn")).forEach(b=>b.classList.remove("active"));
