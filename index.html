@@ -85,6 +85,63 @@
     box-sizing: border-box;
   }
 
+  /* Ability controls (追加) */
+  .ability-controls{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    width:100%;
+    margin-top:6px;
+  }
+  .ability-header{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .ability-title{
+    font-size:12px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .ability-toggle-icon{
+    padding:6px 8px;
+    border-radius:6px;
+    border:1px solid #ccc;
+    background:#f0f0f0;
+    cursor:pointer;
+    color:#111;
+    font-size:12px;
+  }
+  .ability-toggle-icon.active{
+    background:#ffb74d;
+    border-color:#ff9800;
+    color:#111;
+  }
+  .ability-buttons{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+    padding:6px 0;
+  }
+  .ability-btn{
+    padding:6px 8px;
+    border-radius:999px;
+    border:1px solid #ddd;
+    background:#fff;
+    cursor:pointer;
+    font-size:12px;
+    color:#333;
+    box-shadow:0 1px 0 rgba(0,0,0,0.03);
+  }
+  .ability-btn.active{
+    background:var(--accent);
+    color:#fff;
+    border-color:var(--accent);
+  }
+
   .controls{margin-left:auto;display:flex;gap:8px;align-items:center}
   .btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
   .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -118,7 +175,7 @@
   .icon-circle{min-width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:11px;box-shadow:0 1px 2px rgba(0,0,0,0.12);padding:0 6px}
   .icon-circle.dim{ opacity:0.45; }
 
-  .rare-row{width:100%;display:flex;justify-content:center}
+  .rare-row{width:100%;Display:flex;justify-content:center}
   .rare-badge{display:inline-block;padding:4px 8px;border-radius:8px;color:#fff;font-weight:700;font-size:11px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,0.12)}
 
   .thumb-wrap{width:var(--thumb);height:var(--thumb);display:flex;align-items:center;justify-content:center;margin-top:0}
@@ -127,6 +184,25 @@
   .name{font-size:12px;text-align:center;line-height:1.2;margin:0}
   .meta{font-size:12px;color:#000;font-weight:800;margin:0;min-height:1.2em}
   .meta-number{color:var(--meta-red);font-weight:900;font-size:14px;line-height:1}
+
+  /* Ability icons under meta (追加) */
+  .meta-abilities{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    margin-top:6px;
+    justify-content:center;
+    width:100%;
+  }
+  .meta-ability-badge{
+    padding:3px 6px;
+    border-radius:6px;
+    background:#f3f3f3;
+    font-size:10px;
+    color:#222;
+    border:1px solid #e6e6e6;
+    white-space:nowrap;
+  }
 
   .count{margin-top:8px;color:var(--muted);font-size:13px}
   .small{font-size:12px;color:#444}
@@ -146,6 +222,10 @@
     /* 重要: 小画面でも Tag1/Tag2 を同一行に保つため、折り返し禁止を維持します */
     .filters-inline { flex-wrap: nowrap; overflow-x: auto; }
     .filters-inline-item { flex: 0 0 auto; min-width: 140px; }
+
+    /* Ability controls responsive */
+    .ability-buttons{gap:6px}
+    .ability-btn{font-size:11px;padding:5px 7px}
   }
 </style>
 </head>
@@ -212,6 +292,16 @@
         <select id="filter-tag2" title="Tag2"><option value="">All</option></select>
       </label>
     </div>
+
+    <!-- Ability controls: ここに追記 -->
+    <div id="ability-controls" class="ability-controls" aria-label="Abilities" style="display:none">
+      <div class="ability-header">
+        <div class="ability-title">Ability</div>
+        <button id="ability-icon-toggle" class="ability-toggle-icon" title="Toggle ability icons in card meta">Icons</button>
+      </div>
+      <div id="ability-buttons" class="ability-buttons" role="toolbar" aria-label="Ability buttons"></div>
+    </div>
+
   </div>
 
   <div class="controls" aria-hidden="false">
@@ -267,6 +357,11 @@ let units = [], fieldMap = {}, seriesTagOptions = {};
 let currentPage = 1;
 let totalPages = 1;
 let currentFiltered = [];
+
+/* Ability: 追加のグローバル変数 */
+let abilityList = []; // 全Abilityの一覧（文字列）
+let selectedAbilities = []; // 選択中のAbility（AND条件）
+let abilityIconActive = false; // アイコン表示トグル
 
 const grid = document.getElementById("grid");
 const summary = document.getElementById("summary");
@@ -451,6 +546,21 @@ function renderCard(u){
 
   a.appendChild(meta);
 
+  /* Ability: meta 下部にアイコン表示領域を追加（トグルで表示） */
+  const metaAbilities = document.createElement("div");
+  metaAbilities.className = "meta-abilities";
+  // populate only if abilityIconActive is true (renderPage will call renderCard for each u)
+  if(abilityIconActive){
+    const unitAbilities = extractAbilitiesFromUnit(u);
+    unitAbilities.forEach(ab => {
+      const b = document.createElement("div");
+      b.className = "meta-ability-badge";
+      b.textContent = ab;
+      metaAbilities.appendChild(b);
+    });
+  }
+  a.appendChild(metaAbilities);
+
   return a;
 }
 
@@ -477,40 +587,105 @@ function normalizeArrayLikeForMatch(v){
   return parts;
 }
 
-/* populate series/tag selects from series_tag_options.json */
-function populateSeriesAndTags(){
-  filterSeries.innerHTML = '<option value="">All</option>';
-  filterTag1.innerHTML = '<option value="">All</option>';
-  filterTag2.innerHTML = '<option value="">All</option>';
-  if(seriesTagOptions && Array.isArray(seriesTagOptions.series_unit)){
-    seriesTagOptions.series_unit.forEach(v=>{
-      const opt = document.createElement("option");
-      opt.value = v;
-      opt.textContent = v;
-      filterSeries.appendChild(opt);
-    });
+/* ---------- Ability: 抽出ヘルパー ---------- */
+/* _特徴 フィールドから個別の Ability を取り出す関数
+   仕様:
+   - フィールド値は例: "_自動回復_先制攻撃" のように先頭に _ があり、_ 区切りで複数が連結されている
+   - 先頭の空要素を除き、個別のトークンを返す
+   - 正規化（NFKC + 空白トリム）して重複を除去
+*/
+function extractAbilitiesFromUnit(u){
+  const raw = u["_特徴"] || u["_特徴 "] || u["特徴"] || "";
+  if(!raw) return [];
+  // split by underscore, remove empty tokens
+  const parts = String(raw).split("_").map(s => normalizeStringForMatch(s)).filter(Boolean);
+  // parts may contain combined tokens like "移動力UP_先制攻撃" if underscores doubled; but split handles that
+  // remove duplicates while preserving order
+  const seen = new Set();
+  const out = [];
+  parts.forEach(p => {
+    if(!seen.has(p)){
+      seen.add(p);
+      out.push(p);
+    }
+  });
+  return out;
+}
+
+/* Build ability controls (buttons) from loaded units */
+function buildAbilityControls(){
+  const container = document.getElementById("ability-controls");
+  const btnContainer = document.getElementById("ability-buttons");
+  const iconToggle = document.getElementById("ability-icon-toggle");
+  if(!container || !btnContainer || !iconToggle) return;
+
+  // collect all abilities from units
+  const s = new Set();
+  units.forEach(u => {
+    const abs = extractAbilitiesFromUnit(u);
+    abs.forEach(a => { if(a) s.add(a); });
+  });
+  abilityList = Array.from(s).sort((a,b)=> a.localeCompare(b,'ja'));
+
+  // if no abilities, hide container
+  if(abilityList.length === 0){
+    container.style.display = "none";
+    return;
+  } else {
+    container.style.display = "block";
   }
-  if(seriesTagOptions && Array.isArray(seriesTagOptions.tag_unit)){
-    seriesTagOptions.tag_unit.forEach(v=>{
-      const opt1 = document.createElement("option");
-      opt1.value = v;
-      opt1.textContent = v;
-      filterTag1.appendChild(opt1);
-      const opt2 = document.createElement("option");
-      opt2.value = v;
-      opt2.textContent = v;
-      filterTag2.appendChild(opt2);
+
+  // populate buttons
+  btnContainer.innerHTML = "";
+  abilityList.forEach(ab => {
+    const b = document.createElement("button");
+    b.className = "ability-btn";
+    b.type = "button";
+    b.textContent = ab;
+    b.title = ab;
+    b.dataset.ability = ab;
+    b.addEventListener("click", (ev)=>{
+      const ability = ev.currentTarget.dataset.ability;
+      // toggle selection (AND semantics: selectedAbilities must all be present)
+      const idx = selectedAbilities.indexOf(ability);
+      if(idx === -1){
+        selectedAbilities.push(ability);
+        ev.currentTarget.classList.add("active");
+      } else {
+        selectedAbilities.splice(idx,1);
+        ev.currentTarget.classList.remove("active");
+      }
+      // reset to page 1 and reapply filters
+      currentPage = 1;
+      applyFiltersAndRender();
+    });
+    btnContainer.appendChild(b);
+  });
+
+  // icon toggle initial state
+  if(abilityIconActive) iconToggle.classList.add("active");
+  else iconToggle.classList.remove("active");
+  iconToggle.addEventListener("click", ()=>{
+    abilityIconActive = !abilityIconActive;
+    if(abilityIconActive) iconToggle.classList.add("active");
+    else iconToggle.classList.remove("active");
+    // re-render page to show/hide meta icons
+    renderPage();
+    saveUIState();
+  });
+
+  // restore selectedAbilities from saved UI state if any
+  const st = loadSavedUIState();
+  if(st && Array.isArray(st.abilities) && st.abilities.length>0){
+    selectedAbilities = st.abilities.slice();
+    // mark buttons active
+    Array.from(btnContainer.children).forEach(ch=>{
+      if(selectedAbilities.includes(ch.dataset.ability)) ch.classList.add("active");
     });
   }
 }
 
-/* get selected values from a multi-select (excluding the "All" empty option) */
-function getMultiSelectValues(selectEl){
-  const vals = Array.from(selectEl.selectedOptions).map(o => o.value).filter(v => v !== "");
-  return vals;
-}
-
-/* Save/load UI state to sessionStorage */
+/* Save/load UI state extended to include abilities and icon toggle */
 function collectUIState() {
   return {
     rarities: getMultiSelectValues(filterRarity),
@@ -524,7 +699,9 @@ function collectUIState() {
     tag2: filterTag2.value || "",
     sortBy: sortBy.value || "D0",
     sortDirAsc: !!sortDirAsc,
-    page: currentPage || 1
+    page: currentPage || 1,
+    abilities: selectedAbilities || [],
+    abilityIcons: !!abilityIconActive
   };
 }
 function saveUIState() {
@@ -578,6 +755,16 @@ function applyUIState(state) {
   if(state.sortBy) sortBy.value = state.sortBy;
   sortDirAsc = !!state.sortDirAsc;
   currentPage = Math.max(1, Number(state.page || 1));
+
+  // restore abilities and icon toggle
+  if(Array.isArray(state.abilities)) selectedAbilities = state.abilities.slice();
+  abilityIconActive = !!state.abilityIcons;
+}
+
+/* ---------- Filtering / rendering (normalized matching) ---------- */
+function getMultiSelectValues(selectEl){
+  const vals = Array.from(selectEl.selectedOptions).map(o => o.value).filter(v => v !== "");
+  return vals;
 }
 
 /* ---------- Filtering / rendering (normalized matching) ---------- */
@@ -666,6 +853,15 @@ function applyFiltersAndRender(){
       if(!unitTags.some(t => t === normTag2Sel)) return false;
     }
 
+    /* Ability: selectedAbilities がある場合は、ユニットの Ability を抽出して
+       選択されたすべての Ability を含むか（AND 条件）を判定する */
+    if(selectedAbilities && selectedAbilities.length > 0){
+      const unitAbilities = extractAbilitiesFromUnit(u); // 正規化済み配列
+      // すべての selectedAbilities が unitAbilities に含まれていることを要求
+      const ok = selectedAbilities.every(sa => unitAbilities.some(ua => ua === sa));
+      if(!ok) return false;
+    }
+
     return true;
   });
 
@@ -737,12 +933,30 @@ async function init(){
     populateSeriesAndTags();
     populateSortOptions();
 
+    // Build ability controls AFTER units loaded
+    buildAbilityControls();
+
     // restore UI state if present
     const st = loadSavedUIState();
     if(st){
       applyUIState(st);
       // ensure sortBy exists in options
       if(!Array.from(sortBy.options).some(o=>o.value===st.sortBy)) sortBy.value = "D0";
+      // if abilities were restored, mark buttons active
+      if(st.abilities && Array.isArray(st.abilities) && st.abilities.length>0){
+        const btnContainer = document.getElementById("ability-buttons");
+        if(btnContainer){
+          Array.from(btnContainer.children).forEach(ch=>{
+            if(st.abilities.includes(ch.dataset.ability)) ch.classList.add("active");
+          });
+        }
+      }
+      // set icon toggle visual
+      const iconToggle = document.getElementById("ability-icon-toggle");
+      if(iconToggle){
+        if(abilityIconActive) iconToggle.classList.add("active");
+        else iconToggle.classList.remove("active");
+      }
       applyFiltersAndRender();
     } else {
       sortBy.value = "D0";
@@ -786,6 +1000,15 @@ resetBtn.addEventListener("click", ()=>{
   filterSeries.value = "";
   filterTag1.value = "";
   filterTag2.value = "";
+  // clear ability selections
+  selectedAbilities = [];
+  const btnContainer = document.getElementById("ability-buttons");
+  if(btnContainer) Array.from(btnContainer.children).forEach(ch=> ch.classList.remove("active"));
+  // reset icon toggle
+  abilityIconActive = false;
+  const iconToggle = document.getElementById("ability-icon-toggle");
+  if(iconToggle) iconToggle.classList.remove("active");
+
   sortBy.value = "name";
   sortDirAsc = false;
   currentPage = 1;
