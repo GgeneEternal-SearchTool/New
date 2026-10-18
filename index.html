@@ -223,16 +223,17 @@
       <label class="filters-inline-item"><span class="small">Tag2</span>
         <select id="filter-tag2" title="Tag2"><option value="">All</option></select>
       </label>
-
-      <!-- 追加: Ability メニュー -->
-      <div class="filters-inline-item" id="ability-filter-wrap" style="min-width:220px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span class="small">Ability</span>
-          <button id="ability-icon-toggle" class="btn" title="Toggle ability icons" aria-pressed="false" style="background:#ffd966;border-color:#e6b800;color:#000;padding:4px 8px;font-size:12px;">Icon</button>
-        </div>
-        <div id="ability-buttons" style="display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding-top:6px;"></div>
-      </div>
     </div>
+
+    <!-- 変更: Ability は filters-inline の中ではなく filters の直下に別枠で配置 -->
+    <div id="ability-area" style="width:100%;margin-top:8px;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="small">Ability</span>
+        <button id="ability-icon-toggle" class="btn" title="Toggle ability icons" aria-pressed="false" style="background:#ffd966;border-color:#e6b800;color:#000;padding:4px 8px;font-size:12px;">Icon</button>
+      </div>
+      <div id="ability-buttons" style="display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;flex:1;"></div>
+    </div>
+
   </div>
 
   <div class="controls" aria-hidden="false">
@@ -479,9 +480,9 @@ function renderCard(u){
 
   a.appendChild(meta);
 
-  /* 追加: Ability アイコン表示（トグルが有効な場合） */
+  /* 追加: Ability アイコン表示（トグルが有効な場合） - _特徴 のみを参照 */
   if(abilityIconActive){
-    const featsRaw = u["_特徴"] || u["特徴"] || "";
+    const featsRaw = u["_特徴"] || "";
     const unitFeats = (typeof featsRaw === "string") ? featsRaw.split("_").map(s=>s.trim()).filter(Boolean) : [];
     if(unitFeats.length > 0){
       const iconsRow = document.createElement("div");
@@ -728,7 +729,8 @@ function applyFiltersAndRender(){
 
     // Ability フィルタ: selectedAbilities が空でなければ OR 条件でフィルタ
     if(selectedAbilities.size > 0){
-      const featCandidates = u["_特徴"] || u["特徴"] || "";
+      // 重要: _特徴 のみを参照する（"特徴" は参照しない）
+      const featCandidates = u["_特徴"] || "";
       const unitFeats = (typeof featCandidates === "string") ? featCandidates.split("_").map(s=>s.trim()).filter(Boolean) : [];
       // 正規化（NFKC）
       const unitFeatsNorm = unitFeats.map(f => normalizeStringForMatch(f));
@@ -765,13 +767,14 @@ function applyFiltersAndRender(){
   saveUIState();
 }
 
-/* 追加: units から _特徴 を解析して全能力リストを作成し、ボタンを描画 */
+/* 追加: units から _特徴 を解析して全能力リストを作成し、ボタンを描画
+   重要: "特徴" は決して参照せず、必ず "_特徴" のみを使用します */
 function extractAndRenderAbilitiesFromUnits(){
   const s = new Set();
   units.forEach(u=>{
-    const raw = u["_特徴"] || u["特徴"] || "";
+    const raw = u["_特徴"] || "";
     if(typeof raw === "string" && raw.length > 0){
-      // 先頭に _ がある想定なので _ で split
+      // _ で split（先頭に _ がある場合や複数結合されている場合に対応）
       raw.split("_").map(x=>x.trim()).filter(Boolean).forEach(tok=>{
         s.add(normalizeStringForMatch(tok));
       });
@@ -832,7 +835,7 @@ async function init(){
     populateSeriesAndTags();
     populateSortOptions();
 
-    /* 追加: units から Ability を抽出してボタンを生成 */
+    /* 追加: units から Ability を抽出してボタンを生成（_特徴 のみを参照） */
     extractAndRenderAbilitiesFromUnits();
 
     // restore UI state if present
