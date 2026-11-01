@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="ja">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -39,8 +39,9 @@
   .site-header h1{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin:0;color:#f4f3e9;font-size:21px}
   .site-header h1 span{color:#9bc8c2;font-size:15px;font-weight:600}
   .header-section{display:grid;gap:10px;min-width:0}
-  .section-heading{display:flex;align-items:center;gap:10px;margin:0;padding-left:10px;border-left:3px solid #e8c34b;color:#f4f3e9;font-size:14px;font-weight:700;min-height:20px}
-  .section-index{color:#9bc8c2;font-family:monospace;font-size:11px}
+  .section-heading{display:flex;align-items:center;gap:10px;margin:0;padding:8px 12px;border-left:5px solid #f0c84b;background:#ad3932;color:#fff;font-size:14px;font-weight:700;min-height:20px}
+  .section-index{color:#ffe27a;font-family:monospace;font-size:12px;font-weight:800}
+  #ability-heading,#controls-heading{background:#ad3932;border-left-color:#f0c84b}
 
   .site-header .filters{
     display:flex;
@@ -97,6 +98,10 @@
   .site-header .pager{display:flex;gap:6px;align-items:center;margin-left:0;padding:4px;border:1px solid #465356;background:rgba(9,16,18,.28)}
   .site-header .pager .page-info{padding:0 4px;font-size:12px;color:#edf1e9;white-space:nowrap}
   .site-header #reset{border-color:#e06a5d;background:#a93431;color:#fff}
+  .ability-buttons{display:flex;flex-wrap:wrap;gap:7px;min-height:32px}
+  .ability-filter{padding:6px 10px;border:1px solid #668185;border-radius:3px;background:#263a3e;color:#edf1e9;cursor:pointer;font-size:12px;font-weight:650}
+  .ability-filter:hover{background:#34565a}
+  .ability-filter[aria-pressed="true"]{border-color:#f0c84b;background:#f0c84b;color:#202a2d}
 
   main{min-height:60vh}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-w),1fr));gap:var(--gap)}
@@ -133,6 +138,8 @@
   .name{font-size:12px;text-align:center;line-height:1.2;margin:0}
   .meta{font-size:12px;color:#000;font-weight:800;margin:0;min-height:1.2em}
   .meta-number{color:var(--meta-red);font-weight:900;font-size:14px;line-height:1}
+  .card-abilities{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;width:100%}
+  .ability-icon{display:inline-block;max-width:100%;padding:3px 4px;border:1px solid #54749a;border-radius:4px;background:linear-gradient(135deg,#142c50,#244a73);box-shadow:0 1px 3px rgba(8,21,39,.32);color:#f1f5fb;font-size:8px;font-weight:650;line-height:1.2;text-align:center;overflow-wrap:anywhere}
 
   .count{margin-top:8px;color:var(--muted);font-size:13px}
   .small{font-size:12px;color:#444}
@@ -230,19 +237,24 @@
     </div>
   </section>
 
+  <section class="header-section ability-section" aria-labelledby="ability-heading">
+    <h2 class="section-heading" id="ability-heading"><span class="section-index" aria-hidden="true">02</span>Ability アビリティ</h2>
+    <div id="ability-filters" class="ability-buttons" role="group" aria-label="Ability"></div>
+  </section>
+
   <section class="header-section controls-section" aria-labelledby="controls-heading">
-    <h2 class="section-heading" id="controls-heading"><span class="section-index" aria-hidden="true">02</span>Damage・耐久回数の選択</h2>
+    <h2 class="section-heading" id="controls-heading"><span class="section-index" aria-hidden="true">03</span>Damage・耐久回数の選択</h2>
     <div class="controls" aria-hidden="false">
-    <label class="small">Sort by</label>
-    <select id="sort-by" class="btn" title="Sort by"></select>
+      <label class="small">Sort by</label>
+      <select id="sort-by" class="btn" title="Sort by"></select>
 
-    <div class="pager" aria-label="Pagination controls">
-      <button id="prev-page" class="btn" title="Previous page">Prev</button>
-      <div class="page-info" id="page-info">Page 1</div>
-      <button id="next-page" class="btn" title="Next page">Next</button>
-    </div>
+      <div class="pager" aria-label="Pagination controls">
+        <button id="prev-page" class="btn" title="Previous page">Prev</button>
+        <div class="page-info" id="page-info">Page 1</div>
+        <button id="next-page" class="btn" title="Next page">Next</button>
+      </div>
 
-    <button id="reset" class="btn">Reset</button>
+      <button id="reset" class="btn">Reset</button>
     </div>
   </section>
 </header>
@@ -260,7 +272,7 @@
 
 <script>
 /* ===== Settings ===== */
-const JSON_BASE_URL = "./json-file";
+const JSON_BASE_URL = "../json-file";
 const UNITS_JSON = () => `${JSON_BASE_URL}/units.json`;
 const COMBI_FIELD_MAP_JSON = () => `${JSON_BASE_URL}/combi_field_map.json`;
 const SERIES_TAG_JSON = () => `${JSON_BASE_URL}/series_tag_options.json`;
@@ -283,6 +295,8 @@ const FIELD_LABELS = {
 };
 
 let units = [], fieldMap = {}, seriesTagOptions = {};
+let abilityValues = [];
+let selectedAbilities = new Set();
 let currentPage = 1;
 let totalPages = 1;
 let currentFiltered = [];
@@ -301,6 +315,7 @@ const filterMap = document.getElementById("filter-map");
 const filterSeries = document.getElementById("filter-series");
 const filterTag1 = document.getElementById("filter-tag1");
 const filterTag2 = document.getElementById("filter-tag2");
+const abilityFilters = document.getElementById("ability-filters");
 
 const sortBy = document.getElementById("sort-by");
 const prevPageBtn = document.getElementById("prev-page");
@@ -325,6 +340,11 @@ function uniqueValues(arr, key){
     if(v !== "") s.add(v);
   });
   return Array.from(s).sort((a,b)=> a.localeCompare(b, 'ja'));
+}
+
+function getUnitAbilities(unit){
+  const raw = (unit["_特徴"] || "").toString();
+  return Array.from(new Set(raw.split("_").map(value => value.trim()).filter(Boolean)));
 }
 
 function populateMultiSelect(selectEl, values){
@@ -366,6 +386,33 @@ function populateSortOptions(){
     opt.value = k;
     opt.textContent = FIELD_LABELS[k] + " (" + k + ")";
     sortBy.appendChild(opt);
+  });
+}
+
+function updateAbilityButtons(){
+  Array.from(abilityFilters.querySelectorAll(".ability-filter")).forEach(button => {
+    button.setAttribute("aria-pressed", String(selectedAbilities.has(button.dataset.ability)));
+  });
+}
+
+function populateAbilityButtons(){
+  abilityValues = Array.from(new Set(units.flatMap(getUnitAbilities))).sort((a,b)=>a.localeCompare(b, 'ja'));
+  abilityFilters.innerHTML = "";
+  abilityValues.forEach(ability => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "ability-filter";
+    button.dataset.ability = ability;
+    button.textContent = ability;
+    button.setAttribute("aria-pressed", "false");
+    button.addEventListener("click", ()=>{
+      if(selectedAbilities.has(ability)) selectedAbilities.delete(ability);
+      else selectedAbilities.add(ability);
+      updateAbilityButtons();
+      currentPage = 1;
+      applyFiltersAndRender();
+    });
+    abilityFilters.appendChild(button);
   });
 }
 
@@ -449,7 +496,7 @@ function renderCard(u){
   const meta = document.createElement("div");
   meta.className = "meta";
 
-  const key = sortBy.value || "D0";
+  const key = sortBy.value || "D4";
   if(key === "name"){
     meta.textContent = u["ユニット"] || "";
   } else {
@@ -469,6 +516,21 @@ function renderCard(u){
   }
 
   a.appendChild(meta);
+
+  const abilities = getUnitAbilities(u);
+  if(abilities.length > 0){
+    const abilityRow = document.createElement("div");
+    abilityRow.className = "card-abilities";
+    abilityRow.setAttribute("aria-label", "Abilities");
+    abilities.forEach(ability => {
+      const badge = document.createElement("span");
+      badge.className = "ability-icon";
+      badge.textContent = ability;
+      badge.title = ability;
+      abilityRow.appendChild(badge);
+    });
+    a.appendChild(abilityRow);
+  }
 
   return a;
 }
@@ -541,7 +603,8 @@ function collectUIState() {
     series: filterSeries.value || "",
     tag1: filterTag1.value || "",
     tag2: filterTag2.value || "",
-    sortBy: sortBy.value || "D0",
+    abilities: Array.from(selectedAbilities),
+    sortBy: sortBy.value || "D4",
     sortDirAsc: !!sortDirAsc,
     page: currentPage || 1
   };
@@ -590,6 +653,8 @@ function applyUIState(state) {
   setMulti(filterMove, state.moves || []);
   setMulti(filterRange, state.ranges || []);
   setMulti(filterObtain, state.obtains || []);
+  selectedAbilities = new Set(Array.isArray(state.abilities) ? state.abilities.filter(value => abilityValues.includes(value)) : []);
+  updateAbilityButtons();
   if(state.map !== undefined && filterMap) filterMap.value = state.map;
   if(state.series !== undefined) filterSeries.value = state.series;
   if(state.tag1 !== undefined) filterTag1.value = state.tag1;
@@ -609,6 +674,7 @@ function applyFiltersAndRender(){
   const seriesSel = filterSeries.value || "";
   const tag1Sel = filterTag1.value || "";
   const tag2Sel = filterTag2.value || "";
+  const abilitySelections = Array.from(selectedAbilities);
 
   // normalized selected values for matching
   const normSeriesSel = normalizeStringForMatch(seriesSel);
@@ -638,6 +704,10 @@ function applyFiltersAndRender(){
     if(obtains.length > 0){
       const ov = (u["入手"] || "").toString();
       if(!obtains.includes(ov)) return false;
+    }
+    if(abilitySelections.length > 0){
+      const unitAbilities = getUnitAbilities(u);
+      if(!abilitySelections.some(ability => unitAbilities.includes(ability))) return false;
     }
 
     // series filter: compare normalized forms
@@ -689,7 +759,7 @@ function applyFiltersAndRender(){
   });
 
   // sorting
-  const key = sortBy.value || "D0";
+  const key = sortBy.value || "D4";
   if(key === "name"){
     list.sort((a,b)=>{
       const sa = (a["ユニット"] || "").toString();
@@ -752,6 +822,7 @@ async function init(){
     populateMultiSelect(filterMove, uniqueValues(units, "移動力"));
     populateMultiSelect(filterRange, uniqueValues(units, "最大射程"));
     populateMultiSelect(filterObtain, uniqueValues(units, "入手"));
+    populateAbilityButtons();
 
     populateSeriesAndTags();
     populateSortOptions();
@@ -761,10 +832,10 @@ async function init(){
     if(st){
       applyUIState(st);
       // ensure sortBy exists in options
-      if(!Array.from(sortBy.options).some(o=>o.value===st.sortBy)) sortBy.value = "D0";
+      if(!Array.from(sortBy.options).some(o=>o.value===st.sortBy)) sortBy.value = "D4";
       applyFiltersAndRender();
     } else {
-      sortBy.value = "D0";
+      sortBy.value = "D4";
       sortDirAsc = false;
       applyFiltersAndRender();
     }
@@ -805,7 +876,9 @@ resetBtn.addEventListener("click", ()=>{
   filterSeries.value = "";
   filterTag1.value = "";
   filterTag2.value = "";
-  sortBy.value = "name";
+  selectedAbilities.clear();
+  updateAbilityButtons();
+  sortBy.value = "D4";
   sortDirAsc = false;
   currentPage = 1;
   try { sessionStorage.removeItem(STORAGE_KEY); } catch(e){}
