@@ -272,7 +272,8 @@
 
 <script>
 /* ===== Settings ===== */
-const JSON_BASE_URL = "../json-file";
+const JSON_BASE_URL = "./json-file";
+const JSON_FALLBACK_BASE_URL = "../json-file";
 const UNITS_JSON = () => `${JSON_BASE_URL}/units.json`;
 const COMBI_FIELD_MAP_JSON = () => `${JSON_BASE_URL}/combi_field_map.json`;
 const SERIES_TAG_JSON = () => `${JSON_BASE_URL}/series_tag_options.json`;
@@ -327,10 +328,25 @@ let sortDirAsc = false;
 
 /* ===== Helpers ===== */
 async function fetchJson(url, cacheBust=false){
-  const u = cacheBust ? `${url}?v=${Date.now()}` : url;
-  const res = await fetch(u);
-  if(!res.ok) throw new Error(`Fetch failed: ${u} (${res.status})`);
-  return res.json();
+  const fallbackUrl = url.startsWith(`${JSON_BASE_URL}/`)
+    ? `${JSON_FALLBACK_BASE_URL}${url.slice(JSON_BASE_URL.length)}`
+    : "";
+  const urls = fallbackUrl ? [url, fallbackUrl] : [url];
+  let lastError;
+  for(const candidate of urls){
+    const requestUrl = cacheBust ? `${candidate}?v=${Date.now()}` : candidate;
+    try{
+      const res = await fetch(requestUrl);
+      if(!res.ok){
+        lastError = new Error(`Fetch failed: ${requestUrl} (${res.status})`);
+        continue;
+      }
+      return res.json();
+    }catch(error){
+      lastError = error;
+    }
+  }
+  throw lastError;
 }
 
 function uniqueValues(arr, key){
