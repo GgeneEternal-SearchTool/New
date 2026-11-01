@@ -146,6 +146,7 @@
   .ability-icon{display:inline-block;max-width:100%;padding:3px 4px;border:1px solid #79a8d7;border-radius:4px;background:linear-gradient(135deg,#1f4d82,#3678b5);box-shadow:0 1px 3px rgba(8,21,39,.32);color:#f1f5fb;font-size:11px;font-weight:650;line-height:1.2;text-align:center;overflow-wrap:anywhere}
 
   .count{margin-top:8px;color:var(--muted);font-size:13px}
+  .sort-title{margin:3px 0 10px;color:var(--meta-red);font-size:20px;font-weight:900;line-height:1.25}
   .small{font-size:12px;color:#444}
   .empty{padding:40px;text-align:center;color:var(--muted)}
   footer{margin-top:18px;color:var(--muted);font-size:13px}
@@ -274,6 +275,7 @@
 
 <main>
   <div id="summary" class="count">Loading...</div>
+  <div id="sort-title" class="sort-title" aria-live="polite"></div>
   <div id="grid" class="grid" aria-live="polite"></div>
   <div id="empty" class="empty" style="display:none">No matching units found.</div>
   <div id="error" style="color:#b33;margin-top:12px;display:none"></div>
@@ -317,6 +319,7 @@ let currentFiltered = [];
 
 const grid = document.getElementById("grid");
 const summary = document.getElementById("summary");
+const sortTitle = document.getElementById("sort-title");
 const emptyEl = document.getElementById("empty");
 const errorEl = document.getElementById("error");
 
@@ -868,6 +871,8 @@ function renderPage(){
   grid.innerHTML = "";
   const total = currentFiltered.length;
   summary.textContent = `該当 ${total} 件`;
+  const selectedSort = sortBy.selectedOptions[0];
+  sortTitle.textContent = selectedSort ? selectedSort.textContent : "";
   if(total === 0){
     emptyEl.style.display = "block";
     pageInfo.textContent = `Page 0 / 0`;

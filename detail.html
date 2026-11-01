@@ -52,11 +52,20 @@
   .map-row{display:flex;gap:12px;align-items:center;color:var(--navy);font-weight:700;white-space:nowrap;overflow-x:auto}
   .map-row .map-shape{font-size:18px;font-weight:800}
 
-  .filters-area{margin-top:8px;border:1px solid #f0f0f0;padding:10px;border-radius:8px;display:flex;flex-direction:column;gap:10px}
+  .filters-area{margin-top:8px;border:1px solid #465356;border-top:4px solid #d9473f;padding:16px;border-radius:4px;display:flex;flex-direction:column;gap:16px;color:#edf1e9;background-color:#202a2d;background-image:linear-gradient(rgba(220,232,224,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(220,232,224,.035) 1px,transparent 1px);background-size:24px 24px}
+  .filter-section{display:flex;flex-direction:column;gap:10px;min-width:0}
+  .filter-heading{margin:0;padding:8px 12px;border-left:5px solid #f0c84b;background:#ad3932;color:#fff;font-size:14px;font-weight:700}
   .filters-row{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
-  .filter-block{display:flex;flex-direction:column;gap:6px}
-  .filter-block label{font-size:12px;color:#666;font-weight:700}
-  .filter-block select{min-width:120px;max-width:220px;padding:6px;border-radius:6px;border:1px solid #ccc;background:#fff}
+  .filter-block{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .filter-block label,.filter-label{font-size:13px;color:#c5d0ca;font-weight:700}
+  .filter-block select{min-width:120px;max-width:220px;padding:7px 8px;border-radius:3px;border:1px solid #83908d;background:#f1f3ed;color:#172125}
+  .filter-button-group{display:flex;flex-wrap:wrap;gap:6px}
+  .filter-option{padding:7px 11px;border:1px solid #668185;border-radius:3px;background:#263a3e;color:#edf1e9;cursor:pointer;font-size:13px;font-weight:650}
+  .filter-option:hover{background:#34565a}
+  .filter-option[aria-pressed="true"]{border-color:#f0c84b;background:#f0c84b;color:#202a2d}
+  .filters-area .btn{border-color:#668185;background:#263a3e;color:#edf1e9}
+  .filters-area .btn.toggle.active{border-color:#f0c84b;background:#f0c84b;color:#202a2d}
+  .filters-area .sort-area select{min-width:200px;padding:7px 8px;border-radius:3px;border:1px solid #83908d;background:#f1f3ed;color:#172125}
 
   /* Series/Tag pair: keep both selects on one line even on narrow screens */
   .series-tag-pair{
@@ -91,6 +100,7 @@
   .toggles{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
   .btn.toggle{background:#fff}
+  .filters-area .btn.toggle{background:#263a3e;color:#edf1e9;border-color:#668185}
   .btn.toggle.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 
   /* Skill filter icons: 40x40 */
@@ -147,6 +157,7 @@
   .combi-percent{font-weight:900;font-size:18px;color:#111;margin-left:6px}
 
   .diag{font-size:12px;color:#999;margin-top:6px}
+  .sort-title{margin:4px 0 12px;color:#b22222;font-size:24px;font-weight:900;line-height:1.25}
 
   .pager{display:flex;gap:8px;align-items:center;margin-top:10px}
   .page-info{font-size:13px;color:var(--muted)}
@@ -158,6 +169,7 @@
   @media (max-width:520px){
     .p-top{grid-template-columns:2.1fr 0.7fr 1.75fr 2.66fr}
     .p-dmg,.p-hb{font-size:16px}
+    .sort-title{font-size:20px}
   }
 </style>
 </head>
@@ -202,66 +214,75 @@
   </div>
 
   <div class="filters-area" aria-label="Pilot Filters">
-    <div style="font-weight:800">Pilot Filter</div>
-
-    <div class="filters-row">
-      <div class="filter-block">
-        <label for="filter-pilot-rarity">Rarity</label>
-        <select id="filter-pilot-rarity"><option value="">All</option></select>
-      </div>
-
-      <div class="filter-block">
-        <label for="filter-pilot-type">Type</label>
-        <select id="filter-pilot-type"><option value="">All</option></select>
-      </div>
-
-      <div class="filter-block">
-        <label for="filter-pilot-obtain">Obtain</label>
-        <select id="filter-pilot-obtain"><option value="">All</option></select>
-      </div>
-
-      <div class="series-tag-pair">
+    <section class="filter-section">
+      <h2 class="filter-heading">Pilot Filter</h2>
+      <div class="filters-row">
         <div class="filter-block">
-          <label for="filter-pilot-series">Pilot Series</label>
-          <select id="filter-pilot-series"><option value="">All</option></select>
+          <span class="filter-label">Rarity</span>
+          <div id="filter-pilot-rarity-buttons" class="filter-button-group" role="group" aria-label="Rarity"></div>
+          <select id="filter-pilot-rarity" hidden aria-hidden="true" tabindex="-1"><option value="">All</option></select>
         </div>
 
         <div class="filter-block">
-          <label for="filter-pilot-tag">Pilot Tag</label>
-          <select id="filter-pilot-tag"><option value="">All</option></select>
+          <span class="filter-label">Type</span>
+          <div id="filter-pilot-type-buttons" class="filter-button-group" role="group" aria-label="Type"></div>
+          <select id="filter-pilot-type" hidden aria-hidden="true" tabindex="-1"><option value="">All</option></select>
+        </div>
+
+        <div class="filter-block">
+          <span class="filter-label">Obtain</span>
+          <div id="filter-pilot-obtain-buttons" class="filter-button-group" role="group" aria-label="Obtain"></div>
+          <select id="filter-pilot-obtain" hidden aria-hidden="true" tabindex="-1"><option value="">All</option></select>
+        </div>
+
+        <div class="series-tag-pair">
+          <div class="filter-block">
+            <label for="filter-pilot-series">Pilot Series</label>
+            <select id="filter-pilot-series"><option value="">All</option></select>
+          </div>
+
+          <div class="filter-block">
+            <label for="filter-pilot-tag">Pilot Tag</label>
+            <select id="filter-pilot-tag"><option value="">All</option></select>
+          </div>
         </div>
       </div>
+    </section>
 
-    </div>
-
-    <div class="filters-row">
-      <div style="font-weight:700">Ability</div>
-      <div class="toggles">
-        <button id="toggle-twoaction" class="btn toggle">２回行動</button>
-        <button id="toggle-pilot-ability" class="btn toggle">Pilot Ability Active</button>
-        <button id="toggle-autoheal" class="btn toggle">自動回復</button>
-        <button id="toggle-moveup" class="btn toggle">移動力UP</button>
-        <button id="toggle-counterdef" class="btn toggle">反撃支援防御</button>
-        <button id="toggle-forcecs" class="btn toggle">強制CS</button>
-
+    <section class="filter-section">
+      <h2 class="filter-heading">Ability</h2>
+      <div class="filters-row">
+        <div class="toggles">
+          <button id="toggle-twoaction" class="btn toggle">２回行動</button>
+          <button id="toggle-pilot-ability" class="btn toggle">Pilot Ability Active</button>
+          <button id="toggle-autoheal" class="btn toggle">自動回復</button>
+          <button id="toggle-moveup" class="btn toggle">移動力UP</button>
+          <button id="toggle-counterdef" class="btn toggle">反撃支援防御</button>
+          <button id="toggle-forcecs" class="btn toggle">強制CS</button>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div class="filters-row">
-      <div style="font-weight:700">Skill Filters</div>
-      <div id="skill-filter-row" class="skill-icons" aria-hidden="false"></div>
-    </div>
-
-    <div class="filters-row">
-      <div class="sort-area">
-        <div style="font-weight:900;color:var(--accent-strong);margin-right:6px">並べ替え</div>
-        <select id="pilot-sort" class="select"></select>
+    <section class="filter-section">
+      <h2 class="filter-heading">Skill Filters</h2>
+      <div class="filters-row">
+        <div id="skill-filter-row" class="skill-icons" aria-hidden="false"></div>
       </div>
-      <button id="sort-dir" class="btn">降順</button>
-    </div>
+    </section>
+
+    <section class="filter-section">
+      <h2 class="filter-heading">並べ替え</h2>
+      <div class="filters-row">
+        <div class="sort-area">
+          <select id="pilot-sort" class="select" aria-label="Sort"></select>
+        </div>
+        <button id="sort-dir" class="btn">降順</button>
+      </div>
+    </section>
   </div>
 
   <div id="combi-summary" class="diag" aria-live="polite" style="margin-top:10px"></div>
+  <div id="sort-title" class="sort-title" aria-live="polite"></div>
 
   <div id="pilot-list-area">
     <div id="pilot-grid"></div>
@@ -277,6 +298,7 @@
 <script>
 /* ===== Settings ===== */
 const JSON_BASE_URL = "./json-file";
+const JSON_FALLBACK_BASE_URL = "../json-file";
 const UNITS_JSON = JSON_BASE_URL + "/units.json";
 const PILOTS_JSON = JSON_BASE_URL + "/pilots.json";
 const COMBI_PART_PREFIX = JSON_BASE_URL + "/combi_part_";
@@ -346,6 +368,11 @@ const mapRow = document.getElementById("map-row");
 const filterPilotRarity = document.getElementById("filter-pilot-rarity");
 const filterPilotType = document.getElementById("filter-pilot-type");
 const filterPilotObtain = document.getElementById("filter-pilot-obtain");
+const pilotFilterButtonGroups = [
+  { select: filterPilotRarity, container: document.getElementById("filter-pilot-rarity-buttons") },
+  { select: filterPilotType, container: document.getElementById("filter-pilot-type-buttons") },
+  { select: filterPilotObtain, container: document.getElementById("filter-pilot-obtain-buttons") }
+];
 const filterPilotSeries = document.getElementById("filter-pilot-series");
 const filterPilotTag = document.getElementById("filter-pilot-tag");
 
@@ -360,6 +387,7 @@ const skillFilterRow = document.getElementById("skill-filter-row");
 const pilotSort = document.getElementById("pilot-sort");
 const sortDirBtn = document.getElementById("sort-dir");
 const combiSummary = document.getElementById("combi-summary");
+const sortTitle = document.getElementById("sort-title");
 
 const pilotGrid = document.getElementById("pilot-grid");
 const prevPageBtn = document.getElementById("prev-page");
@@ -384,9 +412,24 @@ const DETAIL_STATE_KEY = "detail_state_v1";
 
 /* ===== Helpers ===== */
 async function fetchJson(url, opts){
-  const res = await fetch(url, opts || {});
-  if(!res.ok) throw new Error("Fetch failed: " + url + " (" + res.status + ")");
-  return res.json();
+  const fallbackUrl = url.startsWith(JSON_BASE_URL + "/")
+    ? JSON_FALLBACK_BASE_URL + url.slice(JSON_BASE_URL.length)
+    : "";
+  const urls = fallbackUrl ? [url, fallbackUrl] : [url];
+  let lastError;
+  for(const candidate of urls){
+    try{
+      const res = await fetch(candidate, opts || {});
+      if(!res.ok){
+        lastError = new Error("Fetch failed: " + candidate + " (" + res.status + ")");
+        continue;
+      }
+      return res.json();
+    }catch(error){
+      lastError = error;
+    }
+  }
+  throw lastError;
 }
 function fmtDamage(v){
   if(v === null || v === undefined || v === "") return "-";
@@ -924,6 +967,16 @@ function populateSortOptions(){
   pilotSort.value = sortKey;
 }
 
+function updateSortTitle(){
+  const sortTitles = {
+    D0: "Damage D0：ダメージ（開幕状態、スキルなし）",
+    D4: "Damage-full active D4：ダメージ（全発動＋デバフ＆超一撃）",
+    CD: "Critical：クリティカルダメ（全発動・デバフ・超一撃）"
+  };
+  const selectedOption = pilotSort.selectedOptions[0];
+  sortTitle.textContent = sortTitles[pilotSort.value] || (selectedOption ? selectedOption.textContent : "");
+}
+
 function uniqueValuesFromPilots(key){
   const s = new Set();
   (pilots || []).forEach(p => {
@@ -942,6 +995,7 @@ function populatePilotFilterOptions(){
   const tagPil = Array.isArray(seriesTagOptions.tag_pilot) ? seriesTagOptions.tag_pilot : [];
   populateSelect(filterPilotSeries, seriesPil);
   populateSelect(filterPilotTag, tagPil);
+  populatePilotFilterButtons();
 }
 
 function populateSelect(el, values){
@@ -956,6 +1010,35 @@ function populateSelect(el, values){
     opt.textContent = v;
     el.appendChild(opt);
   });
+}
+
+function syncPilotFilterButtons(){
+  pilotFilterButtonGroups.forEach(({select, container})=>{
+    Array.from(container.querySelectorAll(".filter-option")).forEach(button=>{
+      button.setAttribute("aria-pressed", String(select.value === button.dataset.value));
+    });
+  });
+}
+
+function populatePilotFilterButtons(){
+  pilotFilterButtonGroups.forEach(({select, container})=>{
+    container.innerHTML = "";
+    Array.from(select.options).forEach(option=>{
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "filter-option";
+      button.dataset.value = option.value;
+      button.textContent = option.textContent;
+      button.addEventListener("click", ()=>{
+        select.value = option.value;
+        syncPilotFilterButtons();
+        currentPage = 1;
+        applyFiltersAndRender();
+      });
+      container.appendChild(button);
+    });
+  });
+  syncPilotFilterButtons();
 }
 
 function getSelectValue(selectEl){
@@ -1063,6 +1146,7 @@ function applyFiltersAndRender(){
 
 function renderPage(){
   pilotGrid.innerHTML = "";
+  updateSortTitle();
   const total = currentFiltered.length;
   if(total === 0){
     combiSummary.textContent = "該当 0 件";
@@ -1147,6 +1231,7 @@ function restoreDetailState(){
       filterPilotSeries.value = state.filters.series || "";
       filterPilotTag.value = state.filters.tag || "";
     }
+    syncPilotFilterButtons();
 
     // restore toggles
     const setToggle = (btn, val) => {
@@ -1334,7 +1419,7 @@ sortDirBtn.addEventListener("click", ()=>{
 
 
 [ filterPilotRarity, filterPilotType, filterPilotObtain, filterPilotSeries, filterPilotTag ].forEach(sel=>{
-  sel.addEventListener("change", ()=>{ currentPage = 1; applyFiltersAndRender(); });
+  sel.addEventListener("change", ()=>{ syncPilotFilterButtons(); currentPage = 1; applyFiltersAndRender(); });
 });
 
 prevPageBtn.addEventListener("click", ()=>{
