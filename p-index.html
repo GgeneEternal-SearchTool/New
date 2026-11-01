@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Pilot Search パイロット検索</title>
+<style>
+	:root{
+		--meta-red:#b22222;
+		--accent:#2b6cb0;
+		--gap:2px;
+		font-family:system-ui,"Hiragino Kaku Gothic ProN","Noto Sans JP","Segoe UI",Arial,sans-serif;
+	}
+	*{box-sizing:border-box}
+	html,body{min-height:100%;margin:0}
+	body{padding:12px;color:#111;background:#fff}
+	.site-header{display:grid;gap:14px;margin-bottom:12px;padding:16px 18px 18px;color:#edf1e9;background-color:#202a2d;background-image:linear-gradient(rgba(220,232,224,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(220,232,224,.035) 1px,transparent 1px);background-size:24px 24px;border:1px solid #465356;border-top:4px solid #d9473f}
+	.masthead{display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid #465356}
+	.header-mark{position:relative;flex:0 0 34px;width:34px;height:34px;background:#d9473f}
+	.header-mark::before{position:absolute;inset:6px;border:1px solid rgba(255,255,255,.55);border-right:5px solid #e8c34b;content:""}
+	h1{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin:0;color:#f4f3e9;font-size:21px}
+	h1 span{color:#9bc8c2;font-size:15px}
+	.filter-section{display:grid;gap:9px;min-width:0}
+	.section-title{margin:0;padding:8px 12px;border-left:5px solid #f0c84b;background:#ad3932;color:#fff;font-size:14px;font-weight:700}
+	.filter-row{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-start}
+	.filter-block{display:flex;flex:1 1 200px;min-width:180px;flex-direction:column;gap:6px}
+	.filter-label{color:#c5d0ca;font-size:13px;font-weight:700}
+	.choice-row{display:flex;flex-wrap:wrap;gap:6px}
+	.choice-button,.toggle-button{min-height:32px;padding:6px 10px;border:1px solid #668185;border-radius:3px;background:#263a3e;color:#edf1e9;cursor:pointer;font-size:13px;font-weight:650}
+	.choice-button:hover,.toggle-button:hover{background:#34565a}
+	.choice-button[aria-pressed="true"],.toggle-button[aria-pressed="true"]{border-color:#f0c84b;background:#f0c84b;color:#202a2d}
+	.filter-block select,.sort-select{width:100%;max-width:320px;min-height:34px;padding:6px 8px;border:1px solid #83908d;border-radius:3px;background:#f1f3ed;color:#172125}
+	.toggle-row{display:flex;flex-wrap:wrap;gap:7px}
+	.skill-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+	.skill-icon{width:40px;height:40px;border:1px solid #82909a;border-radius:5px;object-fit:cover;cursor:pointer;opacity:.88;transition:opacity .15s,filter .15s,transform .15s,box-shadow .15s}
+	.skill-icon.selected{outline:3px solid #f0c84b;outline-offset:2px;box-shadow:0 0 0 4px rgba(240,200,75,.38);filter:brightness(1.12);opacity:1;transform:scale(1.06);z-index:1}
+	.skill-icon.unavailable{filter:grayscale(1);opacity:.28;cursor:not-allowed}
+	.skill-icon:focus-visible{outline:3px solid #f0c84b;outline-offset:2px}
+	.sort-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+	.sort-select{width:auto;min-width:190px}
+	.sort-direction,.reset-button{min-height:34px;padding:7px 12px;border:1px solid #83908d;border-radius:3px;background:#e7ebe4;color:#172125;cursor:pointer;font-weight:700}
+	.reset-button{border-color:#e06a5d;background:#a93431;color:#fff}
+	.content-summary{margin:8px 0 2px;color:#666;font-size:13px}
+	.sort-summary{margin:0 0 10px;color:var(--meta-red);font-size:20px;font-weight:900;line-height:1.25}
+	.error-message{margin:12px 0;color:#b33;font-weight:700}
+	.pilot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:var(--gap);align-items:start}
+	.pilot-card{display:flex;min-width:0;flex-direction:column;align-items:center;gap:2px;padding:3px 2px 4px;border:1px solid #e4e6e5;border-radius:3px;background:#fff;text-align:center}
+	.pilot-stat{display:flex;min-height:21px;align-items:center;justify-content:center;white-space:nowrap;font-size:14px;font-weight:900;line-height:1}
+	.pilot-stat.shooting{color:#c44f2d}
+	.pilot-stat.melee{color:#b22222}
+	.pilot-stat.awakening{color:#6652a3}
+	.pilot-stat.defense{color:#28749b}
+	.pilot-stat.reaction{color:#43824c}
+	.pilot-image{display:block;width:68px;height:68px;border:1px solid #d5d9d7;border-radius:2px;background:#f0f1ef;object-fit:cover}
+	.pilot-image-link{display:block;width:68px;height:68px;line-height:0}
+	.pilot-image-link:focus-visible{outline:3px solid #f0c84b;outline-offset:2px}
+	.pilot-card-skills{display:grid;width:58px;min-height:18px;grid-template-columns:repeat(3,18px);gap:2px;justify-content:center;align-content:start}
+	.pilot-card-skill{display:block;width:18px;height:18px;border:1px solid #c9d0d2;border-radius:2px;object-fit:cover}
+	.action-badge,.action-spacer{display:flex;height:15px;align-items:center;justify-content:center}
+	.action-badge{padding:1px 5px;border:1px solid #d4ae39;border-radius:2px;background:#f2d877;color:#30260b;font-size:9px;font-weight:800;line-height:1}
+	.action-spacer{visibility:hidden}
+	.pilot-name{width:100%;min-height:2.5em;color:#202627;font-size:10px;font-weight:650;line-height:1.2;overflow-wrap:anywhere}
+	.empty-state{padding:28px 12px;color:#68706d;text-align:center}
+	@media(max-width:600px){
+		body{padding:8px}
+		.site-header{gap:12px;padding:13px 10px}
+		h1{font-size:19px}
+		.filter-block{flex-basis:100%;min-width:0}
+		.pilot-grid{grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:1px}
+		.pilot-image{width:62px;height:62px}
+	}
+</style>
+</head>
+<body>
+<header class="site-header">
+	<div class="masthead">
+		<span class="header-mark" aria-hidden="true"></span>
+		<h1>Pilot Search <span lang="ja">パイロット検索</span></h1>
+	</div>
+
+	<section class="filter-section" aria-labelledby="pilot-filter-title">
+		<h2 class="section-title" id="pilot-filter-title">Pilot Filter</h2>
+		<div class="filter-row">
+			<div class="filter-block"><span class="filter-label">Rarity</span><div id="rarity-choices" class="choice-row" role="group" aria-label="Rarity"></div></div>
+			<div class="filter-block"><span class="filter-label">Type</span><div id="type-choices" class="choice-row" role="group" aria-label="Type"></div></div>
+			<div class="filter-block"><span class="filter-label">Obtain</span><div id="obtain-choices" class="choice-row" role="group" aria-label="Obtain"></div></div>
+			<div class="filter-block"><label class="filter-label" for="series-filter">Pilot Series</label><select id="series-filter"><option value="">All</option></select></div>
+			<div class="filter-block"><label class="filter-label" for="tag-filter">Pilot Tag</label><select id="tag-filter"><option value="">All</option></select></div>
+		</div>
+	</section>
+
+	<section class="filter-section" aria-labelledby="ability-title">
+		<h2 class="section-title" id="ability-title">Ability</h2>
+		<div class="toggle-row" id="ability-toggles" role="group" aria-label="Ability filters"></div>
+	</section>
+
+	<section class="filter-section" aria-labelledby="ability-condition-title">
+		<h2 class="section-title" id="ability-condition-title">Ability発動条件</h2>
+		<div class="filter-row">
+			<div class="filter-block"><label class="filter-label" for="tag-condition-filter">タグ条件</label><select id="tag-condition-filter"><option value="">All</option></select></div>
+			<div class="filter-block"><label class="filter-label" for="series-condition-filter">シリーズ条件</label><select id="series-condition-filter"><option value="">All</option></select></div>
+			<div class="filter-block"><label class="filter-label" for="unit-condition-filter">ユニット条件</label><select id="unit-condition-filter"><option value="">All</option></select></div>
+		</div>
+	</section>
+
+	<section class="filter-section" aria-labelledby="skill-title">
+		<h2 class="section-title" id="skill-title">Skill Filters</h2>
+		<div id="skill-filters" class="skill-row" aria-label="Skill filters"></div>
+	</section>
+
+	<section class="filter-section" aria-labelledby="sort-title">
+		<h2 class="section-title" id="sort-title">並べ替え</h2>
+		<div class="sort-row">
+			<select id="sort-by" class="sort-select" aria-label="Sort pilots">
+				<option value="maximum">最大値順</option>
+				<option value="shooting">射撃値</option>
+				<option value="melee">格闘値</option>
+				<option value="awakening">覚醒値</option>
+				<option value="defense">守備値</option>
+				<option value="reaction">反応値</option>
+			</select>
+			<button id="sort-direction" class="sort-direction" type="button" aria-label="Sort direction">降順</button>
+			<button id="reset-filters" class="reset-button" type="button">Reset</button>
+		</div>
+	</section>
+</header>
+
+<main>
+	<div id="result-count" class="content-summary" aria-live="polite">Loading...</div>
+	<div id="sort-summary" class="sort-summary" aria-live="polite"></div>
+	<div id="pilot-grid" class="pilot-grid"></div>
+	<div id="empty-state" class="empty-state" hidden>No matching pilots found.</div>
+	<div id="error-message" class="error-message" hidden></div>
+</main>
+
+<script>
+const JSON_BASE_URL = "./json-file";
+const JSON_FALLBACK_URL = "../json-file";
+const STORAGE_KEY = "pilotSearchState_v1";
+
+const SKILL_ICONS = {
+	"ENセーブ": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/a7/20/p/o0139014415681987764.png?caw=800",
+	"ENチャージ": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/57/e6/p/o0142014615681987771.png?caw=800",
+	"HPリペア": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/46/ad/p/o0139014015681987780.png?caw=800",
+	"MPアップ": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/1b/b8/p/o0140014715681987760.png?caw=800",
+	"MPアップ（範囲)": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/3c/74/p/o0140014115681994624.png?caw=800",
+	"アタックバースト": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/74/c0/p/o0143014315681987747.png?caw=800",
+	"クリブースト （率UP)": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/4e/9b/p/o0139014715681987758.png?caw=800",
+	"スウェー(SP)": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/5d/10/p/o0143014315681987768.png?caw=800",
+	"ハイスピード": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/10/f3/p/o0144014315681994621.png?caw=800",
+	"アタックバースト (範囲)": "https://stat.ameba.jp/user_images/20251112/08/winterstory0820/14/df/j/o0145015715714714034.jpg",
+	"フォースガード": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/f5/63/p/o0146014415681987781.png?caw=800",
+	"レンジブースト": "https://stat.ameba.jp/user_images/20250925/05/winterstory0820/31/50/p/o0146016115682015322.png",
+	"ロックオン": "https://stat.ameba.jp/user_images/20250925/05/winterstory0820/be/c7/p/o0142016115682015816.png",
+	"命中率・回避率上昇": "https://stat.ameba.jp/user_images/20260124/17/winterstory0820/02/58/j/o0127013415744109737.jpg",
+	"CS+1": "https://stat.ameba.jp/user_images/20251016/21/winterstory0820/45/e9/p/o0136013515697655665.png",
+	"支援攻撃+1": "https://stat.ameba.jp/user_images/20251016/21/winterstory0820/75/01/p/o0137013815697655660.png",
+	"支援防御+1": "https://stat.ameba.jp/user_images/20251016/21/winterstory0820/7f/e6/p/o0137013715697655662.png",
+	"覚醒ブースト": "https://stat.ameba.jp/user_images/20250925/04/winterstory0820/3a/ed/p/o0139014315681987751.png",
+	"射撃ブースト": "https://stat.ameba.jp/user_images/20251004/13/winterstory0820/66/97/j/o0145014515689195378.jpg?caw=800",
+	"格闘ブースト": "https://stat.ameba.jp/user_images/20251001/19/winterstory0820/54/fd/p/o0149014615687591295.png",
+	"EN弾数フリー": "https://stat.ameba.jp/user_images/20260207/08/winterstory0820/00/80/j/o0131013415748559744.jpg",
+	"フォースガード (範囲)": "https://stat.ameba.jp/user_images/20260207/09/winterstory0820/a6/bf/j/o0127013715748575419.jpg"
+};
+
+const STAT_FIELDS = {
+	shooting: { key: "Pilot.射撃値", prefix: "射", className: "shooting", label: "射撃値" },
+	melee: { key: "Pilot.格闘値", prefix: "格", className: "melee", label: "格闘値" },
+	awakening: { key: "Pilot.覚醒値", prefix: "覚", className: "awakening", label: "覚醒値" },
+	defense: { key: "Pilot.守備値", prefix: "守", className: "defense", label: "守備値" },
+	reaction: { key: "Pilot.反応値", prefix: "反", className: "reaction", label: "反応値" }
+};
+
+const CONDITION_FIELDS = {
+	tagCondition: [
+		"Pilot.２回行動タグ＆シリーズ条件（タグ）",
+		"Pilot.２回行動タグ条件",
+		"Pilot.Ab. 相性タグ条件",
+		"Pilot.Ab. 相性タグ条件(OR2)",
+		"Pilot.Ab. タグ条件",
+		"Pilot.Ab. タグ・シリーズ条件 (タグ)"
+	],
+	seriesCondition: [
+		"Pilot.２回行動タグ＆シリーズ条件(シリーズ)",
+		"Pilot.２回行動シリーズ条件",
+		"Pilot.２回行動シリーズ条件2 OR",
+		"Pilot.Ab. タグ・シリーズ条件 (シリーズ)",
+		"Pilot.Ab. シリーズ条件"
+	],
+	unitCondition: ["Pilot.Ab. ユニット条件"]
+};
+
+const ABILITY_FILTERS = [
+	{ id: "twoaction", label: "２回行動", matches: pilot => String(pilot["Pilot.2回行動者"] || "").trim() === "Y" },
+	{ id: "autoheal", label: "自動回復", matches: pilot => hasValue(pilot["Pilot.自動回復"]) },
+	{ id: "moveup", label: "移動力UP", matches: pilot => hasValue(pilot["Pilot.移動力UP"]) },
+	{ id: "counterdef", label: "反撃支援防御", matches: pilot => hasValue(pilot["Pilot.反撃支援防御"]) },
+	{ id: "forcecs", label: "強制CS", matches: pilot => hasValue(pilot["Pilot.強制CS"]) }
+];
+
+const filterState = { rarity: "", type: "", obtain: "", series: "", tag: "", tagCondition: "", seriesCondition: "", unitCondition: "" };
+const activeAbilities = new Set();
+const activeSkills = new Set();
+let pilots = [];
+let filteredPilots = [];
+let seriesTagOptions = {};
+let sortKey = "maximum";
+let sortDescending = true;
+
+const rarityChoices = document.getElementById("rarity-choices");
+const typeChoices = document.getElementById("type-choices");
+const obtainChoices = document.getElementById("obtain-choices");
+const seriesFilter = document.getElementById("series-filter");
+const tagFilter = document.getElementById("tag-filter");
+const tagConditionFilter = document.getElementById("tag-condition-filter");
+const seriesConditionFilter = document.getElementById("series-condition-filter");
+const unitConditionFilter = document.getElementById("unit-condition-filter");
+const abilityToggles = document.getElementById("ability-toggles");
+const skillFilters = document.getElementById("skill-filters");
+const sortBy = document.getElementById("sort-by");
+const sortDirection = document.getElementById("sort-direction");
+const pilotGrid = document.getElementById("pilot-grid");
+const resultCount = document.getElementById("result-count");
+const sortSummary = document.getElementById("sort-summary");
+const emptyState = document.getElementById("empty-state");
+const errorMessage = document.getElementById("error-message");
+
+async function fetchJson(url){
+	const fallback = url.startsWith(JSON_BASE_URL + "/")
+		? JSON_FALLBACK_URL + url.slice(JSON_BASE_URL.length)
+		: "";
+	let lastError;
+	for(const candidate of fallback ? [url, fallback] : [url]){
+		try{
+			const response = await fetch(candidate);
+			if(!response.ok){
+				lastError = new Error(`読み込み失敗: ${candidate} (${response.status})`);
+				continue;
+			}
+			return await response.json();
+		}catch(error){
+			lastError = error;
+		}
+	}
+	throw lastError;
+}
+
+function hasValue(value){
+	const text = String(value ?? "").trim();
+	return text !== "" && text !== "0" && text.toUpperCase() !== "XXX";
+}
+
+function uniqueValues(key){
+	return [...new Set(pilots.map(pilot => String(pilot[key] || "").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ja"));
+}
+
+function fillSelect(select, values){
+	select.replaceChildren(new Option("All", ""));
+	values.forEach(value => select.add(new Option(value, value)));
+}
+
+function createChoiceButtons(container, values, stateKey){
+	const entries = [{ label: "All", value: "" }, ...values.map(value => ({ label: value, value }))];
+	container.replaceChildren();
+	entries.forEach(entry => {
+		const button = document.createElement("button");
+		button.type = "button";
+		button.className = "choice-button";
+		button.textContent = entry.label;
+		button.dataset.value = entry.value;
+		button.setAttribute("aria-pressed", String(filterState[stateKey] === entry.value));
+		button.addEventListener("click", () => {
+			filterState[stateKey] = entry.value;
+			[...container.children].forEach(item => item.setAttribute("aria-pressed", String(item.dataset.value === entry.value)));
+			applyFilters();
+		});
+		container.appendChild(button);
+	});
+}
+
+function createAbilityButtons(){
+	abilityToggles.replaceChildren();
+	ABILITY_FILTERS.forEach(filter => {
+		const button = document.createElement("button");
+		button.type = "button";
+		button.className = "toggle-button";
+		button.textContent = filter.label;
+		button.dataset.filter = filter.id;
+		button.setAttribute("aria-pressed", "false");
+		button.addEventListener("click", () => {
+			if(activeAbilities.has(filter.id)) activeAbilities.delete(filter.id);
+			else activeAbilities.add(filter.id);
+			button.setAttribute("aria-pressed", String(activeAbilities.has(filter.id)));
+			applyFilters();
+		});
+		abilityToggles.appendChild(button);
+	});
+}
+
+function getPilotSkills(pilot){
+	return Object.keys(pilot)
+		.filter(key => key.startsWith("Pilot.Sk.") && hasValue(pilot[key]))
+		.map(key => key.replace(/^Pilot\.Sk\.\s*/, "").trim());
+}
+
+function createSkillIcons(){
+	skillFilters.replaceChildren();
+	Object.entries(SKILL_ICONS).forEach(([skill, imageUrl]) => {
+		const icon = document.createElement("img");
+		icon.className = "skill-icon";
+		icon.src = imageUrl;
+		icon.alt = skill;
+		icon.title = skill;
+		icon.dataset.skill = skill;
+		icon.setAttribute("role", "button");
+		icon.setAttribute("aria-pressed", "false");
+		icon.tabIndex = 0;
+		const toggle = () => {
+			if(icon.getAttribute("aria-disabled") === "true") return;
+			if(activeSkills.has(skill)) activeSkills.delete(skill);
+			else activeSkills.add(skill);
+			applyFilters();
+		};
+		icon.addEventListener("click", toggle);
+		icon.addEventListener("keydown", event => {
+			if(event.key === "Enter" || event.key === " "){
+				event.preventDefault();
+				toggle();
+			}
+		});
+		skillFilters.appendChild(icon);
+	});
+}
+
+function listFieldValues(value){
+	return String(value || "").normalize("NFKC").split(/[,，]/).map(item => item.trim()).filter(Boolean);
+}
+
+function conditionValues(value){
+	return listFieldValues(value).filter(item => item !== "0" && item.toUpperCase() !== "XXX");
+}
+
+function getConditionOptions(fields){
+	return [...new Set(pilots.flatMap(pilot => fields.flatMap(field => conditionValues(pilot[field]))))].sort((a,b)=>a.localeCompare(b,"ja"));
+}
+
+function hasPilotCondition(pilot, fields, selected){
+	const normalizedSelection = selected.normalize("NFKC");
+	return fields.some(field => conditionValues(pilot[field]).some(value => value.normalize("NFKC") === normalizedSelection));
+}
+
+function matchesFilters(pilot){
+	if(filterState.rarity && pilot["Pilot.レア"] !== filterState.rarity) return false;
+	if(filterState.type && pilot["Pilot.タイプ"] !== filterState.type) return false;
+	if(filterState.obtain && pilot["Pilot.入手"] !== filterState.obtain) return false;
+	if(filterState.series && !listFieldValues(pilot["Pilot.シリーズ連結"]).includes(filterState.series.normalize("NFKC"))) return false;
+	if(filterState.tag && !listFieldValues(pilot["Pilot.タグ連結"]).includes(filterState.tag.normalize("NFKC"))) return false;
+	if(filterState.tagCondition && !hasPilotCondition(pilot, CONDITION_FIELDS.tagCondition, filterState.tagCondition)) return false;
+	if(filterState.seriesCondition && !hasPilotCondition(pilot, CONDITION_FIELDS.seriesCondition, filterState.seriesCondition)) return false;
+	if(filterState.unitCondition && !hasPilotCondition(pilot, CONDITION_FIELDS.unitCondition, filterState.unitCondition)) return false;
+	for(const filterId of activeAbilities){
+		const filter = ABILITY_FILTERS.find(item => item.id === filterId);
+		if(filter && !filter.matches(pilot)) return false;
+	}
+	const skills = getPilotSkills(pilot);
+	for(const skill of activeSkills){
+		if(!skills.includes(skill)) return false;
+	}
+	return true;
+}
+
+function getStat(pilot, key){
+	if(key === "maximum"){
+		return ["melee", "shooting", "awakening"]
+			.map(statKey => ({ ...STAT_FIELDS[statKey], value: Number(pilot[STAT_FIELDS[statKey].key]) || 0 }))
+			.reduce((best, stat) => stat.value > best.value ? stat : best);
+	}
+	const stat = STAT_FIELDS[key];
+	return { ...stat, value: Number(pilot[stat.key]) || 0 };
+}
+
+function formatNumber(value){
+	return Math.round(value).toLocaleString("ja-JP");
+}
+
+function updateSkillAvailability(){
+	const availableSkills = new Set(filteredPilots.flatMap(getPilotSkills));
+	[...skillFilters.children].forEach(icon => {
+		const selected = activeSkills.has(icon.dataset.skill);
+		const unavailable = !selected && !availableSkills.has(icon.dataset.skill);
+		icon.classList.toggle("selected", selected);
+		icon.classList.toggle("unavailable", unavailable);
+		icon.setAttribute("aria-pressed", String(selected));
+		icon.setAttribute("aria-disabled", String(unavailable));
+		icon.tabIndex = unavailable ? -1 : 0;
+	});
+}
+
+function renderCards(){
+	const fragment = document.createDocumentFragment();
+	filteredPilots.forEach(pilot => {
+		const stat = getStat(pilot, sortKey);
+		const card = document.createElement("article");
+		card.className = "pilot-card";
+
+		const statLabel = document.createElement("div");
+		statLabel.className = `pilot-stat ${stat.className}`;
+		statLabel.textContent = `${stat.prefix}${formatNumber(stat.value)}`;
+		statLabel.title = sortKey === "maximum" ? `格闘・射撃・覚醒の最大値（${stat.label}）` : stat.label;
+		card.appendChild(statLabel);
+
+		const imageLink = document.createElement("a");
+		imageLink.className = "pilot-image-link";
+		imageLink.href = `p-detail.html?pid=${encodeURIComponent(pilot.pid)}`;
+		imageLink.setAttribute("aria-label", `${pilot["Pilot.キャラ"] || "パイロット"}の詳細`);
+		const image = document.createElement("img");
+		image.className = "pilot-image";
+		image.src = pilot["Pilot.画像リンク"] || "";
+		image.alt = pilot["Pilot.キャラ"] || "パイロット画像";
+		image.loading = "lazy";
+		image.onerror = () => image.classList.add("image-missing");
+		imageLink.appendChild(image);
+		card.appendChild(imageLink);
+
+		const skillsRow = document.createElement("div");
+		skillsRow.className = "pilot-card-skills";
+		getPilotSkills(pilot).forEach(skill => {
+			const skillImage = document.createElement("img");
+			skillImage.className = "pilot-card-skill";
+			skillImage.src = SKILL_ICONS[skill] || "";
+			skillImage.alt = skill;
+			skillImage.title = skill;
+			skillImage.loading = "lazy";
+			skillsRow.appendChild(skillImage);
+		});
+		card.appendChild(skillsRow);
+
+		const action = document.createElement("span");
+		if(String(pilot["Pilot.2回行動者"] || "").trim() === "Y"){
+			action.className = "action-badge";
+			action.textContent = "2回行動";
+			action.title = "2回行動";
+		} else {
+			action.className = "action-spacer";
+			action.setAttribute("aria-hidden", "true");
+		}
+		card.appendChild(action);
+
+		const name = document.createElement("div");
+		name.className = "pilot-name";
+		name.textContent = pilot["Pilot.キャラ"] || "名称不明";
+		card.appendChild(name);
+		fragment.appendChild(card);
+	});
+	pilotGrid.replaceChildren(fragment);
+	resultCount.textContent = `該当 ${filteredPilots.length} 名`;
+	const sortOption = sortBy.selectedOptions[0];
+	sortSummary.textContent = sortOption ? sortOption.textContent : "";
+	emptyState.hidden = filteredPilots.length !== 0;
+	updateSkillAvailability();
+}
+
+function applyFilters(){
+	filteredPilots = pilots.filter(matchesFilters);
+	filteredPilots.sort((a,b)=>{
+		const difference = getStat(a, sortKey).value - getStat(b, sortKey).value;
+		if(difference !== 0) return sortDescending ? -difference : difference;
+		return String(a["Pilot.キャラ"] || "").localeCompare(String(b["Pilot.キャラ"] || ""), "ja");
+	});
+	renderCards();
+	try{
+		sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ filterState, activeAbilities: [...activeAbilities], activeSkills: [...activeSkills], sortKey, sortDescending }));
+	}catch{}
+}
+
+function restoreState(){
+	try{
+		const state = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+		if(!state) return;
+		Object.assign(filterState, state.filterState || {});
+		(state.activeAbilities || []).filter(id => ABILITY_FILTERS.some(filter => filter.id === id)).forEach(id => activeAbilities.add(id));
+		(state.activeSkills || []).forEach(skill => activeSkills.add(skill));
+		if(["maximum", ...Object.keys(STAT_FIELDS)].includes(state.sortKey)) sortKey = state.sortKey;
+		if(typeof state.sortDescending === "boolean") sortDescending = state.sortDescending;
+	}catch{}
+}
+
+function syncControls(){
+	[
+		[rarityChoices, filterState.rarity],
+		[typeChoices, filterState.type],
+		[obtainChoices, filterState.obtain]
+	].forEach(([container, value]) => {
+		[...container.children].forEach(button => button.setAttribute("aria-pressed", String(button.dataset.value === value)));
+	});
+	[...abilityToggles.children].forEach(button => button.setAttribute("aria-pressed", String(activeAbilities.has(button.dataset.filter))));
+	[...skillFilters.children].forEach(icon => icon.setAttribute("aria-pressed", String(activeSkills.has(icon.dataset.skill))));
+	seriesFilter.value = filterState.series;
+	tagFilter.value = filterState.tag;
+	tagConditionFilter.value = filterState.tagCondition;
+	seriesConditionFilter.value = filterState.seriesCondition;
+	unitConditionFilter.value = filterState.unitCondition;
+	sortBy.value = sortKey;
+	sortDirection.textContent = sortDescending ? "降順" : "昇順";
+	sortDirection.setAttribute("aria-label", sortDescending ? "降順に並べ替え" : "昇順に並べ替え");
+}
+
+async function init(){
+	try{
+		const [pilotData, optionsData] = await Promise.all([
+			fetchJson(`${JSON_BASE_URL}/pilots.json`),
+			fetchJson(`${JSON_BASE_URL}/series_tag_options.json`).catch(() => ({}))
+		]);
+		pilots = Array.isArray(pilotData) ? pilotData : [];
+		seriesTagOptions = optionsData || {};
+
+		fillSelect(seriesFilter, seriesTagOptions.series_pilot || uniqueValues("Pilot.シリーズ連結").flatMap(listFieldValues));
+		fillSelect(tagFilter, seriesTagOptions.tag_pilot || uniqueValues("Pilot.タグ連結").flatMap(listFieldValues));
+		fillSelect(tagConditionFilter, getConditionOptions(CONDITION_FIELDS.tagCondition));
+		fillSelect(seriesConditionFilter, getConditionOptions(CONDITION_FIELDS.seriesCondition));
+		fillSelect(unitConditionFilter, getConditionOptions(CONDITION_FIELDS.unitCondition));
+		createChoiceButtons(rarityChoices, uniqueValues("Pilot.レア"), "rarity");
+		createChoiceButtons(typeChoices, uniqueValues("Pilot.タイプ"), "type");
+		createChoiceButtons(obtainChoices, uniqueValues("Pilot.入手"), "obtain");
+		createAbilityButtons();
+		createSkillIcons();
+		restoreState();
+		syncControls();
+		applyFilters();
+		errorMessage.hidden = true;
+	}catch(error){
+		errorMessage.textContent = `読み込みエラー: ${error.message || error}`;
+		errorMessage.hidden = false;
+	}
+}
+
+seriesFilter.addEventListener("change", () => { filterState.series = seriesFilter.value; applyFilters(); });
+tagFilter.addEventListener("change", () => { filterState.tag = tagFilter.value; applyFilters(); });
+tagConditionFilter.addEventListener("change", () => { filterState.tagCondition = tagConditionFilter.value; applyFilters(); });
+seriesConditionFilter.addEventListener("change", () => { filterState.seriesCondition = seriesConditionFilter.value; applyFilters(); });
+unitConditionFilter.addEventListener("change", () => { filterState.unitCondition = unitConditionFilter.value; applyFilters(); });
+sortBy.addEventListener("change", () => { sortKey = sortBy.value; applyFilters(); });
+sortDirection.addEventListener("click", () => { sortDescending = !sortDescending; syncControls(); applyFilters(); });
+document.getElementById("reset-filters").addEventListener("click", () => {
+	Object.keys(filterState).forEach(key => { filterState[key] = ""; });
+	activeAbilities.clear();
+	activeSkills.clear();
+	sortKey = "maximum";
+	sortDescending = true;
+	try{ sessionStorage.removeItem(STORAGE_KEY); }catch{}
+	syncControls();
+	applyFilters();
+});
+
+init();
+</script>
+</body>
+</html>

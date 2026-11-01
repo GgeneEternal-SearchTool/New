@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Pilot Detail</title>
+<style>
+	:root{
+		--accent:#2b6cb0;
+		--red:#b22222;
+		--muted:#66706e;
+		font-family:system-ui,"Noto Sans JP","Hiragino Kaku Gothic ProN","Segoe UI",Arial,sans-serif;
+	}
+	*{box-sizing:border-box}
+	body{margin:16px;color:#172125;background:#fff}
+	.back{display:inline-block;margin-bottom:12px;color:var(--accent);font-size:14px;font-weight:650;text-decoration:none}
+	.back:hover{text-decoration:underline}
+	.pilot-top{display:flex;gap:18px;align-items:flex-start;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #e5e9e7}
+	.portrait-wrap{display:flex;flex:0 0 140px;flex-direction:column;align-items:center;gap:7px}
+	.portrait{display:block;width:140px;height:140px;border:1px solid #d5d9d7;border-radius:4px;background:#f0f1ef;object-fit:cover}
+	.action-badge{padding:3px 8px;border:1px solid #d4ae39;border-radius:3px;background:#f2d877;color:#30260b;font-size:12px;font-weight:800}
+	.pilot-intro{display:flex;min-width:0;flex:1;flex-direction:column;gap:10px;padding-top:4px}
+	.pilot-name{margin:0;color:#202a2d;font-size:24px;line-height:1.25;overflow-wrap:anywhere}
+	.profile-meta{display:flex;flex-wrap:wrap;gap:7px}
+	.profile-chip{padding:4px 8px;border:1px solid #d5ddda;border-radius:3px;background:#f4f6f4;color:#34413e;font-size:12px;font-weight:650}
+	.obtain{margin:0;color:#38433f;font-size:14px;font-weight:700}
+	.detail-section{display:grid;gap:6px;margin-top:8px}
+	.stats-row{display:flex;flex-wrap:wrap;gap:8px}
+	.stat-item{display:flex;min-width:118px;flex:1 1 118px;flex-direction:column;gap:4px;padding:8px 10px;border:1px solid #e0e5e2;border-radius:3px;background:#fbfcfb}
+	.stat-label{color:var(--muted);font-size:11px;font-weight:700}
+	.stat-value{color:#1e3442;font-size:21px;font-weight:900;line-height:1.1}
+	.stat-item.shooting .stat-value{color:#c44f2d}
+	.stat-item.melee .stat-value{color:var(--red)}
+	.stat-item.awakening .stat-value{color:#6652a3}
+	.stat-item.reaction .stat-value{color:#43824c}
+	.stat-item.defense .stat-value{color:#28749b}
+	.feature-text,.condition-summary{margin:0;color:#303a37;font-size:14px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+	.condition-summary{padding:8px 10px;border-left:3px solid #c85a4e;background:#f8f4f3}
+	.condition-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+	.condition-group{min-width:0;padding:10px;border:1px solid #e0e5e2;border-radius:3px;background:#fbfcfb}
+	.condition-group h3{margin:0 0 8px;color:#364542;font-size:13px}
+	.condition-list{display:grid;gap:7px;margin:0}
+	.condition-row{display:grid;grid-template-columns:minmax(90px,auto) 1fr;gap:8px;font-size:12px;line-height:1.45}
+	.condition-row dt{color:var(--muted);font-weight:700}
+	.condition-row dd{margin:0;color:#25332f;overflow-wrap:anywhere}
+	.chip-list{display:flex;flex-wrap:wrap;gap:6px}
+	.series-chip,.tag-chip{padding:5px 8px;border-radius:3px;color:#fff;font-size:12px;font-weight:700}
+	.series-chip{background:linear-gradient(90deg,#2563eb,#3b82f6)}
+	.tag-chip{background:linear-gradient(90deg,#3c5a03,#158b21)}
+	.empty-value{margin:0;color:#8a9290;font-size:13px}
+	.error-message{margin-top:20px;padding:12px;border-left:4px solid #b33;background:#fbefef;color:#a22;font-weight:700}
+	.unit-browser{display:grid;gap:8px;margin-top:18px;padding-top:12px;border-top:1px solid #dfe5e2}
+	.unit-filter-area{display:grid;gap:10px;padding:12px;border:1px solid #465356;border-top:4px solid #d9473f;border-radius:4px;background-color:#202a2d;background-image:linear-gradient(rgba(220,232,224,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(220,232,224,.035) 1px,transparent 1px);background-size:24px 24px;color:#edf1e9}
+	.unit-filter-heading{margin:0;color:#f4f3e9;font-size:14px;font-weight:800}
+	.unit-filters{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-start}
+	.unit-filter-block{display:flex;flex:1 1 180px;min-width:150px;flex-direction:column;gap:5px}
+	.unit-filter-label{color:#c5d0ca;font-size:12px;font-weight:700}
+	.unit-filter-choices{display:flex;flex-wrap:wrap;gap:5px}
+	.unit-filter-choice,.ability-active-button{min-height:30px;padding:5px 9px;border:1px solid #668185;border-radius:3px;background:#263a3e;color:#edf1e9;cursor:pointer;font-size:12px;font-weight:650}
+	.unit-filter-choice[aria-pressed="true"],.ability-active-button[aria-pressed="true"]{border-color:#f0c84b;background:#f0c84b;color:#202a2d}
+	.unit-filter-area select{width:100%;max-width:320px;min-height:31px;padding:5px 7px;border:1px solid #83908d;border-radius:3px;background:#f1f3ed;color:#172125}
+	.unit-filter-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+	.unit-sort{margin-left:auto}
+	.unit-results{display:grid;gap:6px}
+	.unit-results-summary{color:#68716e;font-size:12px}
+	.unit-sort-label{color:var(--red);font-size:16px;font-weight:900}
+	.unit-combi-list{display:grid;gap:6px}
+	.unit-combi-row{display:grid;grid-template-columns:68px minmax(140px,1fr) minmax(108px,.75fr) minmax(220px,1.6fr);gap:10px;align-items:start;padding:8px;border:1px solid #e3e7e5;border-radius:4px;background:#fff}
+	.unit-combi-image{display:block;width:68px;height:68px;border:1px solid #d8dddb;border-radius:3px;background:#f0f1ef;object-fit:cover}
+	.unit-combi-name{margin:0 0 4px;color:#202a2d;font-size:13px;font-weight:750;line-height:1.3;overflow-wrap:anywhere}
+	.unit-combi-stat{color:var(--red);font-size:19px;font-weight:900;line-height:1.15}
+	.unit-combi-badges{display:flex;flex-wrap:wrap;gap:4px}
+	.combi-badge{padding:3px 6px;border-radius:3px;background:#e8eef0;color:#33434a;font-size:10px;font-weight:750}
+	.combi-badge.action{border:1px solid #d4ae39;background:#f2d877;color:#30260b}
+	.combi-badge.compatibility{background:#2b6cb0;color:#fff}
+	.unit-combi-info{min-width:0;font-size:12px;line-height:1.4}
+	.unit-combi-info .combi-title{margin-bottom:4px;font-weight:800}
+	.unit-combi-info .combi-line{margin:2px 0;overflow-wrap:anywhere}
+	.unit-combi-info .combi-percent{font-size:16px;font-weight:900}
+	.unit-pager{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:4px}
+	.unit-pager button{padding:5px 9px;border:1px solid #cbd3d0;border-radius:3px;background:#f5f7f5;cursor:pointer}
+	.unit-pager button:disabled{opacity:.45;cursor:default}
+	.unit-page-info{color:#66706e;font-size:12px}
+	.unit-empty{padding:18px;color:#68706e;text-align:center}
+	@media(max-width:600px){
+		body{margin:10px}
+		.pilot-top{gap:12px}
+		.portrait-wrap{flex-basis:100px}
+		.portrait{width:100px;height:100px}
+		.pilot-name{font-size:20px}
+		.stat-item{min-width:95px}
+		.stat-value{font-size:19px}
+		.condition-groups{grid-template-columns:1fr}
+		.unit-filter-block{flex-basis:100%;min-width:0}
+		.unit-sort{margin-left:0}
+		.unit-combi-row{grid-template-columns:58px minmax(0,1fr);gap:7px;padding:6px}
+		.unit-combi-image{width:58px;height:58px}
+		.unit-combi-badges,.unit-combi-info{grid-column:2}
+	}
+</style>
+</head>
+<body>
+<a class="back" href="p-index.html">← Pilot Search</a>
+<main id="pilot-detail" hidden>
+	<section class="pilot-top" aria-labelledby="pilot-name">
+		<div class="portrait-wrap">
+			<img id="pilot-image" class="portrait" src="" alt="" />
+			<span id="action-badge" class="action-badge" hidden>2回行動</span>
+		</div>
+		<div class="pilot-intro">
+			<h1 id="pilot-name" class="pilot-name"></h1>
+			<div id="profile-meta" class="profile-meta"></div>
+			<p id="pilot-obtain" class="obtain"></p>
+		</div>
+	</section>
+
+	<section class="detail-section" aria-label="能力値">
+		<div id="pilot-stats" class="stats-row"></div>
+	</section>
+
+	<section class="detail-section" aria-label="特徴">
+		<p id="pilot-feature" class="feature-text"></p>
+	</section>
+
+	<section class="detail-section" aria-label="条件">
+		<p id="condition-summary" class="condition-summary" hidden></p>
+		<div id="condition-groups" class="condition-groups"></div>
+	</section>
+
+	<section class="detail-section" aria-label="シリーズ">
+		<div id="pilot-series" class="chip-list"></div>
+	</section>
+
+	<section class="detail-section" aria-label="タグ">
+		<div id="pilot-tags" class="chip-list"></div>
+	</section>
+
+	<section class="unit-browser" aria-label="ユニットとの組み合わせ">
+		<div id="unit-filter-area" class="unit-filter-area" hidden>
+			<h2 class="unit-filter-heading">Unit Filter</h2>
+			<div class="unit-filters">
+				<div class="unit-filter-block"><span class="unit-filter-label">Rarity</span><div id="unit-rarity-choices" class="unit-filter-choices" role="group" aria-label="Unit Rarity"></div></div>
+				<div class="unit-filter-block"><span class="unit-filter-label">Type</span><div id="unit-type-choices" class="unit-filter-choices" role="group" aria-label="Unit Type"></div></div>
+				<div class="unit-filter-block"><span class="unit-filter-label">Obtain</span><div id="unit-obtain-choices" class="unit-filter-choices" role="group" aria-label="Unit Obtain"></div></div>
+				<div class="unit-filter-block"><label class="unit-filter-label" for="unit-series-filter">Pilot Series</label><select id="unit-series-filter"><option value="">All</option></select></div>
+				<div class="unit-filter-block"><label class="unit-filter-label" for="unit-tag-filter">Pilot Tag</label><select id="unit-tag-filter"><option value="">All</option></select></div>
+			</div>
+			<div class="unit-filter-actions">
+				<button id="ability-active-filter" class="ability-active-button" type="button" aria-pressed="false">Ability発動</button>
+				<div class="unit-filter-block unit-sort"><label class="unit-filter-label" for="unit-sort-by">Sort by</label><select id="unit-sort-by"></select></div>
+				<button id="unit-sort-direction" type="button">降順</button>
+				<button id="unit-filter-reset" type="button">Reset</button>
+			</div>
+		</div>
+		<div id="unit-results" class="unit-results" hidden>
+			<div id="unit-results-summary" class="unit-results-summary" aria-live="polite"></div>
+			<div id="unit-sort-label" class="unit-sort-label"></div>
+			<div id="unit-combi-list" class="unit-combi-list"></div>
+			<div id="unit-empty" class="unit-empty" hidden>該当するユニットがありません</div>
+			<div class="unit-pager">
+				<button id="unit-prev-page" type="button">Prev</button>
+				<span id="unit-page-info" class="unit-page-info"></span>
+				<button id="unit-next-page" type="button">Next</button>
+			</div>
+		</div>
+	</section>
+</main>
+<div id="error-message" class="error-message" hidden></div>
+
+<script>
+const JSON_BASE_URL = "./json-file";
+const JSON_FALLBACK_URL = "../json-file";
+const params = new URLSearchParams(location.search);
+const requestedPid = params.get("pid") || "";
+
+const CONDITION_FIELDS = {
+	tag: {
+		title: "タグ条件",
+		fields: [
+			"Pilot.２回行動タグ＆シリーズ条件（タグ）",
+			"Pilot.２回行動タグ条件",
+			"Pilot.Ab. 相性タグ条件",
+			"Pilot.Ab. 相性タグ条件(OR2)",
+			"Pilot.Ab. タグ条件",
+			"Pilot.Ab. タグ・シリーズ条件 (タグ)"
+		]
+	},
+	series: {
+		title: "シリーズ条件",
+		fields: [
+			"Pilot.２回行動タグ＆シリーズ条件(シリーズ)",
+			"Pilot.２回行動シリーズ条件",
+			"Pilot.２回行動シリーズ条件2 OR",
+			"Pilot.Ab. タグ・シリーズ条件 (シリーズ)",
+			"Pilot.Ab. シリーズ条件"
+		]
+	},
+	unit: {
+		title: "ユニット条件",
+		fields: ["Pilot.Ab. ユニット条件"]
+	}
+};
+
+const STAT_FIELDS = [
+	{ key: "Pilot.射撃値", label: "射撃値", className: "shooting" },
+	{ key: "Pilot.格闘値", label: "格闘値", className: "melee" },
+	{ key: "Pilot.覚醒値", label: "覚醒値", className: "awakening" },
+	{ key: "Pilot.反応値", label: "反応値", className: "reaction" },
+	{ key: "Pilot.守備値", label: "守備値", className: "defense" }
+];
+
+const COMBI_SORT_FIELDS = {
+	D0: "Damage (D0)", D4: "Damage (full) (D4)", CD: "Critical Damage (CD)",
+	HB0: "耐久回数ビーム (HB0)", HB1: "耐久回数物理 (HB1)", HB2: "耐久回数特殊 (HB2)", HB3: "耐久回数EX (HB3)",
+	HB0_F: "耐久回数ビーム (full) (HB0_F)", HB1_F: "耐久回数物理 (full) (HB1_F)",
+	HB2_F: "耐久回数特殊 (full) (HB2_F)", HB3_F: "耐久回数EX (full) (HB3_F)", name: "ユニット名"
+};
+const COMBI_PAGE_SIZE = 50;
+const unitFilterState = { rarity: "", type: "", obtain: "", series: "", tag: "", ability: false };
+let currentPilot = null;
+let units = [];
+let unitByUid = new Map();
+let combiRows = [];
+let filteredCombiRows = [];
+let seriesTagOptions = {};
+let combiSortKey = "D0";
+let combiSortDescending = true;
+let combiPage = 1;
+
+const unitFilterArea = document.getElementById("unit-filter-area");
+const unitResults = document.getElementById("unit-results");
+const unitRarityChoices = document.getElementById("unit-rarity-choices");
+const unitTypeChoices = document.getElementById("unit-type-choices");
+const unitObtainChoices = document.getElementById("unit-obtain-choices");
+const unitSeriesFilter = document.getElementById("unit-series-filter");
+const unitTagFilter = document.getElementById("unit-tag-filter");
+const abilityActiveFilter = document.getElementById("ability-active-filter");
+const unitSortBy = document.getElementById("unit-sort-by");
+const unitSortDirection = document.getElementById("unit-sort-direction");
+const unitFilterReset = document.getElementById("unit-filter-reset");
+const unitResultsSummary = document.getElementById("unit-results-summary");
+const unitSortLabel = document.getElementById("unit-sort-label");
+const unitCombiList = document.getElementById("unit-combi-list");
+const unitEmpty = document.getElementById("unit-empty");
+const unitPrevPage = document.getElementById("unit-prev-page");
+const unitNextPage = document.getElementById("unit-next-page");
+const unitPageInfo = document.getElementById("unit-page-info");
+
+async function fetchJson(url){
+	const fallback = url.startsWith(JSON_BASE_URL + "/")
+		? JSON_FALLBACK_URL + url.slice(JSON_BASE_URL.length)
+		: "";
+	let lastError;
+	for(const candidate of fallback ? [url, fallback] : [url]){
+		try{
+			const response = await fetch(candidate);
+			if(!response.ok){
+				lastError = new Error(`読み込み失敗: ${candidate} (${response.status})`);
+				continue;
+			}
+			return await response.json();
+		}catch(error){
+			lastError = error;
+		}
+	}
+	throw lastError;
+}
+
+function showValue(value){
+	const text = String(value ?? "").trim();
+	return text && text !== "0" && text.toUpperCase() !== "XXX" ? text : "";
+}
+
+function splitList(value){
+	return String(value || "").normalize("NFKC").split(/[,，]/).map(item => item.trim()).filter(Boolean);
+}
+
+function appendChipList(container, values, className){
+	container.replaceChildren();
+	if(values.length === 0){
+		const empty = document.createElement("p");
+		empty.className = "empty-value";
+		empty.textContent = "登録なし";
+		container.appendChild(empty);
+		return;
+	}
+	values.forEach(value => {
+		const chip = document.createElement("span");
+		chip.className = className;
+		chip.textContent = value;
+		container.appendChild(chip);
+	});
+}
+
+function shortConditionLabel(field){
+	return field
+		.replace(/^Pilot\./, "")
+		.replace(/^Ab\.\s*/, "")
+		.replace(/^２回行動/, "2回行動 ");
+}
+
+function renderConditions(pilot){
+	const summaryValue = showValue(pilot["Pilot.条件"]);
+	const summary = document.getElementById("condition-summary");
+	summary.textContent = summaryValue;
+	summary.hidden = !summaryValue;
+
+	const groups = document.getElementById("condition-groups");
+	groups.replaceChildren();
+	Object.values(CONDITION_FIELDS).forEach(groupInfo => {
+		const entries = groupInfo.fields
+			.map(field => ({ label: shortConditionLabel(field), value: showValue(pilot[field]) }))
+			.filter(entry => entry.value);
+		if(entries.length === 0) return;
+
+		const group = document.createElement("section");
+		group.className = "condition-group";
+		const heading = document.createElement("h3");
+		heading.textContent = groupInfo.title;
+		const list = document.createElement("dl");
+		list.className = "condition-list";
+		entries.forEach(entry => {
+			const row = document.createElement("div");
+			row.className = "condition-row";
+			const label = document.createElement("dt");
+			label.textContent = entry.label;
+			const value = document.createElement("dd");
+			value.textContent = entry.value;
+			row.append(label, value);
+			list.appendChild(row);
+		});
+		group.append(heading, list);
+		groups.appendChild(group);
+	});
+	if(groups.children.length === 0 && !summaryValue){
+		const empty = document.createElement("p");
+		empty.className = "empty-value";
+		empty.textContent = "登録なし";
+		groups.appendChild(empty);
+	}
+}
+
+function renderPilot(pilot){
+	document.title = `${pilot["Pilot.キャラ"] || "Pilot"} | Pilot Detail`;
+	const image = document.getElementById("pilot-image");
+	image.src = pilot["Pilot.画像リンク"] || "";
+	image.alt = pilot["Pilot.キャラ"] || "パイロット画像";
+	image.onerror = () => { image.hidden = true; };
+
+	document.getElementById("pilot-name").textContent = pilot["Pilot.キャラ"] || "名称不明";
+	const meta = document.getElementById("profile-meta");
+	[pilot["Pilot.レア"], pilot["Pilot.タイプ"]].filter(Boolean).forEach(value => {
+		const chip = document.createElement("span");
+		chip.className = "profile-chip";
+		chip.textContent = value;
+		meta.appendChild(chip);
+	});
+	document.getElementById("pilot-obtain").textContent = `入手: ${pilot["Pilot.入手"] || "-"}`;
+	document.getElementById("action-badge").hidden = String(pilot["Pilot.2回行動者"] || "").trim() !== "Y";
+
+	const stats = document.getElementById("pilot-stats");
+	STAT_FIELDS.forEach(stat => {
+		const item = document.createElement("div");
+		item.className = `stat-item ${stat.className}`;
+		const label = document.createElement("span");
+		label.className = "stat-label";
+		label.textContent = stat.label;
+		const value = document.createElement("span");
+		value.className = "stat-value";
+		const numericValue = Number(pilot[stat.key]);
+		value.textContent = Number.isFinite(numericValue) ? Math.round(numericValue).toLocaleString("ja-JP") : "-";
+		item.append(label, value);
+		stats.appendChild(item);
+	});
+
+	const feature = showValue(pilot["Pilot.特徴"]);
+	document.getElementById("pilot-feature").textContent = feature || "特徴なし";
+	renderConditions(pilot);
+	appendChipList(document.getElementById("pilot-series"), splitList(pilot["Pilot.シリーズ連結"]), "series-chip");
+	appendChipList(document.getElementById("pilot-tags"), splitList(pilot["Pilot.タグ連結"]), "tag-chip");
+	document.getElementById("pilot-detail").hidden = false;
+}
+
+function conditionFlag(value){
+	return Number(value) === 1 || String(value ?? "").trim().toUpperCase() === "Y";
+}
+
+function isAbilityTriggered(combi){
+	return ["C01", "C02", "C03", "C06", "C07", "C08"].some(key => conditionFlag(combi[key]));
+}
+
+function hasTwoAction(combi){
+	return conditionFlag(combi.C14_flag ?? combi.C14);
+}
+
+function uniqueUnitValues(key){
+	return [...new Set(units.map(unit => String(unit[key] || "").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ja"));
+}
+
+function fillUnitSelect(select, values){
+	select.replaceChildren(new Option("All", ""));
+	[...new Set(values)].sort((a,b)=>a.localeCompare(b,"ja")).forEach(value => select.add(new Option(value, value)));
+}
+
+function createUnitChoiceButtons(container, values, stateKey){
+	container.replaceChildren();
+	[{label:"All",value:""}, ...values.map(value => ({label:value,value}))].forEach(option => {
+		const button = document.createElement("button");
+		button.type = "button";
+		button.className = "unit-filter-choice";
+		button.textContent = option.label;
+		button.dataset.value = option.value;
+		button.setAttribute("aria-pressed", String(unitFilterState[stateKey] === option.value));
+		button.addEventListener("click", () => {
+			unitFilterState[stateKey] = option.value;
+			[...container.children].forEach(item => item.setAttribute("aria-pressed", String(item.dataset.value === option.value)));
+			applyUnitFilters();
+		});
+		container.appendChild(button);
+	});
+}
+
+function initializeUnitFilters(){
+	createUnitChoiceButtons(unitRarityChoices, uniqueUnitValues("レア"), "rarity");
+	createUnitChoiceButtons(unitTypeChoices, uniqueUnitValues("タイプ"), "type");
+	createUnitChoiceButtons(unitObtainChoices, uniqueUnitValues("入手"), "obtain");
+	const seriesValues = Array.isArray(seriesTagOptions.series_unit) ? seriesTagOptions.series_unit : units.flatMap(unit => splitList(unit["シリーズ連結"]));
+	const tagValues = Array.isArray(seriesTagOptions.tag_unit) ? seriesTagOptions.tag_unit : units.flatMap(unit => splitList(unit["タグ連結"]));
+	fillUnitSelect(unitSeriesFilter, seriesValues);
+	fillUnitSelect(unitTagFilter, tagValues);
+	unitSortBy.replaceChildren();
+	Object.entries(COMBI_SORT_FIELDS).forEach(([key,label]) => unitSortBy.add(new Option(label,key)));
+	unitSortBy.value = combiSortKey;
+}
+
+function listContains(value, selected){
+	const normalizedSelected = selected.normalize("NFKC");
+	return splitList(value).some(item => item.normalize("NFKC") === normalizedSelected);
+}
+
+function filterCombination(combi){
+	const unit = unitByUid.get(Number(combi.u));
+	if(!unit) return false;
+	if(unitFilterState.rarity && String(unit["レア"] || "") !== unitFilterState.rarity) return false;
+	if(unitFilterState.type && String(unit["タイプ"] || "") !== unitFilterState.type) return false;
+	if(unitFilterState.obtain && String(unit["入手"] || "") !== unitFilterState.obtain) return false;
+	if(unitFilterState.series && !listContains(unit["シリーズ連結"], unitFilterState.series)) return false;
+	if(unitFilterState.tag && !listContains(unit["タグ連結"], unitFilterState.tag)) return false;
+	if(unitFilterState.ability && !isAbilityTriggered(combi)) return false;
+	return true;
+}
+
+function formatNumber(value){
+	const number = Number(value);
+	return Number.isFinite(number) ? Math.round(number).toLocaleString("ja-JP") : "-";
+}
+
+function addCombiLine(parent, text, isTitle=false, percent=null){
+	const line = document.createElement("div");
+	line.className = isTitle ? "combi-title" : "combi-line";
+	if(percent === null){
+		line.textContent = text;
+	}else{
+		line.append(document.createTextNode(text + " "));
+		const value = document.createElement("strong");
+		value.className = "combi-percent";
+		value.textContent = percent;
+		line.appendChild(value);
+	}
+	parent.appendChild(line);
+}
+
+function damageDifference(value){
+	if(value === null || value === undefined || value === "" || !Number.isFinite(Number(value))) return null;
+	const difference = Math.round((Number(value) - 1) * 100);
+	return `${difference >= 0 ? "+" : ""}${difference}%`;
+}
+
+function enduranceDamageDifference(value){
+	if(value === null || value === undefined || value === "" || !Number.isFinite(Number(value))) return null;
+	const difference = 100 - Math.round(Number(value) * 100);
+	return difference === 0 ? "+0%" : difference > 0 ? `-${difference}%` : `+${Math.abs(difference)}%`;
+}
+
+function renderCombinationInfo(combi){
+	const info = document.createElement("div");
+	info.className = "unit-combi-info";
+	const key = String(combiSortKey || "D0").toUpperCase();
+	if(key === "D0"){
+		addCombiLine(info, "開始時", true);
+		addCombiLine(info, `${combi.PT0 || "格闘"} ${formatNumber(combi.P0)}`);
+		addCombiLine(info, "Damage", false, damageDifference(combi.DR0 ?? 1));
+	}else if(key === "D4"){
+		addCombiLine(info, "全発動", true);
+		addCombiLine(info, `${combi.PT4 || "格闘"} ${formatNumber(combi.P4)}`);
+		addCombiLine(info, "Damage", false, damageDifference(combi.DR4 ?? 1));
+	}else if(key.startsWith("HB")){
+		addCombiLine(info, key.endsWith("_F") ? "全発動" : "開幕時スキルなし", true);
+		addCombiLine(info, `守備 ${formatNumber(currentPilot["Pilot.守備値"])}`);
+		addCombiLine(info, "被Damage");
+		[["Beam",combi.DFB4],["物理",combi.DFP4],["特殊",combi.DFT4],["EX",combi.DFE4]].forEach(([label,value]) => {
+			addCombiLine(info, `・${label}`, false, enduranceDamageDifference(value));
+		});
+	}else{
+		addCombiLine(info, "開始時", true);
+		addCombiLine(info, `${combi.PT0 || "格闘"} ${formatNumber(combi.P0)}`);
+		addCombiLine(info, "Damage", false, damageDifference(combi.DR0 ?? 1));
+	}
+	return info;
+}
+
+function compatibilityLabels(combi){
+	if(conditionFlag(combi.C06) && conditionFlag(combi.C07)) return ["PAシリーズ＆タグ"];
+	const labels = [];
+	if(conditionFlag(combi.C01)) labels.push("相性");
+	if(conditionFlag(combi.C02)) labels.push("Tag");
+	if(conditionFlag(combi.C03)) labels.push("Series");
+	if(conditionFlag(combi.C06)) labels.push("Series");
+	if(conditionFlag(combi.C07)) labels.push("Tag");
+	if(conditionFlag(combi.C08)) labels.push("Unit");
+	return labels;
+}
+
+function renderUnitCombination(combi){
+	const unit = unitByUid.get(Number(combi.u));
+	if(!unit) return null;
+	const row = document.createElement("article");
+	row.className = "unit-combi-row";
+
+	const imageLink = document.createElement("a");
+	imageLink.href = `detail.html?uid=${encodeURIComponent(unit.uid)}`;
+	imageLink.setAttribute("aria-label", `${unit["ユニット"] || "ユニット"}の詳細`);
+	const image = document.createElement("img");
+	image.className = "unit-combi-image";
+	image.src = unit["画像リンク"] || "";
+	image.alt = unit["ユニット"] || "";
+	image.loading = "lazy";
+	image.onerror = () => { image.hidden = true; };
+	imageLink.appendChild(image);
+	row.appendChild(imageLink);
+
+	const main = document.createElement("div");
+	const name = document.createElement("h3");
+	name.className = "unit-combi-name";
+	name.textContent = unit["ユニット"] || "名称不明";
+	main.appendChild(name);
+	const score = document.createElement("div");
+	const isHB = key => String(key).toUpperCase().startsWith("HB");
+	score.className = isHB(combiSortKey) ? "p-hb" : "p-dmg";
+	const scoreValue = combi[combiSortKey] ?? (combiSortKey === "name" ? combi.D0 : null);
+	score.textContent = isHB(combiSortKey) && scoreValue !== null ? Number(scoreValue).toFixed(2) : formatNumber(scoreValue);
+	main.appendChild(score);
+	row.appendChild(main);
+
+	const badges = document.createElement("div");
+	badges.className = "unit-combi-badges";
+	if(hasTwoAction(combi)){
+		const action = document.createElement("span");
+		action.className = "combi-badge action";
+		action.textContent = "2回行動";
+		badges.appendChild(action);
+	}
+	compatibilityLabels(combi).forEach(label => {
+		const badge = document.createElement("span");
+		badge.className = "combi-badge compatibility";
+		badge.textContent = label;
+		badges.appendChild(badge);
+	});
+	row.appendChild(badges);
+	row.appendChild(renderCombinationInfo(combi));
+	return row;
+}
+
+function renderUnitCombinations(){
+	const total = filteredCombiRows.length;
+	const pageCount = Math.max(1, Math.ceil(total / COMBI_PAGE_SIZE));
+	combiPage = Math.min(combiPage, pageCount);
+	const start = (combiPage - 1) * COMBI_PAGE_SIZE;
+	const pageRows = filteredCombiRows.slice(start, start + COMBI_PAGE_SIZE);
+	const fragment = document.createDocumentFragment();
+	pageRows.forEach(combi => {
+		const row = renderUnitCombination(combi);
+		if(row) fragment.appendChild(row);
+	});
+	unitCombiList.replaceChildren(fragment);
+	unitResultsSummary.textContent = `該当 ${total} 件`;
+	unitSortLabel.textContent = unitSortBy.selectedOptions[0]?.textContent || "";
+	unitEmpty.hidden = total !== 0;
+	unitPageInfo.textContent = total ? `Page ${combiPage} / ${pageCount}` : "Page 0 / 0";
+	unitPrevPage.disabled = combiPage <= 1 || total === 0;
+	unitNextPage.disabled = combiPage >= pageCount || total === 0;
+}
+
+function applyUnitFilters(){
+	filteredCombiRows = combiRows.filter(filterCombination);
+	filteredCombiRows.sort((a,b)=>{
+		if(combiSortKey === "name"){
+			const nameA = unitByUid.get(Number(a.u))?.["ユニット"] || "";
+			const nameB = unitByUid.get(Number(b.u))?.["ユニット"] || "";
+			return combiSortDescending ? nameB.localeCompare(nameA,"ja") : nameA.localeCompare(nameB,"ja");
+		}
+		const valueA = Number(a[combiSortKey]);
+		const valueB = Number(b[combiSortKey]);
+		const numberA = Number.isFinite(valueA) ? valueA : -Infinity;
+		const numberB = Number.isFinite(valueB) ? valueB : -Infinity;
+		return combiSortDescending ? numberB - numberA : numberA - numberB;
+	});
+	combiPage = 1;
+	renderUnitCombinations();
+}
+
+function initializeUnitFilterControls(){
+	const fillChoices = (container, values, key) => {
+		container.replaceChildren();
+		["", ...[...new Set(values)].sort((a,b)=>a.localeCompare(b,"ja"))].forEach(value => {
+			const button = document.createElement("button");
+			button.type = "button";
+			button.className = "unit-filter-choice";
+			button.textContent = value || "All";
+			button.dataset.value = value;
+			button.setAttribute("aria-pressed", String(unitFilterState[key] === value));
+			button.addEventListener("click", () => {
+				unitFilterState[key] = value;
+				[...container.children].forEach(item => item.setAttribute("aria-pressed", String(item.dataset.value === value)));
+				applyUnitFilters();
+			});
+			container.appendChild(button);
+		});
+	};
+	fillChoices(unitRarityChoices, units.map(unit => String(unit["レア"] || "").trim()).filter(Boolean), "rarity");
+	fillChoices(unitTypeChoices, units.map(unit => String(unit["タイプ"] || "").trim()).filter(Boolean), "type");
+	fillChoices(unitObtainChoices, units.map(unit => String(unit["入手"] || "").trim()).filter(Boolean), "obtain");
+	const seriesValues = Array.isArray(seriesTagOptions.series_unit) ? seriesTagOptions.series_unit : units.flatMap(unit => splitList(unit["シリーズ連結"]));
+	const tagValues = Array.isArray(seriesTagOptions.tag_unit) ? seriesTagOptions.tag_unit : units.flatMap(unit => splitList(unit["タグ連結"]));
+	unitSeriesFilter.replaceChildren(new Option("All", ""));
+	[...new Set(seriesValues)].sort((a,b)=>a.localeCompare(b,"ja")).forEach(value => unitSeriesFilter.add(new Option(value,value)));
+	unitTagFilter.replaceChildren(new Option("All", ""));
+	[...new Set(tagValues)].sort((a,b)=>a.localeCompare(b,"ja")).forEach(value => unitTagFilter.add(new Option(value,value)));
+	unitSortBy.replaceChildren();
+	Object.entries(COMBI_SORT_FIELDS).forEach(([key,label])=>unitSortBy.add(new Option(label,key)));
+	unitSortBy.value = combiSortKey;
+	unitFilterArea.hidden = false;
+	unitResults.hidden = false;
+}
+
+async function init(){
+	const error = document.getElementById("error-message");
+	try{
+		if(!requestedPid) throw new Error("パイロットIDが指定されていません");
+		const [pilotData, unitData, comboIndex, options] = await Promise.all([
+			fetchJson(`${JSON_BASE_URL}/pilots.json`),
+			fetchJson(`${JSON_BASE_URL}/units.json`),
+			fetchJson(`${JSON_BASE_URL}/pilot_combi_index.json`),
+			fetchJson(`${JSON_BASE_URL}/series_tag_options.json`).catch(() => ({}))
+		]);
+		currentPilot = pilotData.find(item => String(item.pid) === requestedPid || String(item["Pilot.キャラ識別"] || "") === requestedPid);
+		if(!currentPilot) throw new Error("パイロットが見つかりません");
+		units = Array.isArray(unitData) ? unitData : [];
+		unitByUid = new Map(units.map(unit => [Number(unit.uid), unit]));
+		seriesTagOptions = options || {};
+		renderPilot(currentPilot);
+
+		const indexEntry = comboIndex[String(currentPilot.pid)];
+		if(indexEntry){
+			const filenames = Array.isArray(indexEntry) ? indexEntry : [indexEntry.file || indexEntry.filename].filter(Boolean);
+			for(const filename of filenames){
+				const rows = await fetchJson(`${JSON_BASE_URL}/${filename}`);
+				combiRows.push(...rows.filter(row => String(row.p) === String(currentPilot.pid)));
+			}
+		}
+		initializeUnitFilterControls();
+		applyUnitFilters();
+	}catch(reason){
+		error.textContent = reason.message || String(reason);
+		error.hidden = false;
+	}
+}
+
+unitSeriesFilter.addEventListener("change", () => { unitFilterState.series = unitSeriesFilter.value; applyUnitFilters(); });
+unitTagFilter.addEventListener("change", () => { unitFilterState.tag = unitTagFilter.value; applyUnitFilters(); });
+abilityActiveFilter.addEventListener("click", () => {
+	unitFilterState.ability = !unitFilterState.ability;
+	abilityActiveFilter.setAttribute("aria-pressed", String(unitFilterState.ability));
+	applyUnitFilters();
+});
+unitSortBy.addEventListener("change", () => { combiSortKey = unitSortBy.value; applyUnitFilters(); });
+unitSortDirection.addEventListener("click", () => {
+	combiSortDescending = !combiSortDescending;
+	unitSortDirection.textContent = combiSortDescending ? "降順" : "昇順";
+	applyUnitFilters();
+});
+unitPrevPage.addEventListener("click", () => {
+	if(combiPage > 1){ combiPage--; renderUnitCombinations(); }
+});
+unitNextPage.addEventListener("click", () => {
+	if(combiPage * COMBI_PAGE_SIZE < filteredCombiRows.length){ combiPage++; renderUnitCombinations(); }
+});
+unitFilterReset.addEventListener("click", () => {
+	Object.keys(unitFilterState).forEach(key => { unitFilterState[key] = key === "ability" ? false : ""; });
+	[unitRarityChoices, unitTypeChoices, unitObtainChoices].forEach(container => {
+		[...container.children].forEach(button => button.setAttribute("aria-pressed", String(button.dataset.value === "")));
+	});
+	unitSeriesFilter.value = "";
+	unitTagFilter.value = "";
+	abilityActiveFilter.setAttribute("aria-pressed", "false");
+	combiSortKey = "D0";
+	combiSortDescending = true;
+	unitSortBy.value = combiSortKey;
+	unitSortDirection.textContent = "降順";
+	applyUnitFilters();
+});
+
+init();
+</script>
+</body>
+</html>
