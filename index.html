@@ -6,14 +6,12 @@
 <title>Unit List</title>
 <style>
   :root{
-    --gap:6px;
+    --gap:0;
     --thumb:60px;
     --card-w:90px;
     --accent:#2b6cb0;
     --muted:#666;
     --meta-red:#b22222;
-    --ability-icon-bg: #ffd966; /* Icon ボタンと同じ黄色 */
-    --ability-icon-border: #e6b800;
     font-family: system-ui, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Arial;
   }
 
@@ -140,25 +138,6 @@
   .rarity-ssr-ssp { background: linear-gradient(90deg,#ff8a33 0%,#ff9f4d 25%,#ffc24f 55%,#ffe27a 85%); color:#1a1a1a; border-radius:6px; padding:3px 6px; font-weight:450; display:inline-block; font-size:11px; }
   .rarity-ssr-sp { background: linear-gradient(90deg,#ffd8b4 0%,#ffe0c2 25%,#ffecb3 55%,#fff7d5 85%); color:#1a1a1a; border-radius:6px; padding:3px 6px; font-weight:100; display:inline-block; font-size:11px; }
 
-  /* 追加: Ability ボタン / アイコン表示スタイル */
-  .ability-btn{
-    padding:6px 8px;border-radius:999px;border:1px solid #ccc;background:#f3f3f3;cursor:pointer;font-size:12px;white-space:nowrap;
-  }
-  .ability-btn.active{
-    background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 1px 2px rgba(0,0,0,0.12);
-  }
-  #ability-buttons::-webkit-scrollbar{height:8px}
-  #ability-buttons::-webkit-scrollbar-thumb{background:#ddd;border-radius:6px}
-  .ability-icons-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;justify-content:center}
-  .ability-badge{background:#eee;padding:3px 6px;border-radius:6px;font-size:11px;color:#111;border:1px solid #ddd}
-
-  /* body にクラスが付いているときはバッジ色を Icon ボタンと同じ黄色にする */
-  body.ability-icons-on .ability-badge{
-    background: var(--ability-icon-bg);
-    border-color: var(--ability-icon-border);
-    color: #000;
-  }
-
   @media (max-width:520px){
     header{flex-direction:column;align-items:stretch}
     .controls{margin-left:0}
@@ -167,26 +146,6 @@
     /* 重要: 小画面でも Tag1/Tag2 を同一行に保つため、折り返し禁止を維持します */
     .filters-inline { flex-wrap: nowrap; overflow-x: auto; }
     .filters-inline-item { flex: 0 0 auto; min-width: 140px; }
-  }
-
-  /* 追加: ability-area を縦並びにする */
-  #ability-area{
-    width:100%;
-    margin-top:8px;
-    display:flex;
-    flex-direction:column; /* 縦並び */
-    align-items:flex-start;
-    gap:8px;
-    flex-wrap:wrap;
-  }
-  /* ability-buttons は折り返して全ボタンを表示（スクロールなし） */
-  #ability-buttons{
-    display:flex;
-    gap:6px;
-    flex-wrap:wrap; /* 改行して表示 */
-    overflow:visible; /* スクロールさせない */
-    max-height:none;
-    align-items:flex-start;
   }
 </style>
 </head>
@@ -253,16 +212,6 @@
         <select id="filter-tag2" title="Tag2"><option value="">All</option></select>
       </label>
     </div>
-
-    <!-- 変更: Ability は filters-inline の中ではなく filters の直下に別枠で配置（縦並び） -->
-    <div id="ability-area">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span class="small">Ability</span>
-        <button id="ability-icon-toggle" class="btn" title="Toggle ability icons" aria-pressed="false" style="background:var(--ability-icon-bg);border-color:var(--ability-icon-border);color:#000;padding:4px 8px;font-size:12px;">Icon</button>
-      </div>
-      <div id="ability-buttons"></div>
-    </div>
-
   </div>
 
   <div class="controls" aria-hidden="false">
@@ -287,7 +236,7 @@
 </main>
 
 <footer>
-  <div>ジージェネレーションエターナル検索ツール</div>
+  <div>Data: GitHub JSON</div>
 </footer>
 
 <script>
@@ -318,13 +267,6 @@ let units = [], fieldMap = {}, seriesTagOptions = {};
 let currentPage = 1;
 let totalPages = 1;
 let currentFiltered = [];
-
-/* 追加: Ability 関連状態 */
-let allAbilities = []; // 全能力リスト（文字列配列）
-let selectedAbilities = new Set(); // 選択中の能力
-let abilityIconActive = false; // アイコン表示トグル
-const abilityButtonsWrap = document.getElementById("ability-buttons");
-const abilityIconToggleBtn = document.getElementById("ability-icon-toggle");
 
 const grid = document.getElementById("grid");
 const summary = document.getElementById("summary");
@@ -509,23 +451,6 @@ function renderCard(u){
 
   a.appendChild(meta);
 
-  /* 追加: Ability アイコン表示（トグルが有効な場合） - _特徴 のみを参照 */
-  if(abilityIconActive){
-    const featsRaw = u["_特徴"] || "";
-    const unitFeats = (typeof featsRaw === "string") ? featsRaw.split("_").map(s=>s.trim()).filter(Boolean) : [];
-    if(unitFeats.length > 0){
-      const iconsRow = document.createElement("div");
-      iconsRow.className = "ability-icons-row";
-      unitFeats.forEach(f=>{
-        const span = document.createElement("div");
-        span.className = "ability-badge";
-        span.textContent = f;
-        iconsRow.appendChild(span);
-      });
-      a.appendChild(iconsRow);
-    }
-  }
-
   return a;
 }
 
@@ -599,10 +524,7 @@ function collectUIState() {
     tag2: filterTag2.value || "",
     sortBy: sortBy.value || "D0",
     sortDirAsc: !!sortDirAsc,
-    page: currentPage || 1,
-    /* 追加: Ability の選択とアイコン表示状態 */
-    abilities: Array.from(selectedAbilities),
-    abilityIconActive: !!abilityIconActive
+    page: currentPage || 1
   };
 }
 function saveUIState() {
@@ -656,22 +578,6 @@ function applyUIState(state) {
   if(state.sortBy) sortBy.value = state.sortBy;
   sortDirAsc = !!state.sortDirAsc;
   currentPage = Math.max(1, Number(state.page || 1));
-
-  /* 追加: Ability の復元 */
-  if(Array.isArray(state.abilities) && state.abilities.length > 0){
-    selectedAbilities = new Set(state.abilities);
-  } else {
-    selectedAbilities = new Set();
-  }
-  abilityIconActive = !!state.abilityIconActive;
-  // reflect body class for icon color
-  if(abilityIconActive) document.body.classList.add("ability-icons-on");
-  else document.body.classList.remove("ability-icons-on");
-
-  if(abilityIconToggleBtn){
-    abilityIconToggleBtn.setAttribute("aria-pressed", abilityIconActive ? "true" : "false");
-    abilityIconToggleBtn.classList.toggle("primary", abilityIconActive);
-  }
 }
 
 /* ---------- Filtering / rendering (normalized matching) ---------- */
@@ -760,18 +666,6 @@ function applyFiltersAndRender(){
       if(!unitTags.some(t => t === normTag2Sel)) return false;
     }
 
-    // Ability フィルタ: selectedAbilities が空でなければ OR 条件でフィルタ
-    if(selectedAbilities.size > 0){
-      // 重要: _特徴 のみを参照する（"特徴" は参照しない）
-      const featCandidates = u["_特徴"] || "";
-      const unitFeats = (typeof featCandidates === "string") ? featCandidates.split("_").map(s=>s.trim()).filter(Boolean) : [];
-      // 正規化（NFKC）
-      const unitFeatsNorm = unitFeats.map(f => normalizeStringForMatch(f));
-      // selectedAbilities のいずれかが unitFeatsNorm に含まれるか
-      const anyMatch = Array.from(selectedAbilities).some(sa => unitFeatsNorm.includes(normalizeStringForMatch(sa)));
-      if(!anyMatch) return false;
-    }
-
     return true;
   });
 
@@ -800,56 +694,28 @@ function applyFiltersAndRender(){
   saveUIState();
 }
 
-/* 追加: units から _特徴 を解析して全能力リストを作成し、ボタンを描画
-   重要: "特徴" は決して参照せず、必ず "_特徴" のみを使用します */
-function extractAndRenderAbilitiesFromUnits(){
-  const s = new Set();
-  units.forEach(u=>{
-    const raw = u["_特徴"] || "";
-    if(typeof raw === "string" && raw.length > 0){
-      // _ で split（先頭に _ がある場合や複数結合されている場合に対応）
-      raw.split("_").map(x=>x.trim()).filter(Boolean).forEach(tok=>{
-        s.add(normalizeStringForMatch(tok));
-      });
-    }
+function renderPage(){
+  grid.innerHTML = "";
+  const total = currentFiltered.length;
+  summary.textContent = `該当 ${total} 件`;
+  if(total === 0){
+    emptyEl.style.display = "block";
+    pageInfo.textContent = `Page 0 / 0`;
+    prevPageBtn.disabled = true;
+    nextPageBtn.disabled = true;
+    return;
+  } else {
+    emptyEl.style.display = "none";
+  }
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, total);
+  const pageItems = currentFiltered.slice(start, end);
+  pageItems.forEach(u => {
+    grid.appendChild(renderCard(u));
   });
-  allAbilities = Array.from(s).sort((a,b)=> a.localeCompare(b,'ja'));
-  // render buttons
-  if(abilityButtonsWrap){
-    abilityButtonsWrap.innerHTML = "";
-    allAbilities.forEach(ab=>{
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "ability-btn";
-      btn.textContent = ab;
-      btn.dataset.ability = ab;
-      if(selectedAbilities.has(ab)) btn.classList.add("active");
-      btn.addEventListener("click", ()=>{
-        if(selectedAbilities.has(ab)) selectedAbilities.delete(ab);
-        else selectedAbilities.add(ab);
-        btn.classList.toggle("active");
-        currentPage = 1;
-        applyFiltersAndRender();
-        saveUIState();
-      });
-      abilityButtonsWrap.appendChild(btn);
-    });
-  }
-  // set icon toggle visual
-  if(abilityIconToggleBtn){
-    abilityIconToggleBtn.classList.toggle("primary", abilityIconActive);
-    abilityIconToggleBtn.setAttribute("aria-pressed", abilityIconActive ? "true" : "false");
-    abilityIconToggleBtn.addEventListener("click", ()=>{
-      abilityIconActive = !abilityIconActive;
-      abilityIconToggleBtn.classList.toggle("primary", abilityIconActive);
-      abilityIconToggleBtn.setAttribute("aria-pressed", abilityIconActive ? "true" : "false");
-      // toggle body class so CSS can change badge color
-      if(abilityIconActive) document.body.classList.add("ability-icons-on");
-      else document.body.classList.remove("ability-icons-on");
-      renderPage();
-      saveUIState();
-    });
-  }
+  pageInfo.textContent = `Page ${currentPage} / ${totalPages}`;
+  prevPageBtn.disabled = (currentPage <= 1);
+  nextPageBtn.disabled = (currentPage >= totalPages);
 }
 
 /* ---------- Initialization ---------- */
@@ -870,9 +736,6 @@ async function init(){
 
     populateSeriesAndTags();
     populateSortOptions();
-
-    /* 追加: units から Ability を抽出してボタンを生成（_特徴 のみを参照） */
-    extractAndRenderAbilitiesFromUnits();
 
     // restore UI state if present
     const st = loadSavedUIState();
@@ -927,19 +790,6 @@ resetBtn.addEventListener("click", ()=>{
   sortDirAsc = false;
   currentPage = 1;
   try { sessionStorage.removeItem(STORAGE_KEY); } catch(e){}
-  // clear ability selections and icon toggle
-  selectedAbilities = new Set();
-  abilityIconActive = false;
-  if(abilityIconToggleBtn){
-    abilityIconToggleBtn.classList.remove("primary");
-    abilityIconToggleBtn.setAttribute("aria-pressed","false");
-  }
-  // remove body class for icon color
-  document.body.classList.remove("ability-icons-on");
-  // update ability buttons visuals
-  if(abilityButtonsWrap){
-    Array.from(abilityButtonsWrap.querySelectorAll(".ability-btn")).forEach(b=>b.classList.remove("active"));
-  }
   applyFiltersAndRender();
 });
 
@@ -968,31 +818,6 @@ window.addEventListener("beforeunload", saveUIState);
 
 /* initial load */
 init();
-
-/* ---------- Pagination rendering ---------- */
-function renderPage(){
-  grid.innerHTML = "";
-  const total = currentFiltered.length;
-  summary.textContent = `該当 ${total} 件`;
-  if(total === 0){
-    emptyEl.style.display = "block";
-    pageInfo.textContent = `Page 0 / 0`;
-    prevPageBtn.disabled = true;
-    nextPageBtn.disabled = true;
-    return;
-  } else {
-    emptyEl.style.display = "none";
-  }
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const end = Math.min(start + PAGE_SIZE, total);
-  const pageItems = currentFiltered.slice(start, end);
-  pageItems.forEach(u => {
-    grid.appendChild(renderCard(u));
-  });
-  pageInfo.textContent = `Page ${currentPage} / ${totalPages}`;
-  prevPageBtn.disabled = (currentPage <= 1);
-  nextPageBtn.disabled = (currentPage >= totalPages);
-}
 </script>
 </body>
 </html>
