@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Unit List</title>
+<title>Unit Search ユニット検索</title>
 <style>
   :root{
     --gap:0;
@@ -17,80 +17,86 @@
 
   html,body{height:100%;margin:0}
   body{color:#111;background:#fff;padding:16px}
-  header{
-    display:flex;
-    flex-wrap:wrap;
-    gap:12px;
-    align-items:center;
-    margin:0 0 12px 0;
-    padding:8px 0;
-    background:#fff;
-    border-bottom:1px solid #eee;
+  header.site-header{
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    gap:16px;
+    align-items:stretch;
+    margin:0 0 16px;
+    padding:18px 20px 20px;
+    color:#edf1e9;
+    background-color:#202a2d;
+    background-image:linear-gradient(rgba(220,232,224,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(220,232,224,.035) 1px,transparent 1px);
+    background-size:24px 24px;
+    border:1px solid #465356;
+    border-top:4px solid #d9473f;
     position:static;
     z-index:10;
   }
-  h1{margin:0;font-size:18px}
+  .header-masthead{display:flex;align-items:center;gap:12px;min-height:38px;padding-bottom:14px;border-bottom:1px solid #465356}
+  .header-mark{position:relative;flex:0 0 34px;width:34px;height:34px;background:#d9473f}
+  .header-mark::before{content:"";position:absolute;inset:6px;border:1px solid rgba(255,255,255,.55);border-right:5px solid #e8c34b}
+  .site-header h1{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin:0;color:#f4f3e9;font-size:21px}
+  .site-header h1 span{color:#9bc8c2;font-size:15px;font-weight:600}
+  .header-section{display:grid;gap:10px;min-width:0}
+  .section-heading{display:flex;align-items:center;gap:10px;margin:0;padding-left:10px;border-left:3px solid #e8c34b;color:#f4f3e9;font-size:14px;font-weight:700;min-height:20px}
+  .section-index{color:#9bc8c2;font-family:monospace;font-size:11px}
 
-  .filters{
+  .site-header .filters{
     display:flex;
     flex-wrap:wrap;
-    gap:8px;
+    gap:10px 12px;
     align-items:center;
     width:100%;
   }
-  .filters select,.filters input{
-    padding:6px;border:1px solid #ddd;border-radius:6px;background:#fff;
+  .site-header .filters select,.site-header .filters input{
+    padding:7px 8px;border:1px solid #83908d;border-radius:3px;background:#f1f3ed;color:#172125;
     max-width:100%;
   }
 
-  .filters label{
+  .site-header .filters label{
     display:flex;
     flex-direction:column;
     align-items:flex-start;
+    flex:1 1 160px;
+    color:#edf1e9;
     font-size:11px;
     margin:0;
-    max-width: 180px;
+    max-width:none;
   }
+  .site-header .filters label select,.site-header .filters label input{width:100%}
+  .site-header .filters .small,.site-header .controls .small{color:#c5d0ca}
 
-  .filters-row-break{
-    flex-basis:100%;
-    height:0;
-  }
+  .filters-row-break{flex-basis:100%;height:0}
+  .site-header .filters-fullrow{flex-basis:100%;width:100%;max-width:none;margin-top:4px}
+  .site-header .filters-fullrow select{width:min(100%,360px)}
 
-  .filters-fullrow{
-    flex-basis:100%;
-    width:100%;
-    margin-top:4px;
-  }
-
-  .filters-inline{
+  .site-header .filters-inline{
     display:flex;
     gap:8px;
     align-items:flex-start;
     width:100%;
-    /* 変更: Tag1/Tag2 を必ず同一行に収める（折り返し禁止） */
-    flex-wrap: nowrap;
-    overflow-x: auto; /* 横幅不足時は横スクロールさせる */
-    -webkit-overflow-scrolling: touch;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
   }
-
-  /* 変更: 隣接しても干渉しないようにしつつ折り返さない設定
-     flex:0 0 auto で横方向に縮まない（必要なら横スクロール） */
-  .filters-inline-item{
+  .site-header .filters-inline-item{
     display:flex;
     flex-direction:column;
     align-items:flex-start;
-    flex: 0 0 auto;
-    min-width: 160px; /* 必要に応じて調整してください */
-    box-sizing: border-box;
+    flex:0 0 auto;
+    min-width:160px;
+    box-sizing:border-box;
   }
 
-  .controls{margin-left:auto;display:flex;gap:8px;align-items:center}
-  .btn{padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
-  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-
-  .pager{display:flex;gap:8px;align-items:center;margin-left:8px}
-  .pager .page-info{font-size:13px;color:var(--muted)}
+  .controls-section{padding-top:14px;border-top:1px solid #465356}
+  .site-header .controls{margin-left:0;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .site-header .btn{padding:8px 12px;border-radius:3px;border:1px solid #83908d;background:#e7ebe4;color:#172125;cursor:pointer;font-weight:650}
+  .site-header .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .site-header #sort-by{min-width:150px}
+  .site-header .pager{display:flex;gap:6px;align-items:center;margin-left:0;padding:4px;border:1px solid #465356;background:rgba(9,16,18,.28)}
+  .site-header .pager .page-info{padding:0 4px;font-size:12px;color:#edf1e9;white-space:nowrap}
+  .site-header #reset{border-color:#e06a5d;background:#a93431;color:#fff}
 
   main{min-height:60vh}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-w),1fr));gap:var(--gap)}
@@ -139,8 +145,12 @@
   .rarity-ssr-sp { background: linear-gradient(90deg,#ffd8b4 0%,#ffe0c2 25%,#ffecb3 55%,#fff7d5 85%); color:#1a1a1a; border-radius:6px; padding:3px 6px; font-weight:100; display:inline-block; font-size:10px; }
 
   @media (max-width:520px){
-    header{flex-direction:column;align-items:stretch}
-    .controls{margin-left:0}
+    header.site-header{gap:14px;padding:16px 12px}
+    .header-masthead{align-items:flex-start}
+    .site-header h1{gap:4px 8px;font-size:19px}
+    .site-header h1 span{font-size:14px}
+    .site-header .controls{align-items:flex-start}
+    .site-header .pager{margin-left:0}
     .icon-circle{min-width:16px;height:16px;font-size:10px;padding:0 4px}
     .rare-badge{padding:3px 6px;font-size:10px}
     /* 重要: 小画面でも Tag1/Tag2 を同一行に保つため、折り返し禁止を維持します */
@@ -150,10 +160,15 @@
 </style>
 </head>
 <body>
-<header>
-  <h1>Unit List</h1>
+<header class="site-header">
+  <div class="header-masthead">
+    <span class="header-mark" aria-hidden="true"></span>
+    <h1>Unit Search <span lang="ja">ユニット検索</span></h1>
+  </div>
 
-  <div class="filters" aria-label="Filters">
+  <section class="header-section" aria-labelledby="filter-heading">
+    <h2 class="section-heading" id="filter-heading"><span class="section-index" aria-hidden="true">01</span>基本フィルター</h2>
+    <div class="filters" aria-label="基本フィルター">
     <label><span class="small">Rare</span>
       <select id="filter-rarity" multiple title="Select one or more Rares"><option value="">All</option></select>
     </label>
@@ -212,9 +227,12 @@
         <select id="filter-tag2" title="Tag2"><option value="">All</option></select>
       </label>
     </div>
-  </div>
+    </div>
+  </section>
 
-  <div class="controls" aria-hidden="false">
+  <section class="header-section controls-section" aria-labelledby="controls-heading">
+    <h2 class="section-heading" id="controls-heading"><span class="section-index" aria-hidden="true">02</span>Damage・耐久回数の選択</h2>
+    <div class="controls" aria-hidden="false">
     <label class="small">Sort by</label>
     <select id="sort-by" class="btn" title="Sort by"></select>
 
@@ -225,7 +243,8 @@
     </div>
 
     <button id="reset" class="btn">Reset</button>
-  </div>
+    </div>
+  </section>
 </header>
 
 <main>
@@ -236,7 +255,7 @@
 </main>
 
 <footer>
-  <div>Data: GitHub JSON</div>
+  <div>ジージェネエターナル検索ツール</div>
 </footer>
 
 <script>
