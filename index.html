@@ -67,6 +67,10 @@
   }
   .site-header .filters label select,.site-header .filters label input{width:100%}
   .site-header .filters .small,.site-header .controls .small{color:#c5d0ca}
+  .filter-control{display:flex;flex:1 1 270px;min-width:220px;flex-direction:column;align-items:flex-start;gap:6px}
+  .filter-title{color:#c5d0ca;font-size:13px;font-weight:700}
+  .filter-choices{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+  .filter-choices .ability-filter{padding:7px 11px;font-size:13px}
 
   .filters-row-break{flex-basis:100%;height:0}
   .site-header .filters-fullrow{flex-basis:100%;width:100%;max-width:none;margin-top:4px}
@@ -139,7 +143,7 @@
   .meta{font-size:12px;color:#000;font-weight:800;margin:0;min-height:1.2em}
   .meta-number{color:var(--meta-red);font-weight:900;font-size:14px;line-height:1}
   .card-abilities{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;width:100%}
-  .ability-icon{display:inline-block;max-width:100%;padding:3px 4px;border:1px solid #54749a;border-radius:4px;background:linear-gradient(135deg,#142c50,#244a73);box-shadow:0 1px 3px rgba(8,21,39,.32);color:#f1f5fb;font-size:8px;font-weight:650;line-height:1.2;text-align:center;overflow-wrap:anywhere}
+  .ability-icon{display:inline-block;max-width:100%;padding:3px 4px;border:1px solid #79a8d7;border-radius:4px;background:linear-gradient(135deg,#1f4d82,#3678b5);box-shadow:0 1px 3px rgba(8,21,39,.32);color:#f1f5fb;font-size:8px;font-weight:650;line-height:1.2;text-align:center;overflow-wrap:anywhere}
 
   .count{margin-top:8px;color:var(--muted);font-size:13px}
   .small{font-size:12px;color:#444}
@@ -176,31 +180,40 @@
   <section class="header-section" aria-labelledby="filter-heading">
     <h2 class="section-heading" id="filter-heading"><span class="section-index" aria-hidden="true">01</span>基本フィルター</h2>
     <div class="filters" aria-label="基本フィルター">
-    <label><span class="small">Rare</span>
-      <select id="filter-rarity" multiple title="Select one or more Rares"><option value="">All</option></select>
-    </label>
+    <div class="filter-control">
+      <span class="filter-title">Rare</span>
+      <div id="filter-rarity-buttons" class="filter-choices" role="group" aria-label="Rare"></div>
+      <select id="filter-rarity" multiple hidden aria-hidden="true" tabindex="-1"><option value="">All</option></select>
+    </div>
 
-    <label><span class="small">Type</span>
-      <select id="filter-type" multiple title="Select one or more Types"><option value="">All</option></select>
-    </label>
+    <div class="filter-control">
+      <span class="filter-title">Type</span>
+      <div id="filter-type-buttons" class="filter-choices" role="group" aria-label="Type"></div>
+      <select id="filter-type" multiple hidden aria-hidden="true" tabindex="-1"><option value="">All</option></select>
+    </div>
 
-    <label><span class="small">Move</span>
-      <select id="filter-move" multiple title="Select one or more Move values"><option value="">All</option></select>
-    </label>
+    <div class="filter-control">
+      <span class="filter-title">Move</span>
+      <div id="filter-move-buttons" class="filter-choices" role="group" aria-label="Move"></div>
+      <select id="filter-move" multiple hidden aria-hidden="true" tabindex="-1"><option value="">All</option></select>
+    </div>
 
-    <label><span class="small">Range</span>
-      <select id="filter-range" multiple title="Select one or more Range values"><option value="">All</option></select>
-    </label>
+    <div class="filter-control">
+      <span class="filter-title">Range</span>
+      <div id="filter-range-buttons" class="filter-choices" role="group" aria-label="Range"></div>
+      <select id="filter-range" multiple hidden aria-hidden="true" tabindex="-1"><option value="">All</option></select>
+    </div>
 
+    <div class="filter-control">
+      <span class="filter-title">Obtain</span>
+      <div id="filter-obtain-buttons" class="filter-choices" role="group" aria-label="Obtain"></div>
+      <select id="filter-obtain" multiple hidden aria-hidden="true" tabindex="-1"><option value="">All</option></select>
+    </div>
 
-
-    <label><span class="small">Obtain</span>
-      <select id="filter-obtain" multiple title="Select one or more Obtain values"><option value="">All</option></select>
-    </label>
-
-    <!-- Map兵器フィルタ（Obtain の右に表示） -->
-    <label><span class="small">Map兵器</span>
-      <select id="filter-map" title="Map兵器">
+    <div class="filter-control">
+      <span class="filter-title">Map兵器</span>
+      <div id="filter-map-buttons" class="filter-choices" role="group" aria-label="Map兵器"></div>
+      <select id="filter-map" hidden aria-hidden="true" tabindex="-1" title="Map兵器">
         <option value="">All</option>
         <option value="none">無</option>
         <option value="has">有</option>
@@ -210,7 +223,7 @@
         <option value="shape:範囲">範囲</option>
         <option value="shape:移動">移動</option>
       </select>
-    </label>
+    </div>
 
 
     
@@ -317,6 +330,14 @@ const filterSeries = document.getElementById("filter-series");
 const filterTag1 = document.getElementById("filter-tag1");
 const filterTag2 = document.getElementById("filter-tag2");
 const abilityFilters = document.getElementById("ability-filters");
+const filterButtonGroups = [
+  { select: filterRarity, container: document.getElementById("filter-rarity-buttons"), multiple: true },
+  { select: filterType, container: document.getElementById("filter-type-buttons"), multiple: true },
+  { select: filterMove, container: document.getElementById("filter-move-buttons"), multiple: true },
+  { select: filterRange, container: document.getElementById("filter-range-buttons"), multiple: true },
+  { select: filterObtain, container: document.getElementById("filter-obtain-buttons"), multiple: true },
+  { select: filterMap, container: document.getElementById("filter-map-buttons"), multiple: false }
+];
 
 const sortBy = document.getElementById("sort-by");
 const prevPageBtn = document.getElementById("prev-page");
@@ -375,6 +396,49 @@ function populateMultiSelect(selectEl, values){
     opt.textContent = v;
     selectEl.appendChild(opt);
   });
+}
+
+function updateFilterButtonStates(){
+  filterButtonGroups.forEach(({select, container, multiple})=>{
+    const selectedValues = new Set(getMultiSelectValues(select));
+    Array.from(container.querySelectorAll(".filter-choice")).forEach(button=>{
+      const value = button.dataset.value;
+      const pressed = multiple ? (value === "" ? selectedValues.size === 0 : selectedValues.has(value)) : select.value === value;
+      button.setAttribute("aria-pressed", String(pressed));
+    });
+  });
+}
+
+function populateFilterButtons(){
+  filterButtonGroups.forEach(({select, container, multiple})=>{
+    container.innerHTML = "";
+    Array.from(select.options).forEach(option=>{
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "ability-filter filter-choice";
+      button.dataset.value = option.value;
+      button.textContent = option.textContent;
+      button.addEventListener("click", ()=>{
+        if(multiple){
+          if(option.value === ""){
+            Array.from(select.options).forEach(item=>{ item.selected = item.value === ""; });
+          } else {
+            option.selected = !option.selected;
+            const hasSelection = Array.from(select.options).some(item=>item.value !== "" && item.selected);
+            const allOption = Array.from(select.options).find(item=>item.value === "");
+            if(allOption) allOption.selected = !hasSelection;
+          }
+        } else {
+          select.value = option.value;
+        }
+        updateFilterButtonStates();
+        currentPage = 1;
+        applyFiltersAndRender();
+      });
+      container.appendChild(button);
+    });
+  });
+  updateFilterButtonStates();
 }
 
 function populateSelect(selectEl, values){
@@ -669,9 +733,10 @@ function applyUIState(state) {
   setMulti(filterMove, state.moves || []);
   setMulti(filterRange, state.ranges || []);
   setMulti(filterObtain, state.obtains || []);
+  if(state.map !== undefined && filterMap) filterMap.value = state.map;
+  updateFilterButtonStates();
   selectedAbilities = new Set(Array.isArray(state.abilities) ? state.abilities.filter(value => abilityValues.includes(value)) : []);
   updateAbilityButtons();
-  if(state.map !== undefined && filterMap) filterMap.value = state.map;
   if(state.series !== undefined) filterSeries.value = state.series;
   if(state.tag1 !== undefined) filterTag1.value = state.tag1;
   if(state.tag2 !== undefined) filterTag2.value = state.tag2;
@@ -838,6 +903,7 @@ async function init(){
     populateMultiSelect(filterMove, uniqueValues(units, "移動力"));
     populateMultiSelect(filterRange, uniqueValues(units, "最大射程"));
     populateMultiSelect(filterObtain, uniqueValues(units, "入手"));
+    populateFilterButtons();
     populateAbilityButtons();
 
     populateSeriesAndTags();
@@ -889,6 +955,8 @@ resetBtn.addEventListener("click", ()=>{
     Array.from(sel.options).forEach(opt => opt.selected = false);
     sel.value = "";
   });
+  filterMap.value = "";
+  updateFilterButtonStates();
   filterSeries.value = "";
   filterTag1.value = "";
   filterTag2.value = "";
