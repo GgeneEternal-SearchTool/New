@@ -13,9 +13,10 @@
 	}
 	*{box-sizing:border-box}
 	body{margin:16px;color:#172125;background:#fff}
+	#pilot-detail{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
 	.back{display:inline-block;margin-bottom:12px;color:var(--accent);font-size:14px;font-weight:650;text-decoration:none}
 	.back:hover{text-decoration:underline}
-	.pilot-top{display:flex;gap:18px;align-items:flex-start;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #e5e9e7}
+	.pilot-top{display:flex;min-width:0;gap:14px;align-items:flex-start;margin:0;padding:10px;border:1px solid #e0e5e2;border-radius:3px;background:#fbfcfb}
 	.portrait-wrap{display:flex;flex:0 0 140px;flex-direction:column;align-items:center;gap:7px}
 	.portrait{display:block;width:140px;height:140px;border:1px solid #d5d9d7;border-radius:4px;background:#f0f1ef;object-fit:cover}
 	.action-badge{padding:3px 8px;border:1px solid #d4ae39;border-radius:3px;background:#f2d877;color:#30260b;font-size:12px;font-weight:800}
@@ -24,7 +25,7 @@
 	.profile-meta{display:flex;flex-wrap:wrap;gap:7px}
 	.profile-chip{padding:4px 8px;border:1px solid #d5ddda;border-radius:3px;background:#f4f6f4;color:#34413e;font-size:12px;font-weight:650}
 	.obtain{margin:0;color:#38433f;font-size:14px;font-weight:700}
-	.detail-section{display:grid;gap:6px;margin-top:8px}
+	.detail-section{display:grid;min-width:0;gap:6px;margin:0;padding:10px;border:1px solid #e0e5e2;border-radius:3px;background:#fbfcfb}
 	.stats-row{display:flex;flex-wrap:wrap;gap:8px}
 	.stat-item{display:flex;min-width:118px;flex:1 1 118px;flex-direction:column;gap:4px;padding:8px 10px;border:1px solid #e0e5e2;border-radius:3px;background:#fbfcfb}
 	.stat-label{color:var(--muted);font-size:11px;font-weight:700}
@@ -49,7 +50,7 @@
 	.tag-chip{background:linear-gradient(90deg,#3c5a03,#158b21)}
 	.empty-value{margin:0;color:#8a9290;font-size:13px}
 	.error-message{margin-top:20px;padding:12px;border-left:4px solid #b33;background:#fbefef;color:#a22;font-weight:700}
-	.unit-browser{display:grid;gap:8px;margin-top:18px;padding-top:12px;border-top:1px solid #dfe5e2}
+	.unit-browser{display:grid;grid-column:1/-1;gap:8px;margin-top:4px;padding-top:12px;border-top:1px solid #dfe5e2}
 	.unit-filter-area{display:grid;gap:10px;padding:12px;border:1px solid #465356;border-top:4px solid #d9473f;border-radius:4px;background-color:#202a2d;background-image:linear-gradient(rgba(220,232,224,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(220,232,224,.035) 1px,transparent 1px);background-size:24px 24px;color:#edf1e9}
 	.unit-filter-heading{margin:0;color:#f4f3e9;font-size:14px;font-weight:800}
 	.unit-filters{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-start}
@@ -70,6 +71,7 @@
 	.unit-combi-name{margin:0 0 4px;color:#202a2d;font-size:13px;font-weight:750;line-height:1.3;overflow-wrap:anywhere}
 	.unit-combi-stat{color:var(--red);font-size:19px;font-weight:900;line-height:1.15}
 	.unit-combi-badges{display:flex;flex-wrap:wrap;gap:4px}
+	.unit-combi-details{min-width:0}
 	.combi-badge{padding:3px 6px;border-radius:3px;background:#e8eef0;color:#33434a;font-size:10px;font-weight:750}
 	.combi-badge.action{border:1px solid #d4ae39;background:#f2d877;color:#30260b}
 	.combi-badge.compatibility{background:#2b6cb0;color:#fff}
@@ -82,8 +84,13 @@
 	.unit-pager button:disabled{opacity:.45;cursor:default}
 	.unit-page-info{color:#66706e;font-size:12px}
 	.unit-empty{padding:18px;color:#68706e;text-align:center}
+	@media(max-width:1000px){
+		#pilot-detail{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+		.pilot-top{grid-column:1/-1}
+	}
 	@media(max-width:600px){
 		body{margin:10px}
+		#pilot-detail{grid-template-columns:minmax(0,1fr);gap:8px}
 		.pilot-top{gap:12px}
 		.portrait-wrap{flex-basis:100px}
 		.portrait{width:100px;height:100px}
@@ -93,9 +100,14 @@
 		.condition-groups{grid-template-columns:1fr}
 		.unit-filter-block{flex-basis:100%;min-width:0}
 		.unit-sort{margin-left:0}
-		.unit-combi-row{grid-template-columns:58px minmax(0,1fr);gap:7px;padding:6px}
-		.unit-combi-image{width:58px;height:58px}
-		.unit-combi-badges,.unit-combi-info{grid-column:2}
+		.unit-combi-row{grid-template-columns:46px minmax(54px,.8fr) minmax(44px,.55fr) minmax(112px,1.6fr);gap:4px;padding:5px}
+		.unit-combi-image{width:44px;height:44px}
+		.unit-combi-name{font-size:10px;line-height:1.2}
+		.unit-combi-stat{font-size:15px}
+		.unit-combi-badges{display:grid;align-content:start;gap:3px}
+		.combi-badge{padding:2px 3px;font-size:8px;line-height:1.2;overflow-wrap:anywhere}
+		.unit-combi-info{font-size:10px;line-height:1.25}
+		.unit-combi-info .combi-percent{font-size:12px}
 	}
 </style>
 </head>
@@ -544,12 +556,6 @@ function renderUnitCombination(combi){
 	name.className = "unit-combi-name";
 	name.textContent = unit["ユニット"] || "名称不明";
 	main.appendChild(name);
-	const score = document.createElement("div");
-	const isHB = key => String(key).toUpperCase().startsWith("HB");
-	score.className = isHB(combiSortKey) ? "p-hb" : "p-dmg";
-	const scoreValue = combi[combiSortKey] ?? (combiSortKey === "name" ? combi.D0 : null);
-	score.textContent = isHB(combiSortKey) && scoreValue !== null ? Number(scoreValue).toFixed(2) : formatNumber(scoreValue);
-	main.appendChild(score);
 	row.appendChild(main);
 
 	const badges = document.createElement("div");
@@ -567,7 +573,17 @@ function renderUnitCombination(combi){
 		badges.appendChild(badge);
 	});
 	row.appendChild(badges);
-	row.appendChild(renderCombinationInfo(combi));
+
+	const details = document.createElement("div");
+	details.className = "unit-combi-details";
+	const score = document.createElement("div");
+	const isHB = key => String(key).toUpperCase().startsWith("HB");
+	score.className = isHB(combiSortKey) ? "p-hb" : "p-dmg";
+	const scoreValue = combi[combiSortKey] ?? (combiSortKey === "name" ? combi.D0 : null);
+	score.textContent = isHB(combiSortKey) && scoreValue !== null ? Number(scoreValue).toFixed(2) : formatNumber(scoreValue);
+	details.appendChild(score);
+	details.appendChild(renderCombinationInfo(combi));
+	row.appendChild(details);
 	return row;
 }
 
